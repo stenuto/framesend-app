@@ -1,8 +1,8 @@
 <template>
-  <div class="flex w-80 shrink-0 flex-col rounded-lg bg-gray-100" @dragover.prevent="handleDragOver"
-    @dragleave="handleDragLeave" @drop="handleDrop">
+  <div class="flex w-80 shrink-0 flex-col rounded-lg bg-gray-100 border border-gray-200"
+    @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
     <!-- Column Header -->
-    <div class="flex items-center justify-between p-3">
+    <div class="flex items-center justify-between px-3.5 pb-0 pt-3.5">
       <div class="flex items-center gap-2">
         <h3 class="text-sm font-semibold text-gray-700">{{ list.name }}</h3>
         <Badge variant="secondary" class="text-xs">
@@ -18,39 +18,34 @@
     <div class="video-cards-container relative flex-1 overflow-y-auto py-3 pl-3.5">
       <TransitionGroup name="cards" tag="div" class="space-y-3">
         <!-- Drop placeholder at the beginning -->
-        <Transition name="placeholder">
-          <div v-if="isDraggingOver && dragOverIndex === 0" :key="`placeholder-0`" class="placeholder-wrapper">
-            <div :style="{ height: `${draggedCardHeight}px` }"
-              class="placeholder rounded-lg border-2 border-dashed border-blue-400 bg-blue-50 flex items-center justify-center">
-              <span class="text-sm text-blue-600 font-medium placeholder-text">Drop here</span>
-            </div>
+        <div v-if="isDraggingOver && dragOverIndex === 0" :key="`placeholder-0`" class="placeholder-wrapper"
+          :style="{ height: `${draggedCardHeight}px` }">
+          <div class="placeholder rounded-lg bg-gray-200/70 flex items-center justify-center h-full">
+            <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
           </div>
-        </Transition>
+        </div>
 
         <template v-for="(video, index) in videos" :key="video.id">
           <VideoCard :video="video" :list-id="list.id" :index="index" @dragover="handleDragOverCard($event, index)" />
 
           <!-- Drop placeholder after each card -->
-          <Transition name="placeholder">
-            <div v-if="isDraggingOver && dragOverIndex === index + 1" :key="`placeholder-${index + 1}`"
-              class="placeholder-wrapper">
-              <div :style="{ height: `${draggedCardHeight}px` }"
-                class="placeholder rounded-lg border-2 border-dashed border-blue-400 bg-blue-50 flex items-center justify-center">
-                <span class="text-sm text-blue-600 font-medium placeholder-text">Drop here</span>
-              </div>
+          <div v-if="isDraggingOver && dragOverIndex === index + 1" :key="`placeholder-${index + 1}`"
+            class="placeholder-wrapper" :style="{ height: `${draggedCardHeight}px` }">
+            <div class="placeholder rounded-lg bg-gray-200/70 flex items-center justify-center h-full">
+              <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
             </div>
-          </Transition>
+          </div>
         </template>
       </TransitionGroup>
     </div>
 
     <!-- Add Card Button -->
-    <div class="p-3 pt-0">
+    <!-- <div class="p-3 pt-0">
       <Button variant="ghost" class="w-full justify-start" size="sm">
         <Icon name="plus" size="sm" class="mr-2" />
         Add a video
       </Button>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -141,18 +136,21 @@ const handleDragLeave = (e) => {
 
 const handleDrop = (e) => {
   e.preventDefault()
+  
+  // Capture the target index and dragged card before clearing
+  const targetIndex = dragOverIndex.value !== null ? dragOverIndex.value : videos.value.length
+  const cardToRestore = draggedCard.value
+  const listId = props.list.id
+  
+  // Immediately hide the placeholder
   isDraggingOver.value = false
+  dragOverIndex.value = null
 
-  // Use the dragged card from the store
-  if (draggedCard.value) {
-    const targetIndex = dragOverIndex.value !== null ? dragOverIndex.value : videos.value.length
-
-    // Re-add the card at the new position
-    videosStore.restoreVideo(draggedCard.value, props.list.id, targetIndex)
+  // Use the captured values
+  if (cardToRestore) {
+    videosStore.restoreVideo(cardToRestore, listId, targetIndex)
     uiStore.clearDragging()
   }
-
-  dragOverIndex.value = null
 }
 </script>
 
@@ -190,17 +188,18 @@ const handleDrop = (e) => {
 /* Placeholder transitions */
 .placeholder-wrapper {
   overflow: hidden;
+  display: block;
 }
 
 .placeholder-enter-active {
-  animation: placeholder-fade-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: placeholder-grow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .placeholder-leave-active {
-  animation: placeholder-fade-out 0.15s cubic-bezier(0.4, 0, 1, 1);
+  animation: placeholder-fade-only 0.3s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
-@keyframes placeholder-fade-in {
+@keyframes placeholder-grow {
   from {
     opacity: 0;
     max-height: 0;
@@ -212,7 +211,7 @@ const handleDrop = (e) => {
   }
 }
 
-@keyframes placeholder-fade-out {
+@keyframes placeholder-fade-only {
   from {
     opacity: 1;
   }

@@ -12,7 +12,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Brand Awareness Video',
       thumbnail: 'https://picsum.photos/seed/vid1/320/180',
       assignees: [
-        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/150?u=user1' }
+        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' }
       ],
       labels: ['1', '2'],
       duration: '2:45',
@@ -26,7 +26,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Product Launch Teaser',
       thumbnail: 'https://picsum.photos/seed/vid2/320/180',
       assignees: [
-        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/150?u=user2' }
+        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
       ],
       labels: ['4'],
       duration: '0:30',
@@ -40,8 +40,8 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Customer Success Story',
       thumbnail: 'https://picsum.photos/seed/vid3/320/180',
       assignees: [
-        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/150?u=user1' },
-        { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/150?u=user3' }
+        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' },
+        { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/100?img=8' }
       ],
       labels: ['3'],
       duration: '5:12',
@@ -55,7 +55,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Social Media Ad - Version A',
       thumbnail: 'https://picsum.photos/seed/vid4/320/180',
       assignees: [
-        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/150?u=user2' }
+        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
       ],
       labels: ['5', '3'],
       duration: '0:15',
@@ -69,7 +69,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Behind the Scenes - Making Of',
       thumbnail: 'https://picsum.photos/seed/vid7/320/180',
       assignees: [
-        { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/150?u=user3' }
+        { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/100?img=8' }
       ],
       labels: ['6'],
       duration: '3:20',
@@ -83,8 +83,8 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Company Culture Video',
       thumbnail: 'https://picsum.photos/seed/vid8/320/180',
       assignees: [
-        { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/150?u=user4' },
-        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/150?u=user1' }
+        { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/100?img=9' },
+        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' }
       ],
       labels: ['2', '3'],
       duration: '4:15',
@@ -98,7 +98,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Holiday Campaign Promo',
       thumbnail: 'https://picsum.photos/seed/vid9/320/180',
       assignees: [
-        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/150?u=user2' }
+        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
       ],
       labels: ['1', '4'],
       duration: '1:00',
@@ -112,7 +112,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Email Campaign Video',
       thumbnail: 'https://picsum.photos/seed/vid10/320/180',
       assignees: [
-        { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/150?u=user5' }
+        { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/100?img=12' }
       ],
       labels: ['7'],
       duration: '0:45',
@@ -126,8 +126,8 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Q4 Results Presentation',
       thumbnail: 'https://picsum.photos/seed/vid11/320/180',
       assignees: [
-        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/150?u=user1' },
-        { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/150?u=user4' }
+        { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' },
+        { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/100?img=9' }
       ],
       labels: ['7', '3'],
       duration: '12:30',
@@ -141,8 +141,8 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Instagram Reels - Product Feature',
       thumbnail: 'https://picsum.photos/seed/vid12/320/180',
       assignees: [
-        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/150?u=user2' },
-        { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/150?u=user5' }
+        { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' },
+        { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/100?img=12' }
       ],
       labels: ['5', '6'],
       duration: '0:20',
@@ -157,7 +157,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Feature Overview 2024',
       thumbnail: 'https://picsum.photos/seed/vid5/320/180',
       assignees: [
-        { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/150?u=user4' }
+        { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/100?img=9' }
       ],
       labels: ['2'],
       duration: '8:30',
@@ -171,7 +171,7 @@ export const useVideosStore = defineStore('videos', () => {
       title: 'Mobile App Walkthrough',
       thumbnail: 'https://picsum.photos/seed/vid6/320/180',
       assignees: [
-        { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/150?u=user5' }
+        { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/100?img=12' }
       ],
       labels: ['4'],
       duration: '6:45',
@@ -278,8 +278,12 @@ export const useVideosStore = defineStore('videos', () => {
   }
 
   function restoreVideo(video, listId, targetIndex) {
-    // Add the video back to the array first
-    videos.value.push(video)
+    // Check if video already exists to prevent duplicates
+    const exists = videos.value.find(v => v.id === video.id)
+    if (!exists) {
+      // Add the video back to the array first
+      videos.value.push(video)
+    }
     
     // Then use moveVideo to position it correctly
     moveVideo(video.id, listId, targetIndex)

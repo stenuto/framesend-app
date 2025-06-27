@@ -34,10 +34,10 @@
       <!-- Assignees -->
       <div class="flex -space-x-2">
         <Avatar v-for="(assignee, index) in video.assignees.slice(0, 3)" :key="assignee.id" :src="assignee.avatar"
-          :name="assignee.name" size="sm" class="ring-2 ring-white"
+          :name="assignee.name" size="xs" class="ring-2 ring-white"
           :style="{ zIndex: video.assignees.length - index }" />
         <div v-if="video.assignees.length > 3"
-          class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600 ring-2 ring-white">
+          class="flex size-8 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600 ring-2 ring-white">
           +{{ video.assignees.length - 3 }}
         </div>
       </div>
@@ -99,7 +99,7 @@ const handleDragStart = (e) => {
 
 const handleDragEnd = () => {
   isDragging.value = false
-  
+
   // If the card is still in the dragged state, it means the drop was cancelled
   // (dropped outside a valid zone)
   if (uiStore.draggedCard) {
