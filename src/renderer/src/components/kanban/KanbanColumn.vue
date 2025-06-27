@@ -1,11 +1,11 @@
 <template>
-  <div class="flex w-80 shrink-0 flex-col rounded-lg bg-gray-100 border border-gray-200"
+  <div class="flex w-80 shrink-0 flex-col rounded-smooth-xl bg-gray-100 border border-gray-200"
     @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
     <!-- Column Header -->
-    <div class="flex items-center justify-between px-3.5 pb-0 pt-3.5">
+    <div class="flex items-center justify-between px-3.5 pb-0 pt-2">
       <div class="flex items-center gap-2">
-        <h3 class="text-sm font-semibold text-gray-700">{{ list.name }}</h3>
-        <Badge variant="secondary" class="text-xs">
+        <h3 class="text-sm font-medium text-gray-700">{{ list.name }}</h3>
+        <Badge class="text-xs">
           {{ videos.length }}
         </Badge>
       </div>
@@ -20,7 +20,7 @@
         <!-- Drop placeholder at the beginning -->
         <div v-if="isDraggingOver && dragOverIndex === 0" :key="`placeholder-0`" class="placeholder-wrapper"
           :style="{ height: `${draggedCardHeight}px` }">
-          <div class="placeholder rounded-lg bg-gray-200/70 flex items-center justify-center h-full">
+          <div class="placeholder rounded-smooth-lg bg-gray-200/70 flex items-center justify-center h-full">
             <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
           </div>
         </div>
@@ -31,7 +31,7 @@
           <!-- Drop placeholder after each card -->
           <div v-if="isDraggingOver && dragOverIndex === index + 1" :key="`placeholder-${index + 1}`"
             class="placeholder-wrapper" :style="{ height: `${draggedCardHeight}px` }">
-            <div class="placeholder rounded-lg bg-gray-200/70 flex items-center justify-center h-full">
+            <div class="placeholder rounded-smooth-lg bg-gray-200/70 flex items-center justify-center h-full">
               <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
             </div>
           </div>
@@ -136,12 +136,12 @@ const handleDragLeave = (e) => {
 
 const handleDrop = (e) => {
   e.preventDefault()
-  
+
   // Capture the target index and dragged card before clearing
   const targetIndex = dragOverIndex.value !== null ? dragOverIndex.value : videos.value.length
   const cardToRestore = draggedCard.value
   const listId = props.list.id
-  
+
   // Immediately hide the placeholder
   isDraggingOver.value = false
   dragOverIndex.value = null

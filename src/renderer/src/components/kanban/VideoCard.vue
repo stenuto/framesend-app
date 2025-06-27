@@ -1,11 +1,12 @@
 <template>
   <div :draggable="true"
-    :class="['group cursor-move rounded-lg bg-white p-3 shadow-xs border-gray-100 transition-all duration-300 hover:border-gray-300 border transform-gpu', { 'opacity-50': isDragging }]"
+    :class="['group cursor-move rounded-smooth-xl bg-white p-3 shadow-xs border-gray-100 transition-all duration-300 hover:border-gray-300 border transform-gpu', { 'opacity-50': isDragging }]"
     @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover="$emit('dragover', $event)">
     <!-- Video Thumbnail -->
-    <div class="relative mb-3 overflow-hidden rounded-md bg-gray-100">
-      <img :src="video.thumbnail" :alt="video.title" class="aspect-video w-full object-cover" />
-      <div class="absolute bottom-2 right-2 rounded bg-black/70 leading-none px-1 py-[3px] text-[10px] text-white">
+    <div class="relative mb-3 overflow-hidden rounded-smooth-md bg-gray-100">
+      <img :src="video.thumbnail" :alt="video.title" class="aspect-video w-full object-cover" draggable="false" />
+      <div
+        class="absolute bottom-2 right-2 rounded-smooth bg-black/70 leading-none px-1 py-[3px] text-[10px] text-white">
         {{ video.duration }}
       </div>
       <!-- <div
@@ -37,7 +38,7 @@
           :name="assignee.name" size="xs" class="ring-2 ring-white"
           :style="{ zIndex: video.assignees.length - index }" />
         <div v-if="video.assignees.length > 3"
-          class="flex size-8 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600 ring-2 ring-white">
+          class="flex size-8 items-center justify-center rounded-smooth-full bg-gray-200 text-xs font-medium text-gray-600 ring-2 ring-white">
           +{{ video.assignees.length - 3 }}
         </div>
       </div>

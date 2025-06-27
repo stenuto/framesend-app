@@ -10,7 +10,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list1',
       order: 0,
       title: 'Brand Awareness Video',
-      thumbnail: 'https://picsum.photos/seed/vid1/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' }
       ],
@@ -24,7 +24,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list1',
       order: 1,
       title: 'Product Launch Teaser',
-      thumbnail: 'https://picsum.photos/seed/vid2/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
       ],
@@ -38,7 +38,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list2',
       order: 0,
       title: 'Customer Success Story',
-      thumbnail: 'https://picsum.photos/seed/vid3/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' },
         { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/100?img=8' }
@@ -53,7 +53,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list3',
       order: 0,
       title: 'Social Media Ad - Version A',
-      thumbnail: 'https://picsum.photos/seed/vid4/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
       ],
@@ -67,7 +67,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list1',
       order: 2,
       title: 'Behind the Scenes - Making Of',
-      thumbnail: 'https://picsum.photos/seed/vid7/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/100?img=8' }
       ],
@@ -81,7 +81,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list2',
       order: 1,
       title: 'Company Culture Video',
-      thumbnail: 'https://picsum.photos/seed/vid8/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/100?img=9' },
         { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' }
@@ -96,7 +96,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list1',
       order: 3,
       title: 'Holiday Campaign Promo',
-      thumbnail: 'https://picsum.photos/seed/vid9/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
       ],
@@ -110,7 +110,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list3',
       order: 1,
       title: 'Email Campaign Video',
-      thumbnail: 'https://picsum.photos/seed/vid10/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/100?img=12' }
       ],
@@ -124,7 +124,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list4',
       order: 0,
       title: 'Q4 Results Presentation',
-      thumbnail: 'https://picsum.photos/seed/vid11/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' },
         { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/100?img=9' }
@@ -139,7 +139,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list2',
       order: 2,
       title: 'Instagram Reels - Product Feature',
-      thumbnail: 'https://picsum.photos/seed/vid12/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' },
         { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/100?img=12' }
@@ -155,7 +155,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list5',
       order: 0,
       title: 'Feature Overview 2024',
-      thumbnail: 'https://picsum.photos/seed/vid5/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/100?img=9' }
       ],
@@ -169,7 +169,7 @@ export const useVideosStore = defineStore('videos', () => {
       listId: 'list6',
       order: 0,
       title: 'Mobile App Walkthrough',
-      thumbnail: 'https://picsum.photos/seed/vid6/320/180',
+      thumbnail: 'https://placehold.co/640x360',
       assignees: [
         { id: 'user5', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/100?img=12' }
       ],

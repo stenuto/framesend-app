@@ -15,19 +15,19 @@
 
     <!-- Projects List -->
     <div class="flex-1 overflow-y-auto px-3">
-      <div class="mb-2 px-3 text-xs font-semibold uppercase text-gray-500">Projects</div>
+      <div class="mb-2 px-3 text-[11px] text-gray-400">Projects</div>
       <nav class="space-y-1">
         <button v-for="project in projects" :key="project.id" :class="[
-          'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors',
+          'flex w-full items-center justify-between rounded-smooth-lg px-3 py-2 text-sm transition-colors',
           activeProjectId === project.id
-            ? 'bg-blue-50 text-blue-700'
+            ? 'bg-gray-200/70 text-gray-700'
             : 'text-gray-700 hover:bg-gray-100'
         ]" @click="setActiveProject(project.id)">
           <div class="flex items-center gap-3">
             <!-- <div class="text-lg">{{ project.icon }}</div> -->
-            <div class="font-medium whitespace-nowrap overflow-hidden text-ellipsis flex-1">{{ project.name }}</div>
+            <div class="font-regular whitespace-nowrap overflow-hidden text-ellipsis flex-1">{{ project.name }}</div>
           </div>
-          <Badge variant="secondary" class="ml-2">
+          <Badge variant="default" class="ml-2">
             {{ project.videoCount }}
           </Badge>
         </button>

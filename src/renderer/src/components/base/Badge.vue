@@ -56,7 +56,7 @@ const colorClassMap = {
   'amber-100': 'bg-amber-100 text-amber-700',
   'lime-100': 'bg-lime-100 text-lime-700',
   'sky-100': 'bg-sky-100 text-sky-700',
-  
+
   // Medium shades (500)
   'red-500': 'bg-red-500 text-white',
   'blue-500': 'bg-blue-500 text-white',
@@ -79,15 +79,15 @@ const colorClassMap = {
 }
 
 const computedClasses = computed(() => {
-  const baseClasses = 'inline-flex items-center rounded-sm leading-none px-1.5 py-1 text-xs font-medium'
-  
+  const baseClasses = 'inline-flex items-center rounded-smooth leading-none px-1.5 py-1 text-xs'
+
   if (props.variant === 'custom') {
     // Use the pre-defined color class map
     const colorKey = `${props.color}-${props.shade}`
     const colorClasses = colorClassMap[colorKey] || 'bg-gray-100 text-gray-800'
     return `${baseClasses} ${colorClasses} ${props.className}`
   }
-  
+
   // Use predefined variant classes
   return `${baseClasses} ${variantClasses[props.variant]} ${props.className}`
 })

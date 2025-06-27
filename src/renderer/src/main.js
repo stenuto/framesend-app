@@ -9,3 +9,8 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.mount('#app')
+
+// Initialize mock user for development
+import { useUserStore } from './stores/user'
+const userStore = useUserStore()
+userStore.initializeMockUser()

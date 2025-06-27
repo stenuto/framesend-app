@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+@utility corner-smoothing {
+  -webkit-corner-smoothing: system-ui;
+}
+
+/* Rounded utilities with electron corner smoothing */
+@utility rounded-smooth {
+  border-radius: 0.25rem;
+  -webkit-corner-smoothing: system-ui;
+}
+
+@utility rounded-smooth-sm {
+  border-radius: 0.125rem;
+  -webkit-corner-smoothing: system-ui;
+}
+
+@utility rounded-smooth-md {
+  border-radius: 0.375rem;
+  -webkit-corner-smoothing: system-ui;
+}
+
+@utility rounded-smooth-lg {
+  border-radius: 0.5rem;
+  -webkit-corner-smoothing: system-ui;
+}
+
+@utility rounded-smooth-xl {
+  border-radius: 0.75rem;
+  -webkit-corner-smoothing: system-ui;
+}
+
+@utility rounded-smooth-2xl {
+  border-radius: 1rem;
+  -webkit-corner-smoothing: system-ui;
+}
+
+@utility rounded-smooth-3xl {
+  border-radius: 1.5rem;
+  -webkit-corner-smoothing: system-ui;
+}
+
+@utility rounded-smooth-full {
+  border-radius: 9999px;
+  -webkit-corner-smoothing: system-ui;
+}
