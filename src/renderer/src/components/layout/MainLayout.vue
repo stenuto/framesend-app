@@ -1,17 +1,17 @@
 <template>
-  <div class="flex h-screen bg-gray-100">
+  <div class="app-container flex h-screen w-screen overflow-hidden bg-white/90">
     <!-- Sidebar -->
     <Sidebar v-if="sidebarOpen" />
 
-    <!-- Main Content -->
-    <div class="flex flex-1 flex-col overflow-hidden">
-      <!-- Header -->
+    <!-- Main Content Area -->
+    <div class="main-content flex-1 flex flex-col w-0">
+      <!-- Fixed Header -->
       <Header />
 
-      <!-- Content Area -->
-      <main class="flex-1 overflow-auto bg-gray-50">
+      <!-- Scrollable Content -->
+      <div class="content-area flex-1 overflow-auto">
         <slot />
-      </main>
+      </div>
     </div>
   </div>
 </template>

@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Make body transparent for window transparency */
+html, body {
+  background-color: transparent;
+}
+
 @utility corner-smoothing {
   -webkit-corner-smoothing: system-ui;
 }

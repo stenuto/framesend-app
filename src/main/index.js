@@ -58,6 +58,11 @@ function createWindow() {
     height: defaultHeight,
     show: false,
     autoHideMenuBar: true,
+    transparent: true,
+    backgroundColor: '#00000000', // Fully transparent
+    vibrancy: 'under-window', // macOS only - adds blur effect
+    visualEffectState: 'active', // macOS only
+    titleBarStyle: 'hiddenInset', // macOS - hides title bar but shows traffic lights
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

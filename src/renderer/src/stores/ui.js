@@ -12,6 +12,10 @@ export const useUIStore = defineStore('ui', () => {
   const draggedCardHeight = ref(200) // Height of currently dragged card
   const draggedCard = ref(null)
   const draggedCardOriginalPosition = ref(null)
+  const draggedListWidth = ref(320) // Width of currently dragged list (w-80 = 20rem = 320px)
+  const draggedListHeight = ref(600) // Height of currently dragged list
+  const draggedList = ref(null)
+  const draggedListOriginalPosition = ref(null)
 
   function setViewMode(mode) {
     if (['kanban', 'table'].includes(mode)) {
@@ -60,6 +64,24 @@ export const useUIStore = defineStore('ui', () => {
     draggedCardOriginalPosition.value = null
   }
 
+  function setDraggedListWidth(width) {
+    draggedListWidth.value = width
+  }
+  
+  function setDraggedListHeight(height) {
+    draggedListHeight.value = height
+  }
+
+  function startDraggingList(list, projectId, index) {
+    draggedList.value = list
+    draggedListOriginalPosition.value = { projectId, index }
+  }
+
+  function clearListDragging() {
+    draggedList.value = null
+    draggedListOriginalPosition.value = null
+  }
+
   return {
     viewMode,
     sidebarOpen,
@@ -68,6 +90,10 @@ export const useUIStore = defineStore('ui', () => {
     draggedCardHeight,
     draggedCard,
     draggedCardOriginalPosition,
+    draggedListWidth,
+    draggedListHeight,
+    draggedList,
+    draggedListOriginalPosition,
     setViewMode,
     toggleSidebar,
     setSearchQuery,
@@ -75,6 +101,10 @@ export const useUIStore = defineStore('ui', () => {
     clearFilters,
     setDraggedCardHeight,
     startDragging,
-    clearDragging
+    clearDragging,
+    setDraggedListWidth,
+    setDraggedListHeight,
+    startDraggingList,
+    clearListDragging
   }
 })

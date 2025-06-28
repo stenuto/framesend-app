@@ -289,6 +289,54 @@ export const useVideosStore = defineStore('videos', () => {
     moveVideo(video.id, listId, targetIndex)
   }
 
+  function moveList(listId, projectId, newIndex) {
+    const list = lists.value.find(l => l.id === listId)
+    if (!list) return
+
+    // Get all lists in the project except the one being moved
+    const projectLists = lists.value
+      .filter(l => l.projectId === projectId && l.id !== listId)
+      .sort((a, b) => a.order - b.order)
+    
+    // Set the list's project (in case it's moving between projects)
+    list.projectId = projectId
+    
+    // Reorder the lists
+    if (newIndex !== null && newIndex <= projectLists.length) {
+      // Insert at specific position
+      projectLists.forEach((l, idx) => {
+        if (idx >= newIndex) {
+          l.order = idx + 1
+        } else {
+          l.order = idx
+        }
+      })
+      list.order = newIndex
+    } else {
+      // Add to end
+      list.order = projectLists.length
+    }
+  }
+
+  function temporarilyRemoveList(listId) {
+    const index = lists.value.findIndex(l => l.id === listId)
+    if (index !== -1) {
+      lists.value.splice(index, 1)
+    }
+  }
+
+  function restoreList(list, projectId, targetIndex) {
+    // Check if list already exists to prevent duplicates
+    const exists = lists.value.find(l => l.id === list.id)
+    if (!exists) {
+      // Add the list back to the array first
+      lists.value.push(list)
+    }
+    
+    // Then use moveList to position it correctly
+    moveList(list.id, projectId, targetIndex)
+  }
+
   return {
     videos,
     lists,
@@ -300,6 +348,9 @@ export const useVideosStore = defineStore('videos', () => {
     updateVideo,
     deleteVideo,
     temporarilyRemoveVideo,
-    restoreVideo
+    restoreVideo,
+    moveList,
+    temporarilyRemoveList,
+    restoreList
   }
 })

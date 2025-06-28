@@ -1,5 +1,5 @@
 <template>
-  <header class="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
+  <header class="app-header flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 pl-20 flex-shrink-0" style="-webkit-app-region: drag">
     <div class="flex items-center gap-4">
       <!-- Breadcrumb -->
       <div class="flex items-center gap-2 text-sm">
@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4" style="-webkit-app-region: no-drag">
       <!-- Filter Button -->
       <Button variant="ghost" size="sm">
         <Icon name="filter" size="sm" class="mr-2" />

@@ -1,18 +1,30 @@
 <template>
-  <div class="flex w-80 shrink-0 flex-col rounded-smooth-xl bg-gray-100 border border-gray-200"
-    @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
-    <!-- Column Header -->
-    <div class="flex items-center justify-between px-3.5 pb-0 pt-2">
-      <div class="flex items-center gap-2">
-        <h3 class="text-sm font-medium text-gray-700">{{ list.name }}</h3>
-        <Badge class="text-xs">
-          {{ videos.length }}
-        </Badge>
+  <div class="list-container">
+    <!-- Invisible drag handle that covers the entire list -->
+    <div v-if="showDragHandle" 
+      :draggable="true"
+      @dragstart="handleListDragStart" 
+      @dragend="handleListDragEnd"
+      class="absolute inset-0 z-10"></div>
+    
+    <!-- Actual column content -->
+    <div ref="columnRef"
+      :class="['kanban-column flex w-80 shrink-0 flex-col rounded-smooth-xl bg-gray-100 border border-gray-200 transition-all duration-300 relative', { 'opacity-50': isDraggingList }]"
+      @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
+      <!-- Column Header -->
+      <div class="flex items-center justify-between px-3.5 pb-0 pt-2 cursor-move"
+        @mousedown="handleHeaderMouseDown" 
+        @mouseup="handleHeaderMouseUp">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-medium text-gray-700">{{ list.name }}</h3>
+          <Badge class="text-xs">
+            {{ videos.length }}
+          </Badge>
+        </div>
+        <Button variant="ghost" size="sm">
+          <Icon name="plus" size="sm" />
+        </Button>
       </div>
-      <Button variant="ghost" size="sm">
-        <Icon name="plus" size="sm" />
-      </Button>
-    </div>
 
     <!-- Video Cards -->
     <div class="video-cards-container relative flex-1 overflow-y-auto py-3 pl-3.5">
@@ -46,6 +58,7 @@
         Add a video
       </Button>
     </div> -->
+    </div>
   </div>
 </template>
 
@@ -63,6 +76,14 @@ const props = defineProps({
   list: {
     type: Object,
     required: true
+  },
+  index: {
+    type: Number,
+    required: true
+  },
+  projectId: {
+    type: String,
+    required: true
   }
 })
 
@@ -70,9 +91,14 @@ const videosStore = useVideosStore()
 const uiStore = useUIStore()
 const isDraggingOver = ref(false)
 const dragOverIndex = ref(null)
-const { draggedCardHeight, draggedCard, draggedCardOriginalPosition } = storeToRefs(uiStore)
+const isDraggingList = ref(false)
+const columnRef = ref(null)
+const showDragHandle = ref(false)
+const { draggedCardHeight, draggedCard, draggedCardOriginalPosition, draggedList } = storeToRefs(uiStore)
 
 const videos = computed(() => videosStore.videosByList(props.list.id))
+
+const emit = defineEmits(['dragover-list'])
 
 // Handle ESC key to cancel drag
 const handleEscKey = (e) => {
@@ -97,7 +123,57 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
 })
 
+const handleHeaderMouseDown = () => {
+  showDragHandle.value = true
+}
+
+const handleHeaderMouseUp = () => {
+  setTimeout(() => {
+    showDragHandle.value = false
+  }, 100)
+}
+
+const handleListDragStart = (e) => {
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('listId', props.list.id)
+
+  // Store the actual width and height of the list being dragged
+  const listWidth = columnRef.value ? columnRef.value.offsetWidth : 320
+  const listHeight = columnRef.value ? columnRef.value.offsetHeight : 600
+  uiStore.setDraggedListWidth(listWidth)
+  uiStore.setDraggedListHeight(listHeight)
+
+  // Store the list data and remove it from the lists
+  uiStore.startDraggingList(props.list, props.projectId, props.list.order)
+  videosStore.temporarilyRemoveList(props.list.id)
+
+  isDraggingList.value = true
+}
+
+const handleListDragEnd = () => {
+  isDraggingList.value = false
+  showDragHandle.value = false
+
+  // If the list is still in the dragged state, it means the drop was cancelled
+  // (dropped outside a valid zone)
+  if (uiStore.draggedList) {
+    videosStore.restoreList(
+      uiStore.draggedList,
+      uiStore.draggedListOriginalPosition.projectId,
+      uiStore.draggedListOriginalPosition.index
+    )
+    uiStore.clearListDragging()
+  }
+}
+
 const handleDragOver = (e) => {
+  // Don't handle dragover if we're dragging a list
+  if (draggedList.value) {
+    e.stopPropagation()
+    emit('dragover-list', e, props.index)
+    return
+  }
+
   e.preventDefault()
   e.dataTransfer.dropEffect = 'move'
   isDraggingOver.value = true
@@ -137,6 +213,11 @@ const handleDragLeave = (e) => {
 const handleDrop = (e) => {
   e.preventDefault()
 
+  // If we're handling a list drop, let the parent handle it
+  if (draggedList.value) {
+    return
+  }
+
   // Capture the target index and dragged card before clearing
   const targetIndex = dragOverIndex.value !== null ? dragOverIndex.value : videos.value.length
   const cardToRestore = draggedCard.value
@@ -155,6 +236,18 @@ const handleDrop = (e) => {
 </script>
 
 <style scoped>
+/* List container */
+.list-container {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* Column styling */
+.kanban-column {
+  height: 100%;
+}
+
 /* Prevent layout shift when scrollbar appears/disappears */
 .video-cards-container {
   scrollbar-gutter: stable;
