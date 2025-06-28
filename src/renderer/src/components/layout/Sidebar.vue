@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full w-64 flex-col border-r border-gray-200 bg-gray-50 shrink-0">
+  <div class="flex h-full w-64 flex-col border-r border-gray-200 shrink-0">
     <!-- Team name -->
     <div class="flex h-16 items-center border-b border-gray-200 px-6">
       <h1 class="text-xl font-bold">Framesend</h1>

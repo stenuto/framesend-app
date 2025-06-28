@@ -1,5 +1,7 @@
 <template>
-  <header class="app-header flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 pl-20 flex-shrink-0" style="-webkit-app-region: drag">
+  <header
+    class="app-header flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 pl-20 flex-shrink-0"
+    style="-webkit-app-region: drag">
     <div class="flex items-center gap-4">
       <!-- Breadcrumb -->
       <div class="flex items-center gap-2 text-sm">

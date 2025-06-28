@@ -3,7 +3,8 @@
     <TransitionGroup name="lists" tag="div" class="flex gap-4 min-h-full p-6">
       <!-- Drop placeholder at the beginning -->
       <div v-if="isDraggingOverBoard && dragOverListIndex === 0" :key="`list-placeholder-0`"
-        class="list-placeholder-wrapper flex-col" :style="{ width: `${draggedListWidth}px`, height: `${draggedListHeight}px` }">
+        class="list-placeholder-wrapper flex-col"
+        :style="{ width: `${draggedListWidth}px`, height: `${draggedListHeight}px` }">
         <div class="list-placeholder rounded-smooth-xl bg-gray-200/70 flex items-center justify-center flex-1">
           <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
         </div>
@@ -15,7 +16,8 @@
 
         <!-- Drop placeholder after each list -->
         <div v-if="isDraggingOverBoard && dragOverListIndex === index + 1" :key="`list-placeholder-${index + 1}`"
-          class="list-placeholder-wrapper flex-col" :style="{ width: `${draggedListWidth}px`, height: `${draggedListHeight}px` }">
+          class="list-placeholder-wrapper flex-col"
+          :style="{ width: `${draggedListWidth}px`, height: `${draggedListHeight}px` }">
           <div class="list-placeholder rounded-smooth-xl bg-gray-200/70 flex items-center justify-center flex-1">
             <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
           </div>
@@ -160,7 +162,7 @@ const handleBoardDrop = (e) => {
 }
 
 .lists-leave-active {
-  position: absolute;
+  position: relative;
   height: 100%;
 }
 
