@@ -63,6 +63,7 @@ function createWindow() {
     vibrancy: 'under-window', // macOS only - adds blur effect
     visualEffectState: 'active', // macOS only
     titleBarStyle: 'hiddenInset', // macOS - hides title bar but shows traffic lights
+    trafficLightPosition: { x: 10, y: 10 }, // Adjust traffic light position
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

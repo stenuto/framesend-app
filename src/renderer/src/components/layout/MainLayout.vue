@@ -1,17 +1,16 @@
 <template>
-  <div class="app-container flex h-screen w-screen overflow-hidden bg-white/75">
-    <!-- Sidebar -->
-    <Sidebar v-if="sidebarOpen" />
+  <div class="app-container flex-col flex h-screen w-screen overflow-hidden bg-white/75">
 
-    <!-- Main Content Area -->
-    <div
-      class="main-content flex-1 flex flex-col w-0 m-3 rounded-smooth-xl border border-gray-200 bg-white overflow-hidden">
-      <!-- Fixed Header -->
-      <Header />
-
-      <!-- Scrollable Content -->
-      <div class="content-area flex-1 overflow-auto">
-        <slot />
+    <!-- Nav -->
+    <Nav />
+    <!-- Main Content -->
+    <div class="flex-1 flex">
+      <Sidebar v-if="sidebarOpen" />
+      <div class="flex-1 flex flex-col w-0 m-1 rounded-smooth-lg overflow-hidden border border-gray-200">
+        <Header class="bg-white border-b border-gray-200" />
+        <div class="content-area flex-1 overflow-auto bg-white overflow-hidden">
+          <slot />
+        </div>
       </div>
     </div>
   </div>
@@ -20,6 +19,7 @@
 <script setup>
 import { useUIStore } from '../../stores/ui'
 import { storeToRefs } from 'pinia'
+import Nav from './Nav.vue'
 import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
 

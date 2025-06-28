@@ -1,7 +1,7 @@
 <template>
-  <div class="flex h-full w-64 flex-col border-r border-gray-200 shrink-0">
+  <div class="flex h-full w-64 flex-col shrink-0">
     <!-- Team name -->
-    <div class="flex h-16 items-center border-b border-gray-200 px-6">
+    <div class="flex h-16 items-center px-6">
       <h1 class="text-xl font-bold">Framesend</h1>
     </div>
 
@@ -35,7 +35,7 @@
     </div>
 
     <!-- Bottom Actions -->
-    <div class="border-t border-gray-200 p-4">
+    <div class=" p-4">
       <Button variant="secondary" class="w-full" size="sm">
         <Icon name="plus" size="sm" class="mr-2" />
         New Project
