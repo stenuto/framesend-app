@@ -1,13 +1,10 @@
 <template>
-  <div ref="columnRef"
-    :draggable="false"
+  <div ref="columnRef" :draggable="false"
     :class="['kanban-column flex w-80 shrink-0 flex-col rounded-smooth-xl bg-gray-100 border border-gray-200 transition-all duration-300', { 'opacity-50': isDraggingList }]"
-    @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
-      <!-- Column Header -->
-    <div class="flex items-center justify-between px-3.5 pb-0 pt-2 cursor-move"
-      :draggable="true"
-      @dragstart="handleListDragStart" 
-      @dragend="handleListDragEnd">
+    @dragenter="handleDragEnter" @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
+    <!-- Column Header -->
+    <div class="flex items-center justify-between px-3.5 pb-0 pt-2 cursor-move" :draggable="true"
+      @dragstart="handleListDragStart" @dragend="handleListDragEnd">
       <div class="flex items-center gap-2">
         <h3 class="text-sm font-medium text-gray-700">{{ list.name }}</h3>
         <Badge class="text-xs">
@@ -20,7 +17,7 @@
     </div>
 
     <!-- Video Cards -->
-    <div class="video-cards-container relative flex-1 overflow-y-auto py-3 pl-3.5">
+    <div class="video-cards-container relative flex-1 p-3">
       <TransitionGroup name="cards" tag="div" class="space-y-3">
         <!-- Drop placeholder at the beginning -->
         <div v-if="isDraggingOver && dragOverIndex === 0" :key="`placeholder-0`" class="placeholder-wrapper"
@@ -116,11 +113,16 @@ onUnmounted(() => {
 
 // Mouse handlers no longer needed since only header is draggable
 
+const handleDragEnter = (e) => {
+  if (!draggedCard.value && !draggedList.value) return
+  // Drag enter event handler
+}
+
 const handleListDragStart = (e) => {
   // Since only the header is draggable now, we know this is a list drag
   e.dataTransfer.effectAllowed = 'move'
   e.dataTransfer.setData('listId', props.list.id)
-  
+
   // Create a custom drag image of the entire column
   const dragImage = columnRef.value.cloneNode(true)
   dragImage.style.width = columnRef.value.offsetWidth + 'px'

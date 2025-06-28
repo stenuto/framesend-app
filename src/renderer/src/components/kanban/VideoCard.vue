@@ -1,7 +1,7 @@
 <template>
   <div :draggable="true"
     :class="['group cursor-move rounded-smooth-xl bg-white p-3 shadow-xs border-gray-100 transition-all duration-300 hover:border-gray-300 border transform-gpu', { 'opacity-50': isDragging }]"
-    @mousedown.stop @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover="$emit('dragover', $event)">
+    @mousedown="handleMouseDown" @mousedown.stop @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover="$emit('dragover', $event)">
     <!-- Video Thumbnail -->
     <div class="relative mb-3 overflow-hidden rounded-smooth-md bg-gray-100">
       <img :src="video.thumbnail" :alt="video.title" class="aspect-video w-full object-cover" draggable="false" />
@@ -83,6 +83,10 @@ const isDragging = ref(false)
 
 defineEmits(['dragover'])
 
+const handleMouseDown = (e) => {
+  // Mouse down handler for debugging - can be removed if not needed
+}
+
 const handleDragStart = (e) => {
   e.dataTransfer.effectAllowed = 'move'
   e.dataTransfer.setData('videoId', props.video.id)
@@ -93,7 +97,11 @@ const handleDragStart = (e) => {
 
   // Store the card data and remove it from the list
   uiStore.startDragging(props.video, props.listId, props.video.order)
-  videosStore.temporarilyRemoveVideo(props.video.id)
+  
+  // Delay removing the video to ensure the drag is properly initiated
+  setTimeout(() => {
+    videosStore.temporarilyRemoveVideo(props.video.id)
+  }, 0)
 
   isDragging.value = true
 }
