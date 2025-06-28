@@ -1,50 +1,84 @@
 <template>
-  <button
-    :class="[
-      'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-      variantClasses[variant],
-      sizeClasses[size],
-      className
-    ]"
-    :disabled="disabled"
-    v-bind="$attrs"
-  >
+  <button :class="[
+    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    variantClasses[variant],
+    // Use icon-only size classes if only icon exists, otherwise regular size classes
+    iconName && !hasDefaultSlot ? iconOnlySizeClasses[size] : sizeClasses[size],
+    className
+  ]" :disabled="disabled" v-bind="$attrs">
+    <Icon v-if="iconName" :name="iconName" :class="iconClasses" />
     <slot />
   </button>
 </template>
 
 <script setup>
-  defineProps({
-    variant: {
-      type: String,
-      default: 'primary',
-      validator: (value) => ['primary', 'secondary', 'ghost', 'danger'].includes(value)
-    },
-    size: {
-      type: String,
-      default: 'default',
-      validator: (value) => ['sm', 'default', 'lg'].includes(value)
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    className: {
-      type: String,
-      default: ''
-    }
+import { computed, useSlots, Comment } from 'vue'
+import Icon from './Icon.vue'
+
+const props = defineProps({
+  variant: {
+    type: String,
+    default: 'default',
+    validator: (value) => ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'].includes(value)
+  },
+  size: {
+    type: String,
+    default: 'default',
+    validator: (value) => ['default', 'sm', 'lg'].includes(value)
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  iconName: {
+    type: String,
+    default: null
+  },
+  className: {
+    type: String,
+    default: ''
+  }
+})
+
+const slots = useSlots()
+const hasDefaultSlot = computed(() => {
+  if (!slots.default) return false
+  const vnodes = slots.default()
+  return vnodes.some(vnode => {
+    // Check if it's not a comment and has actual content
+    if (vnode.type === Comment) return false
+    if (typeof vnode.children === 'string') return vnode.children.trim().length > 0
+    return true
   })
+})
 
-  const variantClasses = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600',
-    secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-500',
-    ghost: 'hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600'
-  }
+const variantClasses = {
+  default: 'bg-gray-900 text-white hover:bg-gray-800',
+  destructive: 'bg-red-600 text-white hover:bg-red-700',
+  outline: 'border border-gray-300 bg-white hover:bg-gray-50',
+  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
+  ghost: 'hover:bg-gray-300/50 hover:text-gray-900',
+  link: 'text-gray-900 underline-offset-4 hover:underline'
+}
 
-  const sizeClasses = {
-    sm: 'h-8 px-3 text-xs rounded-md',
-    default: 'h-10 px-4 py-2 text-sm rounded-md',
-    lg: 'h-12 px-8 text-base rounded-md'
-  }
+const sizeClasses = {
+  default: 'h-7 px-2 text-sm',
+  sm: 'h-5 px-1.5 text-xs',
+  lg: 'h-8 px-3 text-base'
+}
+
+// Override size classes for icon-only buttons (make them square)
+const iconOnlySizeClasses = {
+  sm: 'size-5',
+  default: 'size-7',
+  lg: 'size-8'
+}
+
+// Icon classes based on whether there's text or not
+const iconClasses = computed(() => {
+  // Properly scale icon based on button size
+  const sizeClass = props.size === 'sm' ? 'size-3' : props.size === 'lg' ? 'size-5' : 'size-4'
+  const marginClass = hasDefaultSlot.value ? (props.size === 'sm' ? 'mr-1' : 'mr-2') : ''
+  return `${sizeClass} ${marginClass}`
+})
 </script>

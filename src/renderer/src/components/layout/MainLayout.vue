@@ -4,11 +4,11 @@
     <!-- Nav -->
     <Nav />
     <!-- Main Content -->
-    <div class="flex-1 flex">
+    <div class="flex-1 flex h-0">
       <Sidebar v-if="sidebarOpen" />
-      <div class="flex-1 flex flex-col w-0 m-1 rounded-smooth-lg overflow-hidden border border-gray-200">
+      <div class="flex-1 flex flex-col w-0 m-1.5 rounded-smooth-lg border border-gray-200 overflow-hidden">
         <Header class="bg-white border-b border-gray-200" />
-        <div class="content-area flex-1 overflow-auto bg-white overflow-hidden">
+        <div class="content-area flex-1 overflow-auto bg-white">
           <slot />
         </div>
       </div>

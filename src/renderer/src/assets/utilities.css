@@ -1,0 +1,27 @@
+/* Custom utility classes */
+
+/* Make element draggable for window movement */
+.drag {
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Make child elements non-draggable (for buttons, inputs, etc.) */
+.drag button,
+.drag input,
+.drag a,
+.drag [role="button"],
+.drag .no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Explicitly make an element non-draggable */
+.no-drag {
+  -webkit-app-region: no-drag !important;
+}
+
+/* Optional: Add cursor style */
+.drag:not(:has(:hover:is(button, input, a, [role="button"], .no-drag))) {
+  cursor: move;
+}

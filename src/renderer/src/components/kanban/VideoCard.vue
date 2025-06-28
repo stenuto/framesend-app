@@ -1,12 +1,13 @@
 <template>
   <div :draggable="true"
-    :class="['group cursor-move rounded-smooth-xl bg-white p-3 shadow-xs border-gray-100 transition-all duration-300 hover:border-gray-300 border transform-gpu', { 'opacity-50': isDragging }]"
-    @mousedown="handleMouseDown" @mousedown.stop @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover="$emit('dragover', $event)">
+    :class="['group cursor-move rounded-smooth-lg bg-white p-2 shadow-xs border border-gray-200 transition-all duration-300 hover:border-gray-300 border transform-gpu', { 'opacity-50': isDragging }]"
+    @mousedown="handleMouseDown" @mousedown.stop @dragstart="handleDragStart" @dragend="handleDragEnd"
+    @dragover="$emit('dragover', $event)">
     <!-- Video Thumbnail -->
-    <div class="relative mb-3 overflow-hidden rounded-smooth-md bg-gray-100">
+    <div class="relative mb-3 overflow-hidden rounded-smooth bg-gray-100">
       <img :src="video.thumbnail" :alt="video.title" class="aspect-video w-full object-cover" draggable="false" />
       <div
-        class="absolute bottom-2 right-2 rounded-smooth bg-black/70 leading-none px-1 py-[3px] text-[10px] text-white">
+        class="absolute bottom-2 right-2 rounded-smooth-sm bg-black/70 leading-none px-1 py-[3px] text-[10px] text-white">
         {{ video.duration }}
       </div>
       <!-- <div
@@ -16,12 +17,12 @@
     </div>
 
     <!-- Video Title -->
-    <h3 class="mb-2 text-sm font-medium text-gray-900 line-clamp-2">
+    <h3 class="mb-1.5 text-sm font-medium text-gray-900 line-clamp-2">
       {{ video.title }}
     </h3>
 
     <!-- Labels -->
-    <div v-if="video.labels && video.labels.length > 0" class="mb-3 flex flex-wrap gap-1">
+    <div v-if="video.labels && video.labels.length > 0" class="mb-2 flex flex-wrap gap-1">
       <Badge v-for="labelId in video.labels" :key="labelId"
         :variant="labelsStore.labelById(labelId) ? 'custom' : 'default'"
         :color="labelsStore.labelById(labelId)?.color || 'gray'" :shade="labelsStore.labelById(labelId)?.shade || 500"
@@ -97,7 +98,7 @@ const handleDragStart = (e) => {
 
   // Store the card data and remove it from the list
   uiStore.startDragging(props.video, props.listId, props.video.order)
-  
+
   // Delay removing the video to ensure the drag is properly initiated
   setTimeout(() => {
     videosStore.temporarilyRemoveVideo(props.video.id)

@@ -1,6 +1,6 @@
 <template>
-  <div class="kanban-board h-full overflow-x-auto" @dragover.prevent="handleBoardDragOver" @drop="handleBoardDrop">
-    <TransitionGroup name="lists" tag="div" class="flex gap-4 min-h-full p-3">
+  <div class="kanban-board h-full overflow-auto" @dragover.prevent="handleBoardDragOver" @drop="handleBoardDrop">
+    <TransitionGroup name="lists" tag="div" class="flex gap-3 min-h-full p-2">
       <!-- Drop placeholder at the beginning -->
       <div v-if="isDraggingOverBoard && dragOverListIndex === 0" :key="`list-placeholder-0`"
         class="list-placeholder-wrapper flex-col"
