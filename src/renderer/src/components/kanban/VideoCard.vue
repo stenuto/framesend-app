@@ -4,7 +4,7 @@
     @mousedown="handleMouseDown" @mousedown.stop @dragstart="handleDragStart" @dragend="handleDragEnd"
     @dragover="$emit('dragover', $event)">
     <!-- Video Thumbnail -->
-    <div class="relative mb-3 overflow-hidden rounded-smooth bg-gray-100">
+    <div class="relative mb-2 overflow-hidden rounded-smooth bg-gray-100">
       <img :src="video.thumbnail" :alt="video.title" class="aspect-video w-full object-cover" draggable="false" />
       <div
         class="absolute bottom-2 right-2 rounded-smooth-sm bg-black/70 leading-none px-1 py-[3px] text-[10px] text-white">
@@ -16,39 +16,40 @@
       </div> -->
     </div>
 
-    <!-- Video Title -->
-    <h3 class="mb-1.5 text-sm font-medium text-gray-900 line-clamp-2">
-      {{ video.title }}
-    </h3>
-
-    <!-- Labels -->
-    <div v-if="video.labels && video.labels.length > 0" class="mb-2 flex flex-wrap gap-1">
-      <Badge v-for="labelId in video.labels" :key="labelId"
-        :variant="labelsStore.labelById(labelId) ? 'custom' : 'default'"
-        :color="labelsStore.labelById(labelId)?.color || 'gray'" :shade="labelsStore.labelById(labelId)?.shade || 500"
-        class="text-xs">
-        {{ labelsStore.labelById(labelId)?.name || 'Unknown' }}
-      </Badge>
-    </div>
-
-    <!-- Footer -->
-    <div class="flex items-center justify-between">
-      <!-- Assignees -->
-      <div class="flex -space-x-2">
-        <Avatar v-for="(assignee, index) in video.assignees.slice(0, 3)" :key="assignee.id" :src="assignee.avatar"
-          :name="assignee.name" size="xs" class="ring-2 ring-white"
-          :style="{ zIndex: video.assignees.length - index }" />
-        <div v-if="video.assignees.length > 3"
-          class="flex size-8 items-center justify-center rounded-smooth-full bg-gray-200 text-xs font-medium text-gray-600 ring-2 ring-white">
-          +{{ video.assignees.length - 3 }}
+    <div class="px-1">
+      <div class="flex items-start justify-between">
+        <div class="shrink-0">
+          <!-- Video Title -->
+          <h3 class="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
+            {{ video.title }}
+          </h3>
+          <!-- Labels -->
+          <div v-if="video.labels && video.labels.length > 0" class="mb-2 flex flex-wrap gap-1">
+            <Badge v-for="labelId in video.labels" :key="labelId"
+              :variant="labelsStore.labelById(labelId) ? 'custom' : 'default'"
+              :color="labelsStore.labelById(labelId)?.color || 'gray'"
+              :shade="labelsStore.labelById(labelId)?.shade || 500" class="text-xs">
+              {{ labelsStore.labelById(labelId)?.name || 'Unknown' }}
+            </Badge>
+          </div>
+        </div>
+        <!-- Assignees -->
+        <div class="flex -space-x-2">
+          <Avatar v-for="(assignee, index) in video.assignees.slice(0, 3)" :key="assignee.id" :src="assignee.avatar"
+            :name="assignee.name" size="xs" class="ring-2 ring-white"
+            :style="{ zIndex: video.assignees.length - index }" />
+          <div v-if="video.assignees.length > 3"
+            class="flex size-8 items-center justify-center rounded-smooth-full bg-gray-200 text-xs font-medium text-gray-600 ring-2 ring-white">
+            +{{ video.assignees.length - 3 }}
+          </div>
         </div>
       </div>
 
-      <!-- Actions -->
-      <Button variant="ghost" size="sm" class="opacity-0 group-hover:opacity-100">
-        <Icon name="more-horizontal" size="sm" />
-      </Button>
+
+
+
     </div>
+
   </div>
 </template>
 
