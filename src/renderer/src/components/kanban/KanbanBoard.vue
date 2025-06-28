@@ -181,6 +181,11 @@ const handleBoardDrop = (e) => {
   animation: list-placeholder-fade-only 0.3s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
+/* Make placeholder disappear instantly on drop */
+.lists-leave-active.list-placeholder-wrapper {
+  display: none !important;
+}
+
 @keyframes list-placeholder-grow {
   from {
     opacity: 0;
