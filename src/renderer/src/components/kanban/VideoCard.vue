@@ -1,7 +1,7 @@
 <template>
   <div :draggable="true"
     :class="['group cursor-move rounded-smooth-xl bg-white p-3 shadow-xs border-gray-100 transition-all duration-300 hover:border-gray-300 border transform-gpu', { 'opacity-50': isDragging }]"
-    @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover="$emit('dragover', $event)">
+    @mousedown.stop @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover="$emit('dragover', $event)">
     <!-- Video Thumbnail -->
     <div class="relative mb-3 overflow-hidden rounded-smooth-md bg-gray-100">
       <img :src="video.thumbnail" :alt="video.title" class="aspect-video w-full object-cover" draggable="false" />

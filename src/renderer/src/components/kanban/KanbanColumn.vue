@@ -1,30 +1,23 @@
 <template>
-  <div class="list-container">
-    <!-- Invisible drag handle that covers the entire list -->
-    <div v-if="showDragHandle" 
+  <div ref="columnRef"
+    :draggable="false"
+    :class="['kanban-column flex w-80 shrink-0 flex-col rounded-smooth-xl bg-gray-100 border border-gray-200 transition-all duration-300', { 'opacity-50': isDraggingList }]"
+    @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
+      <!-- Column Header -->
+    <div class="flex items-center justify-between px-3.5 pb-0 pt-2 cursor-move"
       :draggable="true"
       @dragstart="handleListDragStart" 
-      @dragend="handleListDragEnd"
-      class="absolute inset-0 z-10"></div>
-    
-    <!-- Actual column content -->
-    <div ref="columnRef"
-      :class="['kanban-column flex w-80 shrink-0 flex-col rounded-smooth-xl bg-gray-100 border border-gray-200 transition-all duration-300 relative', { 'opacity-50': isDraggingList }]"
-      @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
-      <!-- Column Header -->
-      <div class="flex items-center justify-between px-3.5 pb-0 pt-2 cursor-move"
-        @mousedown="handleHeaderMouseDown" 
-        @mouseup="handleHeaderMouseUp">
-        <div class="flex items-center gap-2">
-          <h3 class="text-sm font-medium text-gray-700">{{ list.name }}</h3>
-          <Badge class="text-xs">
-            {{ videos.length }}
-          </Badge>
-        </div>
-        <Button variant="ghost" size="sm">
-          <Icon name="plus" size="sm" />
-        </Button>
+      @dragend="handleListDragEnd">
+      <div class="flex items-center gap-2">
+        <h3 class="text-sm font-medium text-gray-700">{{ list.name }}</h3>
+        <Badge class="text-xs">
+          {{ videos.length }}
+        </Badge>
       </div>
+      <Button variant="ghost" size="sm">
+        <Icon name="plus" size="sm" />
+      </Button>
+    </div>
 
     <!-- Video Cards -->
     <div class="video-cards-container relative flex-1 overflow-y-auto py-3 pl-3.5">
@@ -58,7 +51,6 @@
         Add a video
       </Button>
     </div> -->
-    </div>
   </div>
 </template>
 
@@ -93,7 +85,6 @@ const isDraggingOver = ref(false)
 const dragOverIndex = ref(null)
 const isDraggingList = ref(false)
 const columnRef = ref(null)
-const showDragHandle = ref(false)
 const { draggedCardHeight, draggedCard, draggedCardOriginalPosition, draggedList } = storeToRefs(uiStore)
 
 const videos = computed(() => videosStore.videosByList(props.list.id))
@@ -123,19 +114,21 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleEscKey)
 })
 
-const handleHeaderMouseDown = () => {
-  showDragHandle.value = true
-}
-
-const handleHeaderMouseUp = () => {
-  setTimeout(() => {
-    showDragHandle.value = false
-  }, 100)
-}
+// Mouse handlers no longer needed since only header is draggable
 
 const handleListDragStart = (e) => {
+  // Since only the header is draggable now, we know this is a list drag
   e.dataTransfer.effectAllowed = 'move'
   e.dataTransfer.setData('listId', props.list.id)
+  
+  // Create a custom drag image of the entire column
+  const dragImage = columnRef.value.cloneNode(true)
+  dragImage.style.width = columnRef.value.offsetWidth + 'px'
+  dragImage.style.position = 'absolute'
+  dragImage.style.top = '-9999px'
+  document.body.appendChild(dragImage)
+  e.dataTransfer.setDragImage(dragImage, e.offsetX, e.offsetY)
+  setTimeout(() => document.body.removeChild(dragImage), 0)
 
   // Store the actual width and height of the list being dragged
   const listWidth = columnRef.value ? columnRef.value.offsetWidth : 320
@@ -152,7 +145,6 @@ const handleListDragStart = (e) => {
 
 const handleListDragEnd = () => {
   isDraggingList.value = false
-  showDragHandle.value = false
 
   // If the list is still in the dragged state, it means the drop was cancelled
   // (dropped outside a valid zone)
@@ -236,13 +228,6 @@ const handleDrop = (e) => {
 </script>
 
 <style scoped>
-/* List container */
-.list-container {
-  position: relative;
-  display: flex;
-  flex-shrink: 0;
-}
-
 /* Column styling */
 .kanban-column {
   height: 100%;
