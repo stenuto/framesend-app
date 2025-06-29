@@ -25,3 +25,43 @@
 .drag:not(:has(:hover:is(button, input, a, [role="button"], .no-drag))) {
   cursor: move;
 }
+
+/* Overlay-style scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+/* Show scrollbar on hover or when scrolling */
+:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* For dark backgrounds, you might want lighter scrollbars */
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Hide scrollbars until container is hovered */
+.overflow-auto:not(:hover)::-webkit-scrollbar-thumb,
+.overflow-scroll:not(:hover)::-webkit-scrollbar-thumb {
+  background: transparent;
+}

@@ -5,7 +5,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import * as RadixIcons from '@radix-icons/vue'
+import * as icons from 'lucide-vue-next'
 
 const props = defineProps({
   name: {
@@ -19,11 +19,11 @@ const iconName = computed(() => {
   return props.name
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join('') + 'Icon'
+    .join('')
 })
 
-// Get the icon component from RadixIcons
+// Get the icon component from lucide icons
 const iconComponent = computed(() => {
-  return RadixIcons[iconName.value] || null
+  return icons[iconName.value] || null
 })
 </script>

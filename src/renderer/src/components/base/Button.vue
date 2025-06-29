@@ -77,7 +77,7 @@ const iconOnlySizeClasses = {
 // Icon classes based on whether there's text or not
 const iconClasses = computed(() => {
   // Properly scale icon based on button size
-  const sizeClass = props.size === 'sm' ? 'size-3' : props.size === 'lg' ? 'size-5' : 'size-4'
+  const sizeClass = props.size === 'sm' ? 'size-3.5' : props.size === 'lg' ? 'size-5' : 'size-4'
   const marginClass = hasDefaultSlot.value ? (props.size === 'sm' ? 'mr-1' : 'mr-2') : ''
   return `${sizeClass} ${marginClass}`
 })

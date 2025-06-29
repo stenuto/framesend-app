@@ -8,7 +8,7 @@
     <!-- Search -->
     <div class="p-4">
       <div class="relative">
-        <Icon name="magnifying-glass" size="sm" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Icon name="search" size="sm" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <Input v-model="searchQuery" placeholder="Search..." class="pl-9" @update:modelValue="handleSearch" />
       </div>
     </div>

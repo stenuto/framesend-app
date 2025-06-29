@@ -38,10 +38,10 @@
           <span class="text-sm text-gray-700">{{ label.name }}</span>
           <div class="flex items-center gap-1">
             <Button @click="startEdit(label)" size="sm" variant="ghost">
-              <Icon name="edit-2" size="sm" />
+              <Icon name="pencil" size="sm" />
             </Button>
             <Button @click="deleteLabel(label.id)" size="sm" variant="ghost" class="text-red-600 hover:text-red-700">
-              <Icon name="trash-2" size="sm" />
+              <Icon name="trash" size="sm" />
             </Button>
           </div>
         </div>
