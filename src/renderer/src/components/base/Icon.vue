@@ -1,6 +1,6 @@
 <template>
   <component :is="iconComponent" v-if="iconComponent" :class="$attrs.class" />
-  <span v-else class="inline-flex items-center justify-center text-gray-400 leading-none">?</span>
+  <span v-else class="inline-flex items-center justify-center text-zinc-400 leading-none">?</span>
 </template>
 
 <script setup>

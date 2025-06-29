@@ -1,12 +1,12 @@
 <template>
   <div ref="columnRef" :draggable="false"
-    :class="['kanban-column flex w-80 shrink-0 flex-col rounded-smooth-lg bg-gray-100 border border-gray-200 transition-all duration-300', { 'opacity-50': isDraggingList }]"
+    :class="['kanban-column flex w-80 shrink-0 flex-col rounded-smooth-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 transition-all duration-300', { 'opacity-50': isDraggingList }]"
     @dragenter="handleDragEnter" @dragover.prevent="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
     <!-- Column Header -->
     <div class="flex items-center justify-between px-3 pb-0 pt-2 cursor-move" :draggable="true"
       @dragstart="handleListDragStart" @dragend="handleListDragEnd">
       <div class="flex items-center gap-2">
-        <h3 class="text-sm font-medium text-gray-700">{{ list.name }}</h3>
+        <h3 class="text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ list.name }}</h3>
         <Badge class="text-xs">
           {{ videos.length }}
         </Badge>
@@ -22,8 +22,8 @@
         <!-- Drop placeholder at the beginning -->
         <div v-if="isDraggingOver && dragOverIndex === 0" :key="`placeholder-0`" class="placeholder-wrapper"
           :style="{ height: `${draggedCardHeight}px` }">
-          <div class="placeholder rounded-smooth-lg bg-gray-200/70 flex items-center justify-center h-full">
-            <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
+          <div class="placeholder rounded-smooth-lg bg-zinc-200/70 flex items-center justify-center h-full">
+            <span class="text-sm text-zinc-700 font-medium placeholder-text">Drop here</span>
           </div>
         </div>
 
@@ -33,8 +33,8 @@
           <!-- Drop placeholder after each card -->
           <div v-if="isDraggingOver && dragOverIndex === index + 1" :key="`placeholder-${index + 1}`"
             class="placeholder-wrapper" :style="{ height: `${draggedCardHeight}px` }">
-            <div class="placeholder rounded-smooth-lg bg-gray-200/70 flex items-center justify-center h-full">
-              <span class="text-sm text-gray-700 font-medium placeholder-text">Drop here</span>
+            <div class="placeholder rounded-smooth-lg bg-zinc-200/70 flex items-center justify-center h-full">
+              <span class="text-sm text-zinc-700 font-medium placeholder-text">Drop here</span>
             </div>
           </div>
         </template>

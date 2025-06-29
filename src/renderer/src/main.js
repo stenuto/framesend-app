@@ -1,5 +1,6 @@
 import './assets/main.css'
 import './assets/utilities.css'
+import './assets/dark-mode.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -15,3 +16,7 @@ app.mount('#app')
 import { useUserStore } from './stores/user'
 const userStore = useUserStore()
 userStore.initializeMockUser()
+
+// Initialize settings store to apply dark mode
+import { useSettingsStore } from './stores/settings'
+const settingsStore = useSettingsStore()

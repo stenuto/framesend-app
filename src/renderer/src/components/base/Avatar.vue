@@ -1,11 +1,11 @@
 <template>
   <div :class="[
-    'relative inline-flex items-center justify-center overflow-hidden rounded-full bg-gray-100',
+    'relative inline-flex items-center justify-center overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700',
     sizeClasses[size],
     className
   ]">
     <img v-if="src" :src="src" :alt="alt" class="h-full w-full object-cover" />
-    <span v-else :class="['font-medium text-gray-600', textSizeClasses[size]]">
+    <span v-else :class="['font-medium text-zinc-600 dark:text-zinc-300', textSizeClasses[size]]">
       {{ initials }}
     </span>
   </div>

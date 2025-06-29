@@ -37,7 +37,7 @@ export const useLabelsStore = defineStore('labels', () => {
     {
       id: '6',
       name: 'Draft',
-      color: 'gray',
+      color: 'zinc',
       shade: 100
     },
     {
@@ -52,7 +52,7 @@ export const useLabelsStore = defineStore('labels', () => {
   const availableColors = [
     'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 
     'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 
-    'rose', 'gray', 'slate', 'zinc', 'neutral', 'stone'
+    'rose', 'zinc', 'slate', 'neutral', 'stone'
   ]
 
   const availableShades = [100, 500]
@@ -71,7 +71,7 @@ export const useLabelsStore = defineStore('labels', () => {
     const newLabel = {
       id: Date.now().toString(),
       name: labelData.name,
-      color: labelData.color || 'gray',
+      color: labelData.color || 'zinc',
       shade: labelData.shade || 500
     }
     labels.value.push(newLabel)

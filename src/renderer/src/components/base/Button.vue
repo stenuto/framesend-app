@@ -1,6 +1,6 @@
 <template>
   <button :class="[
-    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
     variantClasses[variant],
     // Use icon-only size classes if only icon exists, otherwise regular size classes
     iconName && !hasDefaultSlot ? iconOnlySizeClasses[size] : sizeClasses[size],
@@ -53,12 +53,12 @@ const hasDefaultSlot = computed(() => {
 })
 
 const variantClasses = {
-  default: 'bg-gray-900 text-white hover:bg-gray-800',
-  destructive: 'bg-red-600 text-white hover:bg-red-700',
-  outline: 'border border-gray-300 bg-white hover:bg-gray-50',
-  secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
-  ghost: 'hover:bg-gray-300/50 hover:text-gray-900',
-  link: 'text-gray-900 underline-offset-4 hover:underline'
+  default: 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200',
+  destructive: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700',
+  outline: 'border border-zinc-300 bg-white hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-100',
+  secondary: 'bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600',
+  ghost: 'hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+  link: 'text-zinc-900 underline-offset-4 hover:underline dark:text-zinc-100'
 }
 
 const sizeClasses = {

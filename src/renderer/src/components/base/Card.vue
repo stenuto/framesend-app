@@ -1,5 +1,5 @@
 <template>
-  <div :class="['rounded-lg border bg-white text-gray-950 shadow-sm', className]">
+  <div :class="['rounded-lg border bg-white text-zinc-950 shadow-sm', className]">
     <div
       v-if="$slots.header"
       class="border-b px-6 py-4"

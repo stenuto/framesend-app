@@ -15,7 +15,7 @@ const props = defineProps({
   },
   color: {
     type: String,
-    default: 'gray'
+    default: 'zinc'
   },
   shade: {
     type: Number,
@@ -28,11 +28,11 @@ const props = defineProps({
 })
 
 const variantClasses = {
-  default: 'bg-gray-100 text-gray-800',
-  secondary: 'bg-blue-100 text-blue-800',
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  danger: 'bg-red-100 text-red-800'
+  default: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200',
+  secondary: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  success: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  warning: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  danger: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
 }
 
 // Create a map of color combinations for light (100) and medium (500) shades
@@ -48,7 +48,7 @@ const colorClassMap = {
   'pink-100': 'bg-pink-100 text-pink-700',
   'teal-100': 'bg-teal-100 text-teal-700',
   'cyan-100': 'bg-cyan-100 text-cyan-700',
-  'gray-100': 'bg-gray-100 text-gray-700',
+  'zinc-100': 'bg-zinc-100 text-zinc-700',
   'emerald-100': 'bg-emerald-100 text-emerald-700',
   'violet-100': 'bg-violet-100 text-violet-700',
   'fuchsia-100': 'bg-fuchsia-100 text-fuchsia-700',
@@ -68,7 +68,7 @@ const colorClassMap = {
   'pink-500': 'bg-pink-500 text-white',
   'teal-500': 'bg-teal-500 text-white',
   'cyan-500': 'bg-cyan-500 text-white',
-  'gray-500': 'bg-gray-500 text-white',
+  'zinc-500': 'bg-zinc-500 text-white',
   'emerald-500': 'bg-emerald-500 text-white',
   'violet-500': 'bg-violet-500 text-white',
   'fuchsia-500': 'bg-fuchsia-500 text-white',
@@ -84,7 +84,7 @@ const computedClasses = computed(() => {
   if (props.variant === 'custom') {
     // Use the pre-defined color class map
     const colorKey = `${props.color}-${props.shade}`
-    const colorClasses = colorClassMap[colorKey] || 'bg-gray-100 text-gray-800'
+    const colorClasses = colorClassMap[colorKey] || 'bg-zinc-100 text-zinc-800'
     return `${baseClasses} ${colorClasses} ${props.className}`
   }
 

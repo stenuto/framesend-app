@@ -5,9 +5,9 @@
     :placeholder="placeholder"
     :disabled="disabled"
     :class="[
-      'flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm',
-      'placeholder:text-gray-400',
-      'focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2',
+      'flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100',
+      'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
+      'focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-zinc-900',
       'disabled:cursor-not-allowed disabled:opacity-50',
       className
     ]"

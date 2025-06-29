@@ -5,7 +5,7 @@
     <!-- Label List -->
     <div class="space-y-2 mb-4">
       <div v-for="label in labelsStore.labels" :key="label.id" 
-        class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+        class="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 hover:bg-zinc-50">
         
         <!-- Label Preview -->
         <Badge :variant="'custom'" :color="label.color" :shade="label.shade" class="text-xs">
@@ -17,14 +17,14 @@
           <Input v-model="editForm.name" placeholder="Label name" class="flex-1" size="sm" />
           
           <!-- Color Picker -->
-          <select v-model="editForm.color" class="text-sm border border-gray-300 rounded px-2 py-1">
+          <select v-model="editForm.color" class="text-sm border border-zinc-300 rounded px-2 py-1">
             <option v-for="color in labelsStore.availableColors" :key="color" :value="color">
               {{ color }}
             </option>
           </select>
           
           <!-- Shade Picker -->
-          <select v-model.number="editForm.shade" class="text-sm border border-gray-300 rounded px-2 py-1">
+          <select v-model.number="editForm.shade" class="text-sm border border-zinc-300 rounded px-2 py-1">
             <option value="100">Light</option>
             <option value="500">Medium</option>
           </select>
@@ -35,7 +35,7 @@
         
         <!-- View Mode -->
         <div v-else class="flex-1 flex items-center justify-between">
-          <span class="text-sm text-gray-700">{{ label.name }}</span>
+          <span class="text-sm text-zinc-700">{{ label.name }}</span>
           <div class="flex items-center gap-1">
             <Button @click="startEdit(label)" size="sm" variant="ghost">
               <Icon name="pencil" size="sm" />
@@ -55,14 +55,14 @@
         <Input v-model="newLabel.name" placeholder="Label name" class="flex-1" size="sm" />
         
         <!-- Color Picker -->
-        <select v-model="newLabel.color" class="text-sm border border-gray-300 rounded px-2 py-1">
+        <select v-model="newLabel.color" class="text-sm border border-zinc-300 rounded px-2 py-1">
           <option v-for="color in labelsStore.availableColors" :key="color" :value="color">
             {{ color }}
           </option>
         </select>
         
         <!-- Shade Picker -->
-        <select v-model.number="newLabel.shade" class="text-sm border border-gray-300 rounded px-2 py-1">
+        <select v-model.number="newLabel.shade" class="text-sm border border-zinc-300 rounded px-2 py-1">
           <option value="100">Light</option>
           <option value="500">Medium</option>
         </select>
@@ -74,7 +74,7 @@
       
       <!-- Preview -->
       <div v-if="newLabel.name" class="mt-2">
-        <span class="text-xs text-gray-500">Preview:</span>
+        <span class="text-xs text-zinc-500">Preview:</span>
         <Badge :variant="'custom'" :color="newLabel.color" :shade="newLabel.shade" class="text-xs ml-2">
           {{ newLabel.name }}
         </Badge>

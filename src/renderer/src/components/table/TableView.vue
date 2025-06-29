@@ -2,34 +2,34 @@
   <div class="rounded-lg border bg-white">
     <table class="w-full">
       <thead>
-        <tr class="border-b bg-gray-50">
+        <tr class="border-b bg-zinc-50">
           <th
-            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
             Video
           </th>
           <th
-            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
             Status
           </th>
           <th
-            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
             Assignees
           </th>
           <th
-            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
             Labels
           </th>
           <th
-            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
             Duration
           </th>
           <th
-            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+            class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500"
           >
             Created
           </th>
@@ -38,11 +38,11 @@
           </th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-200 bg-white">
+      <tbody class="divide-y divide-zinc-200 bg-white">
         <tr
           v-for="video in videos"
           :key="video.id"
-          class="hover:bg-gray-50"
+          class="hover:bg-zinc-50"
         >
           <!-- Video Info -->
           <td class="whitespace-nowrap px-6 py-4">
@@ -55,7 +55,7 @@
                 />
               </div>
               <div class="ml-4">
-                <div class="text-sm font-medium text-gray-900">
+                <div class="text-sm font-medium text-zinc-900">
                   {{ video.title }}
                 </div>
               </div>
@@ -98,7 +98,7 @@
           </td>
 
           <!-- Duration -->
-          <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+          <td class="whitespace-nowrap px-6 py-4 text-sm text-zinc-500">
             <div class="flex items-center gap-1">
               <Icon
                 name="clock"
@@ -109,7 +109,7 @@
           </td>
 
           <!-- Created Date -->
-          <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+          <td class="whitespace-nowrap px-6 py-4 text-sm text-zinc-500">
             {{ formatDate(video.createdAt) }}
           </td>
 
