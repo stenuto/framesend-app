@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex h-full w-48 flex-col shrink-0 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
+    class="flex h-full w-70 flex-col shrink-0 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
     <!-- Header -->
     <div class="flex h-12 items-center px-4 border-b border-zinc-200 dark:border-zinc-700">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">Explorer</h2>

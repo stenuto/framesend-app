@@ -25,14 +25,16 @@ export default {
       type: Object,
       default: () => ({
         indentSize: 12, // pixels per depth level
-        itemPaddingY: 'py-0.5', // tailwind class for vertical padding
+        itemPaddingY: 'py-[3px]', // tailwind class for vertical padding
         itemPaddingX: 'px-1', // tailwind class for horizontal padding
         fontSize: 'text-sm', // tailwind class for font size
-        chevronSize: 'size-3', // tailwind class for chevron size
+        chevronSize: 'size-4', // tailwind class for chevron size
         videoIconSize: 'size-3.5', // tailwind class for video icon size
-        guideLineOffset: 13.5, // pixels from left edge of indentation
+        guideLineOffset: 15, // pixels from left edge of indentation
         initialFolderOffset: 8, // initial padding for root folders
-        videoIndentExtra: 20 // extra indent for video items
+        videoIndentExtra: 20, // extra indent for video items
+        showVideoCount: false,
+        showVideoDuration: false
       })
     }
   },

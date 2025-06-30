@@ -11,13 +11,12 @@
         }
       ]" @click.stop="handleFolderClick">
       <span :style="{ paddingLeft: `${depth * config.indentSize + config.initialFolderOffset}px` }"
-        class="flex items-center relative">
+        class="flex items-center relative min-w-0 flex-1">
         <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'"
-          :class="[config.chevronSize, 'mr-1 text-zinc-600 dark:text-zinc-300']" />
+          :class="[config.chevronSize, 'mr-1 text-zinc-600 dark:text-zinc-300 flex-shrink-0']" />
         <span class="text-zinc-700 dark:text-zinc-300 truncate">{{ item.name }}</span>
-
       </span>
-      <span v-if="item.videoCount" class="ml-auto mr-2 text-xs text-zinc-500 dark:text-zinc-500">
+      <span v-if="item.videoCount && config.showVideoCount" class="ml-2 mr-2 text-xs text-zinc-500 dark:text-zinc-500 flex-shrink-0">
         {{ item.videoCount }}
       </span>
     </div>
@@ -48,12 +47,11 @@
       <div v-if="depth > 0" class="absolute top-0 h-full border-l border-zinc-200 dark:border-zinc-600"
         :style="{ left: `${depth * config.indentSize + config.guideLineOffset}px` }" />
       <span :style="{ paddingLeft: `${depth * config.indentSize + config.videoIndentExtra}px` }"
-        class="flex items-center relative">
-        <Icon name="video" :class="[config.videoIconSize, 'mr-1.5 text-zinc-500 dark:text-zinc-400']" />
+        class="flex items-center relative min-w-0 flex-1">
+        <Icon name="video" :class="[config.videoIconSize, 'mr-1.5 text-zinc-500 dark:text-zinc-400 flex-shrink-0']" />
         <span class="text-zinc-600 dark:text-zinc-300 truncate">{{ item.name }}</span>
-
       </span>
-      <span v-if="item.duration" class="ml-auto mr-2 text-xs text-zinc-400 dark:text-zinc-500">
+      <span v-if="item.duration && config.showVideoDuration" class="ml-2 mr-2 text-xs text-zinc-400 dark:text-zinc-500 flex-shrink-0">
         {{ item.duration }}
       </span>
     </div>
@@ -96,7 +94,9 @@ export default {
         videoIconSize: 'size-3.5',
         guideLineOffset: 16,
         initialFolderOffset: 8,
-        videoIndentExtra: 20
+        videoIndentExtra: 20,
+        showVideoCount: true,
+        showVideoDuration: true
       })
     }
   },
