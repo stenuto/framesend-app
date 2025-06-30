@@ -1,5 +1,6 @@
 <template>
-  <div class="flex h-full w-64 flex-col shrink-0 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
+  <div
+    class="flex h-full w-48 flex-col shrink-0 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
     <!-- Header -->
     <div class="flex h-12 items-center px-4 border-b border-zinc-200 dark:border-zinc-700">
       <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">Explorer</h2>
@@ -8,22 +9,17 @@
     <!-- Search -->
     <div class="p-2 border-b border-zinc-200 dark:border-zinc-700">
       <div class="relative">
-        <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400 dark:text-zinc-500" />
-        <input 
-          v-model="searchQuery" 
-          placeholder="Search files..." 
+        <Icon name="search"
+          class="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400 dark:text-zinc-500" />
+        <input v-model="searchQuery" placeholder="Search files..."
           class="w-full h-7 pl-7 pr-2 text-sm bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          @input="handleSearch"
-        />
+          @input="handleSearch" />
       </div>
     </div>
 
     <!-- File Explorer -->
     <div class="flex-1 overflow-y-auto">
-      <FileExplorer 
-        :items="filteredFileTree" 
-        @select-video="handleVideoSelect"
-      />
+      <FileExplorer :items="filteredFileTree" @select-video="handleVideoSelect" />
     </div>
   </div>
 </template>
@@ -51,14 +47,14 @@ export default {
     fileTree() {
       const projectsStore = useProjectsStore()
       const videosStore = useVideosStore()
-      
+
       // Transform projects and videos into a file tree structure
       return projectsStore.projects.map(project => {
         const projectVideos = videosStore.videosByProject(project.id)
-        
+
         // Get all lists for this project
         const projectLists = videosStore.lists.filter(l => l.projectId === project.id)
-        
+
         // Build folder hierarchy
         const buildFolderTree = (parentId = null) => {
           const folders = projectLists
@@ -67,7 +63,7 @@ export default {
             .map(list => {
               const listVideos = projectVideos.filter(v => v.listId === list.id)
               const subfolders = buildFolderTree(list.id)
-              
+
               return {
                 id: list.id,
                 name: list.name,
@@ -85,10 +81,10 @@ export default {
                 ]
               }
             })
-          
+
           return folders
         }
-        
+
         const rootFolders = buildFolderTree(null)
         const rootVideos = projectVideos
           .filter(v => !v.listId)
@@ -99,7 +95,7 @@ export default {
             duration: video.duration,
             ...video
           }))
-        
+
         // Build the project folder
         return {
           id: project.id,
@@ -115,7 +111,7 @@ export default {
     },
     filteredFileTree() {
       if (!this.searchQuery) return this.fileTree
-      
+
       // Filter the tree based on search query
       return this.filterTree(this.fileTree, this.searchQuery.toLowerCase())
     }
