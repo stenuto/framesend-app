@@ -39,7 +39,7 @@ export default {
         videoIconSize: 'size-3', // tailwind class for video icon size
         guideLineOffset: 15, // pixels from left edge of indentation
         initialFolderOffset: 8, // initial padding for root folders
-        videoIndentExtra: 12, // extra indent for video items
+        videoIndentExtra: 6, // extra indent for video items
         showVideoCount: false,
         showVideoDuration: false
       })
@@ -94,11 +94,20 @@ export default {
     },
     handleDragStart(dragData) {
       this.draggedItem = dragData
+      // Store in a way that child components can access during dragover
+      window.__draggedItem = dragData
     },
     handleDragEnd() {
+      // Clean up all drag state
       this.draggedItem = null
       this.showRootDropZone = false
       this.clearRootDragTimer()
+      window.__draggedItem = null
+
+      // Force immediate update
+      this.$nextTick(() => {
+        this.showRootDropZone = false
+      })
     },
     handleDropItem({ draggedItem, targetItem, position }) {
       if (!draggedItem || !targetItem) return
@@ -185,9 +194,14 @@ export default {
       // Only handle if we're dropping on the empty space
       if (event.target === event.currentTarget || event.target.classList.contains('root-drop-zone')) {
         event.preventDefault()
+        event.stopPropagation()
 
-        const dragData = this.getDragData(event)
-        if (!dragData) return
+        const dragData = window.__draggedItem
+        if (!dragData) {
+          this.showRootDropZone = false
+          this.clearRootDragTimer()
+          return
+        }
 
         // Move items to root level
         if (dragData.type === 'video') {
@@ -198,8 +212,14 @@ export default {
           this.fileExplorerStore.moveFolder(dragData.item.id, null)
         }
 
+        // Ensure drop zone is hidden immediately after drop
         this.showRootDropZone = false
         this.clearRootDragTimer()
+
+        // Force update to ensure UI reflects the change
+        this.$nextTick(() => {
+          this.showRootDropZone = false
+        })
       }
     },
     handleRootDragLeave(event) {

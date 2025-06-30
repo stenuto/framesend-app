@@ -18,7 +18,7 @@
     </div>
 
     <!-- File Explorer -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto my-1.5">
       <FileExplorer :items="filteredFileTree" @select-video="handleVideoSelect" />
     </div>
   </div>
@@ -111,7 +111,6 @@ export default {
     },
     handleVideoSelect(video) {
       // Handle video selection
-      console.log('Selected video:', video)
       this.$emit('select-video', video)
     },
     filterTree(items, query) {

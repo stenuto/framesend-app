@@ -1,19 +1,18 @@
 <template>
   <div class="file-explorer-item" :class="{ 'drag-over': isDragOver }">
     <!-- Folder -->
-    <div v-if="item.type === 'folder'" class="folder-item flex items-center px-0 cursor-pointer select-none relative"
-      :class="[
-        config.itemPaddingY,
-        config.fontSize,
-        {
-          'bg-blue-500/20 dark:bg-blue-500/20': isSelected,
-          'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isSelected,
-          'opacity-50': isDragging,
-          'border-t-2 border-blue-500': dropIndicatorPosition === 'before',
-          'border-b-2 border-blue-500': dropIndicatorPosition === 'after',
-          'ring-2 ring-blue-500': dropIndicatorPosition === 'inside'
-        }
-      ]" draggable="true" @click.stop="handleFolderClick" @dragstart="handleDragStart" @dragend="handleDragEnd"
+    <div v-if="item.type === 'folder'" class="folder-item flex items-center px-0 select-none relative" :class="[
+      config.itemPaddingY,
+      config.fontSize,
+      {
+        'bg-amber-500/20 dark:bg-amber-500/20': isSelected,
+        'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isSelected,
+        'opacity-50': isDragging,
+        'border-t-2 border-amber-500': dropIndicatorPosition === 'before',
+        'border-b-2 border-amber-500': dropIndicatorPosition === 'after',
+        'ring-2 ring-amber-500': dropIndicatorPosition === 'inside'
+      }
+    ]" draggable="true" @click.stop="handleFolderClick" @dragstart="handleDragStart" @dragend="handleDragEnd"
       @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
       <span :style="{ paddingLeft: `${depth * config.indentSize + config.initialFolderOffset}px` }"
         class="flex items-center relative min-w-0 flex-1">
@@ -40,24 +39,23 @@
     </div>
 
     <!-- Video -->
-    <div v-else-if="item.type === 'video'" class="video-item flex items-center cursor-pointer select-none relative"
-      :class="[
-        config.itemPaddingY,
-        config.itemPaddingX,
-        config.fontSize,
-        {
-          'bg-blue-500/20 dark:bg-blue-500/20': isSelected,
-          'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isSelected,
-          'opacity-50': isDragging,
-          'border-t-2 border-blue-500': dropIndicatorPosition === 'before',
-          'border-b-2 border-blue-500': dropIndicatorPosition === 'after'
-        }
-      ]" draggable="true" @click.stop="$emit('select-video', item)" @dragstart="handleDragStart"
-      @dragend="handleDragEnd" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
+    <div v-else-if="item.type === 'video'" class="video-item flex items-center select-none relative" :class="[
+      config.itemPaddingY,
+      config.itemPaddingX,
+      config.fontSize,
+      {
+        'bg-amber-500/20 dark:bg-amber-500/20': isSelected,
+        'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isSelected,
+        'opacity-50': isDragging,
+        'border-t-2 border-amber-500': dropIndicatorPosition === 'before',
+        'border-b-2 border-amber-500': dropIndicatorPosition === 'after'
+      }
+    ]" draggable="true" @click.stop="$emit('select-video', item)" @dragstart="handleDragStart" @dragend="handleDragEnd"
+      @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
       <span :style="{ paddingLeft: `${depth * config.indentSize + config.videoIndentExtra}px` }"
         class="flex items-center relative min-w-0 flex-1">
         <Icon name="circle-play"
-          :class="[config.videoIconSize, 'mr-1.5 text-indigo-500 dark:text-indigo-300 flex-shrink-0']" />
+          :class="[config.videoIconSize, 'mr-1.5 text-amber-500 dark:text-amber-300 flex-shrink-0']" />
         <span class="text-zinc-600 dark:text-zinc-300 truncate">{{ item.name }}</span>
       </span>
       <span v-if="item.duration && config.showVideoDuration"
@@ -146,7 +144,7 @@ export default {
         position: absolute;
         top: -1000px;
         padding: 4px 12px;
-        background: rgba(59, 130, 246, 0.9);
+        background: rgba(251, 191, 36, 0.9);
         color: white;
         border-radius: 4px;
         font-size: 14px;
@@ -174,7 +172,8 @@ export default {
       event.preventDefault()
       event.stopPropagation()
 
-      const dragData = this.getDragData(event)
+      // Use the global drag data instead of trying to get it from dataTransfer
+      const dragData = window.__draggedItem
       if (!dragData) return
 
       // Prevent dropping a folder into itself or its descendants
@@ -208,7 +207,7 @@ export default {
               const fileExplorerStore = useFileExplorerStore()
               fileExplorerStore.expandFolder(this.item.id)
               this.autoExpandTimer = null
-            }, 1500)
+            }, 800)
           }
         }
       } else {
@@ -235,7 +234,8 @@ export default {
       event.preventDefault()
       event.stopPropagation()
 
-      const dragData = this.getDragData(event)
+      // Use the global drag data
+      const dragData = window.__draggedItem
       if (!dragData) return
 
 
