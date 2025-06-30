@@ -33,7 +33,7 @@ export const useUserStore = defineStore('user', () => {
       planDetails: {
         name: 'Pro',
         maxMembers: 10,
-        maxProjects: -1, // unlimited
+        maxFolders: -1, // unlimited
         maxStorageGB: 100,
         features: ['advanced-analytics', 'custom-branding', 'api-access', 'priority-support']
       },
@@ -79,7 +79,7 @@ export const useUserStore = defineStore('user', () => {
     return currentUser.value?.role === 'admin' || isTeamOwner.value
   })
 
-  const canEditProjects = computed(() => {
+  const canEditContent = computed(() => {
     return ['admin', 'member'].includes(currentUser.value?.role) || isTeamOwner.value
   })
 
@@ -121,8 +121,6 @@ export const useUserStore = defineStore('user', () => {
       isAuthenticated.value = false
       
       // Clear other stores if needed
-      // const projectsStore = useProjectsStore()
-      // projectsStore.clear()
       
       return { success: true }
     } catch (error) {
@@ -194,7 +192,7 @@ export const useUserStore = defineStore('user', () => {
     teamInitials,
     isTeamOwner,
     isAdmin,
-    canEditProjects,
+    canEditContent,
     isPlanActive,
     teamPlan,
     

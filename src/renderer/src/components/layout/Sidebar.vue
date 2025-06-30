@@ -25,8 +25,7 @@
 </template>
 
 <script>
-import { useProjectsStore } from '../../stores/projects'
-import { useVideosStore } from '../../stores/videos'
+import { useFileExplorerStore } from '../../stores/fileExplorer'
 import { useUIStore } from '../../stores/ui'
 import Icon from '../base/Icon.vue'
 import FileExplorer from '../FileExplorer.vue'
@@ -45,69 +44,58 @@ export default {
   },
   computed: {
     fileTree() {
-      const projectsStore = useProjectsStore()
-      const videosStore = useVideosStore()
+      const fileExplorerStore = useFileExplorerStore()
 
-      // Transform projects and videos into a file tree structure
-      return projectsStore.projects.map(project => {
-        const projectVideos = videosStore.videosByProject(project.id)
+      // Build folder hierarchy starting from root
+      const buildFolderTree = (parentId = null) => {
+        const folders = fileExplorerStore.getFoldersByParent(parentId)
+          .map(folder => {
+            const folderFiles = fileExplorerStore.getFilesByFolder(folder.id)
+            const subfolders = buildFolderTree(folder.id)
 
-        // Get all lists for this project
-        const projectLists = videosStore.lists.filter(l => l.projectId === project.id)
+            return {
+              id: folder.id,
+              name: folder.name,
+              type: 'folder',
+              videoCount: folderFiles.length,
+              parentId: folder.parentId,
+              orderIndex: folder.orderIndex,
+              children: [
+                ...subfolders,
+                ...folderFiles.map(file => ({
+                  id: file.id,
+                  name: file.name,
+                  type: 'video',
+                  duration: file.metadata?.duration,
+                  folderId: file.folderId,
+                  orderIndex: file.orderIndex,
+                  ...file
+                }))
+              ]
+            }
+          })
 
-        // Build folder hierarchy
-        const buildFolderTree = (parentId = null) => {
-          const folders = projectLists
-            .filter(list => list.parentId === parentId)
-            .sort((a, b) => a.order - b.order)
-            .map(list => {
-              const listVideos = projectVideos.filter(v => v.listId === list.id)
-              const subfolders = buildFolderTree(list.id)
+        return folders
+      }
 
-              return {
-                id: list.id,
-                name: list.name,
-                type: 'folder',
-                videoCount: listVideos.length,
-                children: [
-                  ...subfolders,
-                  ...listVideos.map(video => ({
-                    id: video.id,
-                    name: video.title,
-                    type: 'video',
-                    duration: video.duration,
-                    ...video
-                  }))
-                ]
-              }
-            })
+      // Get root folders and videos
+      const rootFolders = buildFolderTree(null)
+      const rootFiles = fileExplorerStore.getFilesByFolder(null)
+        .map(file => ({
+          id: file.id,
+          name: file.name,
+          type: 'video',
+          duration: file.metadata?.duration,
+          folderId: file.folderId,
+          orderIndex: file.orderIndex,
+          ...file
+        }))
 
-          return folders
-        }
-
-        const rootFolders = buildFolderTree(null)
-        const rootVideos = projectVideos
-          .filter(v => !v.listId)
-          .map(video => ({
-            id: video.id,
-            name: video.title,
-            type: 'video',
-            duration: video.duration,
-            ...video
-          }))
-
-        // Build the project folder
-        return {
-          id: project.id,
-          name: project.name,
-          type: 'folder',
-          videoCount: projectVideos.length,
-          children: [
-            ...rootFolders,
-            ...rootVideos
-          ]
-        }
-      })
+      // Return combined tree
+      return [
+        ...rootFolders,
+        ...rootFiles
+      ]
     },
     filteredFileTree() {
       if (!this.searchQuery) return this.fileTree
