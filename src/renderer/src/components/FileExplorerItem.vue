@@ -53,6 +53,12 @@
       }"
       @click.stop="$emit('select-video', item)"
     >
+      <!-- Vertical line for video items -->
+      <div 
+        v-if="depth > 0"
+        class="absolute top-0 h-full border-l border-zinc-200 dark:border-zinc-600"
+        :style="{ left: `${depth * 20 + 16}px` }"
+      />
       <span :style="{ paddingLeft: `${depth * 20 + 20}px` }" class="flex items-center relative">
         <Icon name="video" class="size-3.5 mr-1.5 text-zinc-500 dark:text-zinc-400" />
         <span class="text-zinc-600 dark:text-zinc-300 truncate">{{ item.name }}</span>

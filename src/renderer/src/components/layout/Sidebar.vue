@@ -41,6 +41,7 @@ export default {
     Icon,
     FileExplorer
   },
+  emits: ['select-video'],
   data() {
     return {
       searchQuery: ''
