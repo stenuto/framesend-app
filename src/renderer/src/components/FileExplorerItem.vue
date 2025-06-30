@@ -53,8 +53,7 @@
       @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
       <span :style="{ paddingLeft: `${depth * config.indentSize + config.videoIndentExtra}px` }"
         class="flex items-center relative min-w-0 flex-1">
-        <Icon name="circle-play"
-          :class="[config.videoIconSize, 'mr-1.5 text-amber-500 dark:text-amber-300 flex-shrink-0']" />
+        <Icon name="video" :class="[config.videoIconSize, 'mr-1.5 text-amber-500 dark:text-amber-300 flex-shrink-0']" />
         <span class="text-zinc-600 dark:text-zinc-300 truncate">{{ item.name }}</span>
       </span>
       <span v-if="item.duration && config.showVideoDuration"
