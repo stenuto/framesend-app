@@ -5,31 +5,31 @@ export const useProjectsStore = defineStore('projects', () => {
   const projects = ref([
     {
       id: 'proj1',
-      name: 'Marketing Campaign 2024',
+      name: 'Video_Course_2024',
       icon: '📹',
       videoCount: 12
     },
     {
       id: 'proj2',
-      name: 'Product Demos',
+      name: 'Client_Projects',
       icon: '🎬',
       videoCount: 8
     },
     {
       id: 'proj3',
-      name: 'Customer Testimonials',
+      name: 'YouTube_Channel',
       icon: '🎥',
       videoCount: 15
     },
     {
       id: 'proj4',
-      name: 'Training Videos',
+      name: 'Stock_Footage',
       icon: '📚',
       videoCount: 24
     },
     {
       id: 'proj5',
-      name: 'Social Media Content',
+      name: 'Personal_Archive',
       icon: '📱',
       videoCount: 32
     }

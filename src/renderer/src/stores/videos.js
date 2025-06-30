@@ -33,6 +33,30 @@ export const useVideosStore = defineStore('videos', () => {
       createdAt: new Date('2024-01-16')
     },
     {
+      id: 'vid2-archived-1',
+      projectId: 'proj1',
+      listId: 'list1-archived',
+      order: 0,
+      title: 'Old Introduction Video',
+      thumbnail: 'https://placehold.co/640x360',
+      assignees: [],
+      labels: ['4'],
+      duration: '2:15',
+      createdAt: new Date('2023-12-01')
+    },
+    {
+      id: 'vid2-archived-2',
+      projectId: 'proj1',
+      listId: 'list1-archived',
+      order: 1,
+      title: 'Deprecated Welcome Message',
+      thumbnail: 'https://placehold.co/640x360',
+      assignees: [],
+      labels: ['2'],
+      duration: '1:30',
+      createdAt: new Date('2023-11-15')
+    },
+    {
       id: 'vid3',
       projectId: 'proj1',
       listId: 'list2',
@@ -180,14 +204,15 @@ export const useVideosStore = defineStore('videos', () => {
   ])
 
   const lists = ref([
-    { id: 'list1', name: 'To Do', order: 0, projectId: 'proj1' },
-    { id: 'list2', name: 'In Progress', order: 1, projectId: 'proj1' },
-    { id: 'list3', name: 'In Review', order: 2, projectId: 'proj1' },
-    { id: 'list4', name: 'Done', order: 3, projectId: 'proj1' },
-    { id: 'list5', name: 'To Do', order: 0, projectId: 'proj2' },
-    { id: 'list6', name: 'In Progress', order: 1, projectId: 'proj2' },
-    { id: 'list7', name: 'In Review', order: 2, projectId: 'proj2' },
-    { id: 'list8', name: 'Done', order: 3, projectId: 'proj2' }
+    { id: 'list1', name: '01_Introduction', order: 0, projectId: 'proj1', parentId: null },
+    { id: 'list1-archived', name: 'archived', order: 0, projectId: 'proj1', parentId: 'list1' },
+    { id: 'list2', name: '02_Getting_Started', order: 1, projectId: 'proj1', parentId: null },
+    { id: 'list3', name: '03_Core_Concepts', order: 2, projectId: 'proj1', parentId: null },
+    { id: 'list4', name: '04_Advanced_Topics', order: 3, projectId: 'proj1', parentId: null },
+    { id: 'list5', name: 'Module_1', order: 0, projectId: 'proj2', parentId: null },
+    { id: 'list6', name: 'Module_2', order: 1, projectId: 'proj2', parentId: null },
+    { id: 'list7', name: 'Module_3', order: 2, projectId: 'proj2', parentId: null },
+    { id: 'list8', name: 'Bonus_Content', order: 3, projectId: 'proj2', parentId: null }
   ])
 
   const videosByProject = computed(() => {
