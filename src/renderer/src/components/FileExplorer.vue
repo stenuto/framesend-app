@@ -7,10 +7,10 @@
         @drag-start="handleDragStart" @drag-end="handleDragEnd" @drop-item="handleDropItem" />
     </div>
     <!-- Drop zone indicator for root level -->
-    <div v-if="showRootDropZone"
+    <!-- <div v-if="showRootDropZone"
       class="root-drop-zone border-2 border-dashed border-blue-500 bg-blue-500/10 mx-2 my-1 p-4 rounded text-center text-sm text-blue-600 dark:text-blue-400">
       Drop here to move to root level
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -87,7 +87,6 @@ export default {
     handleItemClick(item) {
       if (item.type === 'folder') {
         this.toggleFolder(item.id)
-        this.selectFolder(item)
       } else {
         this.selectVideo(item)
       }
@@ -108,6 +107,9 @@ export default {
       this.$nextTick(() => {
         this.showRootDropZone = false
       })
+
+      // Emit a global event to clear any lingering drop indicators
+      document.dispatchEvent(new Event('dragend'))
     },
     handleDropItem({ draggedItem, targetItem, position }) {
       if (!draggedItem || !targetItem) return
@@ -124,25 +126,20 @@ export default {
 
       if (targetItem.type === 'folder' && position === 'inside') {
         // Move video into a folder
-        this.fileExplorerStore.moveFile(video.id, targetItem.id)
+        this.fileExplorerStore.moveItem(video.id, 'video', targetItem.id)
 
         // Expand the target folder to show the dropped item
         this.fileExplorerStore.expandFolder(targetItem.id)
       } else {
         // Move video before/after another item
-        const targetFolderId = targetItem.type === 'video' ? targetItem.folderId : targetItem.id
-        const targetFiles = this.fileExplorerStore.getFilesByFolder(targetFolderId)
+        const targetParentId = targetItem.type === 'video' ? targetItem.folderId : targetItem.parentId
+        const siblings = this.fileExplorerStore.getItemsByParent(targetParentId)
 
-        let newIndex = 0
-        if (targetItem.type === 'video') {
-          const targetIndex = targetFiles.findIndex(f => f.id === targetItem.id)
-          newIndex = position === 'before' ? targetIndex : targetIndex + 1
-        } else if (position === 'after') {
-          // After a folder means at the beginning of the next level
-          newIndex = 0
-        }
+        // Find target item index in the unified list
+        const targetIndex = siblings.findIndex(item => item.id === targetItem.id)
+        const newIndex = position === 'before' ? targetIndex : targetIndex + 1
 
-        this.fileExplorerStore.moveFile(video.id, targetFolderId, newIndex)
+        this.fileExplorerStore.moveItem(video.id, 'video', targetParentId, newIndex)
       }
     },
     handleFolderMove(draggedItem, targetItem, position) {
@@ -157,24 +154,20 @@ export default {
 
       if (targetItem.type === 'folder' && dropPosition === 'inside') {
         // Move folder into another folder - parentId should be the target folder's ID
-        this.fileExplorerStore.moveFolder(folder.id, targetItem.id)
+        this.fileExplorerStore.moveItem(folder.id, 'folder', targetItem.id)
 
         // Expand the target folder to show the dropped item
         this.fileExplorerStore.expandFolder(targetItem.id)
       } else {
         // Move folder before/after another item
-        if (targetItem.type === 'folder') {
-          const targetFolder = this.fileExplorerStore.getFolderById(targetItem.id)
-          if (targetFolder) {
-            // Calculate new index
-            const siblingFolders = this.fileExplorerStore.getFoldersByParent(targetFolder.parentId)
-
-            const targetIndex = siblingFolders.findIndex(f => f.id === targetItem.id)
-            const newIndex = position === 'before' ? targetIndex : targetIndex + 1
-
-            this.fileExplorerStore.moveFolder(folder.id, targetFolder.parentId, newIndex)
-          }
-        }
+        const targetParentId = targetItem.type === 'folder' ? targetItem.parentId : targetItem.folderId
+        const siblings = this.fileExplorerStore.getItemsByParent(targetParentId)
+        
+        // Find target item index in the unified list
+        const targetIndex = siblings.findIndex(item => item.id === targetItem.id)
+        const newIndex = position === 'before' ? targetIndex : targetIndex + 1
+        
+        this.fileExplorerStore.moveItem(folder.id, 'folder', targetParentId, newIndex)
       }
     },
     handleRootDragOver(event) {
@@ -206,10 +199,10 @@ export default {
         // Move items to root level
         if (dragData.type === 'video') {
           // Move file to root (folderId = null)
-          this.fileExplorerStore.moveFile(dragData.item.id, null)
+          this.fileExplorerStore.moveItem(dragData.item.id, 'video', null)
         } else if (dragData.type === 'folder') {
           // Move folder to root (parentId = null)
-          this.fileExplorerStore.moveFolder(dragData.item.id, null)
+          this.fileExplorerStore.moveItem(dragData.item.id, 'folder', null)
         }
 
         // Ensure drop zone is hidden immediately after drop

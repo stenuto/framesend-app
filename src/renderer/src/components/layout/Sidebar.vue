@@ -46,56 +46,45 @@ export default {
     fileTree() {
       const fileExplorerStore = useFileExplorerStore()
 
-      // Build folder hierarchy starting from root
-      const buildFolderTree = (parentId = null) => {
-        const folders = fileExplorerStore.getFoldersByParent(parentId)
-          .map(folder => {
-            const folderFiles = fileExplorerStore.getFilesByFolder(folder.id)
-            const subfolders = buildFolderTree(folder.id)
-
+      // Build folder hierarchy with unified ordering
+      const buildTree = (parentId = null) => {
+        // Get all items (folders and files) at this level, sorted by itemOrder
+        const items = fileExplorerStore.getItemsByParent(parentId)
+        
+        return items.map(item => {
+          if (item.type === 'folder') {
+            // For folders, recursively build children
+            const folderFiles = fileExplorerStore.getFilesByFolder(item.id)
+            const children = buildTree(item.id)
+            
             return {
-              id: folder.id,
-              name: folder.name,
+              id: item.id,
+              name: item.name,
               type: 'folder',
               videoCount: folderFiles.length,
-              parentId: folder.parentId,
-              orderIndex: folder.orderIndex,
-              children: [
-                ...subfolders,
-                ...folderFiles.map(file => ({
-                  id: file.id,
-                  name: file.name,
-                  type: 'video',
-                  duration: file.metadata?.duration,
-                  folderId: file.folderId,
-                  orderIndex: file.orderIndex,
-                  ...file
-                }))
-              ]
+              parentId: item.parentId,
+              orderIndex: item.orderIndex,
+              itemOrder: item.itemOrder,
+              children: children
             }
-          })
-
-        return folders
+          } else {
+            // For files/videos, return as-is with additional properties
+            return {
+              id: item.id,
+              name: item.name,
+              type: 'video',
+              duration: item.metadata?.duration,
+              folderId: item.folderId,
+              orderIndex: item.orderIndex,
+              itemOrder: item.itemOrder,
+              ...item
+            }
+          }
+        })
       }
 
-      // Get root folders and videos
-      const rootFolders = buildFolderTree(null)
-      const rootFiles = fileExplorerStore.getFilesByFolder(null)
-        .map(file => ({
-          id: file.id,
-          name: file.name,
-          type: 'video',
-          duration: file.metadata?.duration,
-          folderId: file.folderId,
-          orderIndex: file.orderIndex,
-          ...file
-        }))
-
-      // Return combined tree
-      return [
-        ...rootFolders,
-        ...rootFiles
-      ]
+      // Build tree starting from root (null parent)
+      return buildTree(null)
     },
     filteredFileTree() {
       if (!this.searchQuery) return this.fileTree

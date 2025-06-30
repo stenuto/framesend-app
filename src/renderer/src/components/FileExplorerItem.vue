@@ -5,12 +5,11 @@
       config.itemPaddingY,
       config.fontSize,
       {
-        'bg-amber-500/20 dark:bg-amber-500/20': isSelected,
-        'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isSelected,
+        'bg-amber-400/30 dark:bg-amber-400/20': isDragOver && dropIndicatorPosition === 'inside',
+        'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isDragOver,
         'opacity-50': isDragging,
         'border-t-2 border-amber-500': dropIndicatorPosition === 'before',
-        'border-b-2 border-amber-500': dropIndicatorPosition === 'after',
-        'ring-2 ring-amber-500': dropIndicatorPosition === 'inside'
+        'border-b-2 border-amber-500': dropIndicatorPosition === 'after'
       }
     ]" draggable="true" @click.stop="handleFolderClick" @dragstart="handleDragStart" @dragend="handleDragEnd"
       @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
@@ -114,13 +113,17 @@ export default {
       return this.selectedItemId === this.item.id
     }
   },
+  mounted() {
+    // Listen for global dragend to ensure indicators are cleared
+    document.addEventListener('dragend', this.handleGlobalDragEnd)
+  },
   beforeUnmount() {
     this.clearAutoExpandTimer()
+    document.removeEventListener('dragend', this.handleGlobalDragEnd)
   },
   methods: {
     handleFolderClick() {
       this.$emit('toggle-folder', this.item.id)
-      this.$emit('select-folder', this.item)
     },
     handleDragStart(event) {
       this.isDragging = true
@@ -168,6 +171,12 @@ export default {
       this.dropIndicatorPosition = null
       this.$emit('drag-end')
     },
+    handleGlobalDragEnd() {
+      // Clear any lingering drop indicators when drag ends globally
+      this.dropIndicatorPosition = null
+      this.isDragOver = false
+      this.clearAutoExpandTimer()
+    },
     handleDragOver(event) {
       event.preventDefault()
       event.stopPropagation()
@@ -197,8 +206,12 @@ export default {
         // For folders, support before, after, and inside drop zones
         if (y < threshold) {
           this.dropIndicatorPosition = 'before'
+          // Clear any auto-expand timer when hovering before
+          this.clearAutoExpandTimer()
         } else if (y > height - threshold) {
           this.dropIndicatorPosition = 'after'
+          // Clear any auto-expand timer when hovering after
+          this.clearAutoExpandTimer()
         } else {
           this.dropIndicatorPosition = 'inside'
           // Start auto-expand timer if folder is closed
@@ -223,10 +236,9 @@ export default {
     },
     handleDragLeave(event) {
       // Only clear if we're actually leaving the element
-      // Don't clear immediately to avoid race conditions with drop event
       if (!event.currentTarget.contains(event.relatedTarget)) {
         this.isDragOver = false
-        // Don't clear dropIndicatorPosition here - let drop handler do it
+        this.dropIndicatorPosition = null
         this.clearAutoExpandTimer()
       }
     },
@@ -337,18 +349,7 @@ export default {
 /* Smooth transitions for drop indicators */
 .folder-item,
 .video-item {
-  transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Cursor styles during drag */
-.folder-item[draggable="true"],
-.video-item[draggable="true"] {
-  cursor: grab;
-}
-
-.folder-item[draggable="true"]:active,
-.video-item[draggable="true"]:active {
-  cursor: grabbing;
+  transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.15s ease;
 }
 
 /* Prevent text selection during drag */
