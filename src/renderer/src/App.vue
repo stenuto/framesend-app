@@ -1,19 +1,20 @@
 <template>
-  <MainLayout>
-    <component :is="currentComponent" v-if="currentComponent" />
-    <div v-else class="flex items-center justify-center h-full">
-      <p class="text-zinc-500">
-        Loading...
-      </p>
+  <div class="h-screen w-screen bg-zinc-800 drag">
+    <div class="non-draggable">
+      <component :is="currentComponent" v-if="currentComponent" />
+      <div v-else class="flex items-center justify-center h-full">
+        <p class="text-zinc-500">
+          Loading...
+        </p>
+      </div>
     </div>
-  </MainLayout>
+  </div>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouterStore } from './stores/router'
-import MainLayout from './components/layout/MainLayout.vue'
 
 const router = useRouterStore()
 const { currentComponent } = storeToRefs(router)

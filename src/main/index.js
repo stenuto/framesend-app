@@ -48,15 +48,19 @@ const ensureVisibleOnSomeDisplay = (windowState) => {
 }
 
 function createWindow() {
-  // Load previous window state or use defaults
-  const savedState = loadWindowState()
-  const defaultWidth = 900
-  const defaultHeight = 670
+  // Fixed window size
+  const windowWidth = 480
+  const windowHeight = 700
 
   let windowOptions = {
-    width: defaultWidth,
-    height: defaultHeight,
+    width: windowWidth,
+    height: windowHeight,
+    minWidth: windowWidth, // Set minimum width
+    minHeight: windowHeight, // Set minimum height
     show: false,
+    resizable: true, // Enable resizing
+    maximizable: true, // Enable maximize button
+    fullscreenable: true, // Enable fullscreen
     autoHideMenuBar: true,
     transparent: true,
     backgroundColor: '#00000000', // Fully transparent
@@ -71,20 +75,24 @@ function createWindow() {
     }
   }
 
-  // Apply saved state if available and window is visible
+  // Restore window state
+  const savedState = loadWindowState()
   if (savedState) {
+    // Restore size if valid (respecting minimum size)
     if (savedState.width && savedState.height) {
-      windowOptions.width = savedState.width
-      windowOptions.height = savedState.height
+      windowOptions.width = Math.max(savedState.width, windowWidth)
+      windowOptions.height = Math.max(savedState.height, windowHeight)
     }
-
+    
+    // Restore position
     if (savedState.x !== undefined && savedState.y !== undefined) {
       if (ensureVisibleOnSomeDisplay(savedState)) {
         windowOptions.x = savedState.x
         windowOptions.y = savedState.y
       }
     }
-
+    
+    // Handle maximized state
     if (savedState.isMaximized) {
       windowOptions.show = false
     }

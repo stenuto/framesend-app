@@ -3,8 +3,8 @@ import { ref, computed, markRaw } from 'vue'
 
 export const useRouterStore = defineStore('router', () => {
   // State
-  const currentRoute = ref('dashboard')
-  const history = ref(['dashboard'])
+  const currentRoute = ref('signin')
+  const history = ref(['signin'])
   const historyIndex = ref(0)
   const routes = ref(new Map())
 
@@ -123,6 +123,10 @@ export const useRouterStore = defineStore('router', () => {
     currentRoute.value = history.value[historyIndex.value]
   }
   
+  function navigateTo(route, params = {}) {
+    navigate(route, params)
+  }
+  
   function registerRoute(path, component, meta = {}) {
     routes.value.set(path, {
       path,
@@ -164,9 +168,9 @@ export const useRouterStore = defineStore('router', () => {
     
     // Ensure current route is valid
     if (!routes.value.has(currentRoute.value)) {
-      console.warn(`Current route "${currentRoute.value}" not found, navigating to dashboard`)
-      currentRoute.value = 'dashboard'
-      history.value = ['dashboard']
+      console.warn(`Current route "${currentRoute.value}" not found, navigating to signin`)
+      currentRoute.value = 'signin'
+      history.value = ['signin']
       historyIndex.value = 0
     }
   }
@@ -193,6 +197,7 @@ export const useRouterStore = defineStore('router', () => {
     
     // Actions
     navigate,
+    navigateTo,
     goBack,
     goForward,
     registerRoute,
