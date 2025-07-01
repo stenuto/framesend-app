@@ -1,18 +1,16 @@
 <template>
-  <div
-    class="flex h-full w-70 flex-col shrink-0 bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
+  <div class="flex h-full w-70 flex-col shrink-0 border-r border-zinc-700 bg-zinc-900/30">
     <!-- Header -->
-    <div class="flex h-12 items-center px-4 border-b border-zinc-200 dark:border-zinc-700">
-      <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">Explorer</h2>
+    <div class="flex h-12 items-center px-4 border-b border-zinc-700">
+      <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-400">Explorer</h2>
     </div>
 
     <!-- Search -->
-    <div class="p-2 border-b border-zinc-200 dark:border-zinc-700">
+    <div class="p-2 border-b border-zinc-700">
       <div class="relative">
-        <Icon name="search"
-          class="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-zinc-400 dark:text-zinc-500" />
+        <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
         <input v-model="searchQuery" placeholder="Search files..."
-          class="w-full h-7 pl-7 pr-2 text-sm bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          class="w-full h-7 pl-7 pr-2 text-sm bg-zinc-800 border border-zinc-700 rounded placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           @input="handleSearch" />
       </div>
     </div>
@@ -27,6 +25,8 @@
 <script>
 import { useFileExplorerStore } from '../../stores/fileExplorer'
 import { useUIStore } from '../../stores/ui'
+import { useVideoStore } from '../../stores/video'
+import { useRouterStore } from '../../stores/router'
 import Icon from '../base/Icon.vue'
 import FileExplorer from '../FileExplorer.vue'
 
@@ -50,13 +50,13 @@ export default {
       const buildTree = (parentId = null) => {
         // Get all items (folders and files) at this level, sorted by itemOrder
         const items = fileExplorerStore.getItemsByParent(parentId)
-        
+
         return items.map(item => {
           if (item.type === 'folder') {
             // For folders, recursively build children
             const folderFiles = fileExplorerStore.getFilesByFolder(item.id)
             const children = buildTree(item.id)
-            
+
             return {
               id: item.id,
               name: item.name,
@@ -100,6 +100,16 @@ export default {
     },
     handleVideoSelect(video) {
       // Handle video selection
+      const videoStore = useVideoStore()
+      const router = useRouterStore()
+
+      // Set the video in the store
+      videoStore.selectVideo(video)
+
+      // Navigate to video page with video ID as parameter
+      router.navigate('video', { id: video.id })
+
+      // Emit event for any parent listeners
       this.$emit('select-video', video)
     },
     filterTree(items, query) {

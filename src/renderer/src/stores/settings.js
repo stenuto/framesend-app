@@ -16,18 +16,14 @@ export const useSettingsStore = defineStore('settings', () => {
   // Initialize state with saved settings
   const savedSettings = loadSettings()
   
-  // Dark mode state
-  const darkMode = ref(savedSettings.darkMode ?? false)
-  
   // Other settings can be added here
   const sidebarCollapsed = ref(savedSettings.sidebarCollapsed ?? false)
-  const accentColor = ref(savedSettings.accentColor ?? 'blue')
+  const accentColor = ref(savedSettings.accentColor ?? 'amber')
 
   // Save settings to localStorage whenever they change
   const saveSettings = () => {
     try {
       const settings = {
-        darkMode: darkMode.value,
         sidebarCollapsed: sidebarCollapsed.value,
         accentColor: accentColor.value
       }
@@ -38,40 +34,13 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   // Watch for changes and save
-  watch([darkMode, sidebarCollapsed, accentColor], saveSettings)
+  watch([sidebarCollapsed, accentColor], saveSettings)
 
-  // Apply dark mode class to document
-  const applyDarkMode = () => {
-    if (darkMode.value) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
-
-  // Apply dark mode on initialization
-  applyDarkMode()
-
-  // Toggle dark mode
-  function toggleDarkMode() {
-    darkMode.value = !darkMode.value
-    applyDarkMode()
-  }
-
-  // Set dark mode
-  function setDarkMode(value) {
-    darkMode.value = value
-    applyDarkMode()
-  }
+  // No need to apply dark mode class anymore
 
   return {
     // State
-    darkMode,
     sidebarCollapsed,
-    accentColor,
-    
-    // Actions
-    toggleDarkMode,
-    setDarkMode
+    accentColor
   }
 })

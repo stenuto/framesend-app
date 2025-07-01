@@ -5,22 +5,21 @@
       config.itemPaddingY,
       config.fontSize,
       {
-        'bg-amber-400/30 dark:bg-amber-400/20': isDragOver && dropIndicatorPosition === 'inside',
-        'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isDragOver,
+        'bg-zinc-400/20': isDragOver && dropIndicatorPosition === 'inside',
+        'hover:bg-zinc-800': !isDragOver,
         'opacity-50': isDragging,
-        'border-t-2 border-amber-500': dropIndicatorPosition === 'before',
-        'border-b-2 border-amber-500': dropIndicatorPosition === 'after'
+        'border-t-2 border-zinc-500': dropIndicatorPosition === 'before',
+        'border-b-2 border-zinc-500': dropIndicatorPosition === 'after'
       }
     ]" draggable="true" @click.stop="handleFolderClick" @dragstart="handleDragStart" @dragend="handleDragEnd"
       @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
       <span :style="{ paddingLeft: `${depth * config.indentSize + config.initialFolderOffset}px` }"
         class="flex items-center relative min-w-0 flex-1">
         <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'"
-          :class="[config.chevronSize, 'mr-1 text-zinc-600 dark:text-zinc-300 flex-shrink-0']" />
-        <span class="text-zinc-700 dark:text-zinc-300 truncate">{{ item.name }}</span>
+          :class="[config.chevronSize, 'mr-1 text-zinc-500 flex-shrink-0']" />
+        <span class="truncate" :class="[isExpanded ? 'text-zinc-300' : 'text-zinc-500']">{{ item.name }}</span>
       </span>
-      <span v-if="item.videoCount && config.showVideoCount"
-        class="ml-2 mr-2 text-xs text-zinc-500 dark:text-zinc-500 flex-shrink-0">
+      <span v-if="item.videoCount && config.showVideoCount" class="ml-2 mr-2 text-xs text-zinc-500 flex-shrink-0">
         {{ item.videoCount }}
       </span>
     </div>
@@ -28,7 +27,7 @@
     <!-- Folder contents with tree line -->
     <div v-if="item.type === 'folder' && isExpanded && item.children" class="relative">
       <!-- Vertical line for this folder's children -->
-      <div v-if="depth >= 0" class="absolute top-0 bottom-0 border-l border-zinc-200 dark:border-zinc-600"
+      <div v-if="depth >= 0" class="absolute top-0 bottom-0 border-l border-zinc-700"
         :style="{ left: `${depth * config.indentSize + config.guideLineOffset}px` }" />
       <FileExplorerItem v-for="child in item.children" :key="child.id" :item="child" :depth="depth + 1"
         :expanded-folders="expandedFolders" :selected-item-id="selectedItemId" :config="config"
@@ -43,21 +42,20 @@
       config.itemPaddingX,
       config.fontSize,
       {
-        'bg-amber-500/20 dark:bg-amber-500/20': isSelected,
-        'hover:bg-zinc-100 dark:hover:bg-zinc-800': !isSelected,
+        'bg-zinc-700/30': isSelected,
+        'hover:bg-zinc-800': !isSelected,
         'opacity-50': isDragging,
-        'border-t-2 border-amber-500': dropIndicatorPosition === 'before',
-        'border-b-2 border-amber-500': dropIndicatorPosition === 'after'
+        'border-t-2 border-zinc-500': dropIndicatorPosition === 'before',
+        'border-b-2 border-zinc-500': dropIndicatorPosition === 'after'
       }
     ]" draggable="true" @click.stop="$emit('select-video', item)" @dragstart="handleDragStart" @dragend="handleDragEnd"
       @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
       <span :style="{ paddingLeft: `${depth * config.indentSize + config.videoIndentExtra}px` }"
         class="flex items-center relative min-w-0 flex-1">
-        <Icon name="video" :class="[config.videoIconSize, 'mr-1.5 text-amber-500 dark:text-amber-300 flex-shrink-0']" />
-        <span class="text-zinc-600 dark:text-zinc-300 truncate">{{ item.name }}</span>
+        <Icon name="video" :class="[config.videoIconSize, 'mr-1.5 text-zinc-400/50 flex-shrink-0']" />
+        <span class="text-zinc-300 truncate">{{ item.name }}</span>
       </span>
-      <span v-if="item.duration && config.showVideoDuration"
-        class="ml-2 mr-2 text-xs text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+      <span v-if="item.duration && config.showVideoDuration" class="ml-2 mr-2 text-xs text-zinc-500 flex-shrink-0">
         {{ item.duration }}
       </span>
     </div>
@@ -145,11 +143,11 @@ export default {
       dragImage.style.cssText = `
         position: absolute;
         top: -1000px;
-        padding: 4px 12px;
-        background: rgba(251, 191, 36, 0.9);
+        padding: 0px 4px;
+        background: oklch(21% 0.006 285.885);
         color: white;
-        border-radius: 4px;
-        font-size: 14px;
+        border-radius: 2px;
+        font-size: 13px;
         pointer-events: none;
         z-index: 1000;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);

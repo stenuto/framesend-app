@@ -8,7 +8,7 @@
     </div>
     <!-- Drop zone indicator for root level -->
     <!-- <div v-if="showRootDropZone"
-      class="root-drop-zone border-2 border-dashed border-blue-500 bg-blue-500/10 mx-2 my-1 p-4 rounded text-center text-sm text-blue-600 dark:text-blue-400">
+      class="root-drop-zone border-2 border-dashed border-blue-500 bg-blue-500/10 mx-2 my-1 p-4 rounded text-center text-sm text-blue-400">
       Drop here to move to root level
     </div> -->
   </div>
