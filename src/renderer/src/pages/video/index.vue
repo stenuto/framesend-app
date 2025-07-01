@@ -119,8 +119,10 @@
 </template>
 
 <script>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import { useVideoStore } from '../../stores/video'
+import { useRouterStore } from '../../stores/router'
+import { useFileExplorerStore } from '../../stores/fileExplorer'
 import Icon from '../../components/base/Icon.vue'
 
 export default {
@@ -134,6 +136,18 @@ export default {
   },
   setup() {
     const videoStore = useVideoStore()
+    const routerStore = useRouterStore()
+    const fileExplorerStore = useFileExplorerStore()
+
+    // Watch for route parameter changes to load the correct video
+    watch(() => routerStore.currentParams, (newParams) => {
+      if (newParams.id) {
+        const video = fileExplorerStore.getFileById(newParams.id)
+        if (video) {
+          videoStore.selectVideo(video)
+        }
+      }
+    }, { immediate: true })
 
     // For demo purposes, set a fake duration
     if (videoStore.hasVideo && !videoStore.duration) {

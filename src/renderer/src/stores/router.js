@@ -41,6 +41,18 @@ export const useRouterStore = defineStore('router', () => {
     return routes.value.get(base)?.meta || {}
   })
   
+  const currentParams = computed(() => {
+    const paramMatch = currentRoute.value.match(/\?(.+)$/)
+    if (paramMatch) {
+      try {
+        return JSON.parse(paramMatch[1])
+      } catch {
+        return {}
+      }
+    }
+    return {}
+  })
+  
   const breadcrumbs = computed(() => {
     const crumbs = []
     
@@ -95,17 +107,6 @@ export const useRouterStore = defineStore('router', () => {
     history.value.push(routeKey)
     historyIndex.value = history.value.length - 1
     currentRoute.value = routeKey
-    
-    // Debug log
-    console.log('Navigation:', {
-      route: routeKey,
-      baseRoute,
-      params,
-      history: [...history.value],
-      index: historyIndex.value,
-      canGoBack: canGoBack.value,
-      canGoForward: canGoForward.value
-    })
   }
   
   function goBack() {
@@ -187,6 +188,7 @@ export const useRouterStore = defineStore('router', () => {
     currentSubPage,
     currentComponent,
     currentMeta,
+    currentParams,
     breadcrumbs,
     
     // Actions

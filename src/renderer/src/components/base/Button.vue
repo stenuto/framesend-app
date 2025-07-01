@@ -1,6 +1,6 @@
 <template>
   <button :class="[
-    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
     variantClasses[variant],
     // Use icon-only size classes if only icon exists, otherwise regular size classes
     iconName && !hasDefaultSlot ? iconOnlySizeClasses[size] : sizeClasses[size],
@@ -57,7 +57,7 @@ const variantClasses = {
   destructive: 'bg-red-600 text-white hover:bg-red-700',
   outline: 'border border-zinc-600 bg-zinc-800 hover:bg-zinc-700 text-zinc-100',
   secondary: 'bg-zinc-700 text-zinc-100 hover:bg-zinc-600',
-  ghost: 'hover:bg-zinc-800 hover:text-zinc-100',
+  ghost: 'hover:bg-zinc-700 hover:text-zinc-100',
   link: 'text-zinc-100 underline-offset-4 hover:underline'
 }
 
