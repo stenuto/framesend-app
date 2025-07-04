@@ -3,8 +3,8 @@ import { ref, computed, markRaw } from 'vue'
 
 export const useRouterStore = defineStore('router', () => {
   // State
-  const currentRoute = ref('signin')
-  const history = ref(['signin'])
+  const currentRoute = ref('upload')
+  const history = ref(['upload'])
   const historyIndex = ref(0)
   const routes = ref(new Map())
 
@@ -168,9 +168,9 @@ export const useRouterStore = defineStore('router', () => {
     
     // Ensure current route is valid
     if (!routes.value.has(currentRoute.value)) {
-      console.warn(`Current route "${currentRoute.value}" not found, navigating to signin`)
-      currentRoute.value = 'signin'
-      history.value = ['signin']
+      console.warn(`Current route "${currentRoute.value}" not found, navigating to upload`)
+      currentRoute.value = 'upload'
+      history.value = ['upload']
       historyIndex.value = 0
     }
   }

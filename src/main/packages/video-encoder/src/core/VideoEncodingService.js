@@ -1,0 +1,272 @@
+import { EventEmitter } from 'events';
+import PQueue from 'p-queue';
+import { nanoid } from 'nanoid';
+import path from 'path';
+import fs from 'fs-extra';
+import os from 'os';
+import { VideoJob } from './VideoJob.js';
+import { RESOURCE_LIMITS } from '../config/encoding-presets.js';
+import { validateVideoFile } from '../utils/validation.js';
+import { setupBinaries } from '../utils/binary-setup.js';
+
+/**
+ * Main video encoding service that manages encoding jobs
+ * Uses p-queue to control parallel processing and system resources
+ */
+export class VideoEncodingService extends EventEmitter {
+  constructor(options = {}) {
+    super();
+    
+    // Configuration with defaults
+    this.config = {
+      outputDir: options.outputDir || path.join(os.homedir(), 'framesend-videos'),
+      tempDir: options.tempDir || path.join(os.tmpdir(), 'framesend-encoding'),
+      maxParallelJobs: options.maxParallelJobs || RESOURCE_LIMITS.maxParallelJobs,
+      ffmpegPath: options.ffmpegPath,
+      ffprobePath: options.ffprobePath,
+      whisperPath: options.whisperPath,
+      ...options,
+    };
+
+    // Initialize job queue with concurrency control
+    this.jobQueue = new PQueue({ 
+      concurrency: this.config.maxParallelJobs,
+      intervalCap: 1,
+      interval: 1000, // Rate limiting: 1 job per second
+    });
+
+    // Track active jobs
+    this.activeJobs = new Map();
+
+    // Setup required directories
+    this._setupDirectories();
+
+    // Initialize binary paths
+    this._initializeBinaries().catch(error => {
+      console.error('Binary initialization error:', error);
+    });
+  }
+
+  /**
+   * Initialize and verify FFmpeg/FFprobe/Whisper binaries
+   */
+  async _initializeBinaries() {
+    try {
+      const binaries = await setupBinaries({
+        ffmpegPath: this.config.ffmpegPath,
+        ffprobePath: this.config.ffprobePath,
+        whisperPath: this.config.whisperPath,
+      });
+      
+      this.binaries = binaries;
+      
+      // Emit ready asynchronously to avoid issues
+      process.nextTick(() => {
+        this.emit('ready', { binaries });
+      });
+    } catch (error) {
+      this.emit('error', {
+        type: 'initialization',
+        message: 'Failed to initialize encoding binaries',
+        error,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Create required directories
+   */
+  async _setupDirectories() {
+    await fs.ensureDir(this.config.outputDir);
+    await fs.ensureDir(this.config.tempDir);
+  }
+
+  /**
+   * Queue a video for encoding
+   * @param {string} inputPath - Path to input video file
+   * @param {Object} options - Encoding options
+   * @returns {Promise<Object>} Job information
+   */
+  async queueVideo(inputPath, options = {}) {
+    // Make sure binaries are initialized
+    if (!this.binaries) {
+      await this._initializeBinaries();
+    }
+    
+    // Validate input file
+    const validation = await validateVideoFile(inputPath);
+    if (!validation.isValid) {
+      throw new Error(`Invalid video file: ${validation.errors.join(', ')}`);
+    }
+
+    // Generate unique job ID
+    const jobId = nanoid();
+    
+    // Create job output directory
+    const jobOutputDir = path.join(this.config.outputDir, jobId);
+    await fs.ensureDir(jobOutputDir);
+
+    // Create job instance
+    console.log('Creating VideoJob with binaries:', this.binaries);
+    const job = new VideoJob({
+      id: jobId,
+      inputPath,
+      outputDir: jobOutputDir,
+      tempDir: path.join(this.config.tempDir, jobId),
+      binaries: this.binaries,
+      ...options,
+    });
+
+    // Track the job
+    this.activeJobs.set(jobId, job);
+
+    // Forward job events
+    job.on('progress', (progress) => {
+      this.emit('job:progress', { jobId, ...progress });
+    });
+
+    job.on('complete', (result) => {
+      this.activeJobs.delete(jobId);
+      this.emit('job:complete', { jobId, ...result });
+    });
+
+    job.on('error', (error) => {
+      this.activeJobs.delete(jobId);
+      this.emit('job:error', { jobId, error });
+    });
+
+    // Add to queue
+    const jobPromise = this.jobQueue.add(async () => {
+      console.log(`Starting job ${jobId}`);
+      this.emit('job:start', { 
+        jobId, 
+        inputPath,
+        validation: validation.warnings,
+      });
+      
+      try {
+        const result = await job.encode();
+        console.log(`Job ${jobId} completed`);
+        return result;
+      } catch (error) {
+        console.error(`Job ${jobId} failed:`, error);
+        throw error;
+      }
+    });
+
+    return {
+      id: jobId,
+      promise: jobPromise,
+      cancel: () => this.cancelJob(jobId),
+    };
+  }
+
+  /**
+   * Cancel an active encoding job
+   * @param {string} jobId - Job ID to cancel
+   */
+  async cancelJob(jobId) {
+    console.log(`[VideoEncodingService] ========== CANCEL JOB ${jobId} ==========`);
+    console.log(`[VideoEncodingService] Active jobs count: ${this.activeJobs.size}`);
+    console.log(`[VideoEncodingService] Active job IDs:`, Array.from(this.activeJobs.keys()));
+    
+    const job = this.activeJobs.get(jobId);
+    if (!job) {
+      console.error(`[VideoEncodingService] ERROR: Job ${jobId} not found in activeJobs`);
+      console.log(`[VideoEncodingService] Available jobs:`, Array.from(this.activeJobs.keys()));
+      throw new Error(`Job ${jobId} not found`);
+    }
+
+    try {
+      console.log(`[VideoEncodingService] Found job ${jobId}`);
+      console.log(`[VideoEncodingService] Job status: ${job.status}`);
+      console.log(`[VideoEncodingService] Calling job.cancel()`);
+      
+      await job.cancel();
+      
+      console.log(`[VideoEncodingService] job.cancel() returned, removing from activeJobs`);
+      this.activeJobs.delete(jobId);
+      console.log(`[VideoEncodingService] Job removed, active jobs now: ${this.activeJobs.size}`);
+      
+      console.log(`[VideoEncodingService] Emitting job:cancelled event`);
+      this.emit('job:cancelled', { jobId });
+      
+      console.log(`[VideoEncodingService] ========== CANCEL COMPLETE ==========`);
+    } catch (error) {
+      console.error(`[VideoEncodingService] ERROR cancelling job ${jobId}:`, error);
+      console.error(`[VideoEncodingService] Error stack:`, error.stack);
+      this.emit('job:error', { 
+        jobId, 
+        error: new Error(`Failed to cancel job: ${error.message}`),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Get status of all jobs
+   * @returns {Object} Queue and job statistics
+   */
+  getStatus() {
+    return {
+      pending: this.jobQueue.pending,
+      active: this.jobQueue.size,
+      jobs: Array.from(this.activeJobs.entries()).map(([id, job]) => ({
+        id,
+        status: job.status,
+        progress: job.progress,
+      })),
+    };
+  }
+
+  /**
+   * Pause all encoding jobs
+   */
+  pause() {
+    this.jobQueue.pause();
+    this.emit('paused');
+  }
+
+  /**
+   * Resume all encoding jobs
+   */
+  resume() {
+    this.jobQueue.start();
+    this.emit('resumed');
+  }
+
+  /**
+   * Clear completed jobs and clean up
+   */
+  async cleanup() {
+    // Clear the queue
+    this.jobQueue.clear();
+
+    // Cancel all active jobs
+    const cancelPromises = Array.from(this.activeJobs.keys()).map(jobId => 
+      this.cancelJob(jobId).catch(err => 
+        console.error(`Failed to cancel job ${jobId}:`, err)
+      )
+    );
+
+    await Promise.all(cancelPromises);
+
+    // Clean up temp directory
+    try {
+      await fs.emptyDir(this.config.tempDir);
+    } catch (error) {
+      console.error('Failed to clean temp directory:', error);
+    }
+
+    this.emit('cleanup');
+  }
+
+  /**
+   * Destroy the service and clean up resources
+   */
+  async destroy() {
+    await this.cleanup();
+    this.removeAllListeners();
+  }
+}

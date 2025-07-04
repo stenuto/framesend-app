@@ -21,7 +21,8 @@ const iconMappings = {
   'skip-forward': 'SkipForward',
   'volume-2': 'Volume2',
   'volume-x': 'VolumeX',
-  'maximize': 'Maximize'
+  'maximize': 'Maximize',
+  'upload': 'Upload'
 }
 
 const props = defineProps({

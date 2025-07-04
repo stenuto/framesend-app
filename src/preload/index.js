@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
@@ -17,7 +17,9 @@ const api = {
     open: (options) => ipcRenderer.invoke('file:open', options),
     save: (options) => ipcRenderer.invoke('file:save', options),
     readFile: (path) => ipcRenderer.invoke('file:read', path),
-    writeFile: (path, data) => ipcRenderer.invoke('file:write', path, data)
+    writeFile: (path, data) => ipcRenderer.invoke('file:write', path, data),
+    saveTemp: (name, buffer) => ipcRenderer.invoke('file:saveTemp', { name, buffer }),
+    cleanTemp: (path) => ipcRenderer.invoke('file:cleanTemp', path)
   },
   
   // Dialog operations
@@ -33,6 +35,51 @@ const api = {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
     getName: () => ipcRenderer.invoke('app:getName'),
     getPath: (name) => ipcRenderer.invoke('app:getPath', name)
+  },
+  
+  // Video encoding
+  video: {
+    validate: (filePath) => ipcRenderer.invoke('video:validate', filePath),
+    encode: (filePath, options) => ipcRenderer.invoke('video:encode', { filePath, options }),
+    cancel: (jobId) => ipcRenderer.invoke('video:cancel', jobId),
+    forceKill: (jobId) => ipcRenderer.invoke('video:forceKill', jobId),
+    emergencyStop: () => ipcRenderer.invoke('video:emergencyStop'),
+    processStatus: () => ipcRenderer.invoke('video:processStatus'),
+    testKill: () => ipcRenderer.invoke('video:testKill'),
+    getStatus: () => ipcRenderer.invoke('video:status'),
+    pause: () => ipcRenderer.invoke('video:pause'),
+    resume: () => ipcRenderer.invoke('video:resume'),
+    selectFiles: () => ipcRenderer.invoke('video:selectFiles'),
+    
+    // Event listeners
+    onProgress: (callback) => {
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('encoding:progress', listener);
+      return () => ipcRenderer.removeListener('encoding:progress', listener);
+    },
+    onComplete: (callback) => {
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('encoding:complete', listener);
+      return () => ipcRenderer.removeListener('encoding:complete', listener);
+    },
+    onError: (callback) => {
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('encoding:error', listener);
+      return () => ipcRenderer.removeListener('encoding:error', listener);
+    },
+    onCancelled: (callback) => {
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('encoding:cancelled', listener);
+      return () => ipcRenderer.removeListener('encoding:cancelled', listener);
+    }
+  }
+}
+
+// Extend electronAPI with webUtils
+const extendedElectronAPI = {
+  ...electronAPI,
+  webUtils: {
+    getPathForFile: (file) => webUtils.getPathForFile(file)
   }
 }
 
@@ -41,12 +88,12 @@ const api = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
+    contextBridge.exposeInMainWorld('electron', extendedElectronAPI)
     contextBridge.exposeInMainWorld('api', api)
   } catch (error) {
     console.error(error)
   }
 } else {
-  window.electron = electronAPI
+  window.electron = extendedElectronAPI
   window.api = api
 }
