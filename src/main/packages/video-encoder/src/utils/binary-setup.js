@@ -2,7 +2,6 @@ import { execa } from 'execa';
 import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
-import { app } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -15,11 +14,64 @@ const __dirname = dirname(__filename);
  * @returns {Promise<Object>} Verified binary paths
  */
 export async function setupBinaries(options = {}) {
-  console.log('Setting up video encoding binaries...');
+  console.log('[binary-setup] Setting up video encoding binaries...');
+  console.log('[binary-setup] Options:', options);
   
-  // Get bundled binary paths
+  // Use provided paths directly if available
+  if (options.ffmpegPath && options.ffprobePath) {
+    console.log('[binary-setup] Using provided binary paths');
+    const binaries = {
+      ffmpeg: options.ffmpegPath,
+      ffprobe: options.ffprobePath,
+      whisper: options.whisperPath || null,
+    };
+    
+    // Verify they exist
+    if (fs.existsSync(binaries.ffmpeg)) {
+      console.log('[binary-setup] FFmpeg found at:', binaries.ffmpeg);
+      
+      // Check codec support
+      try {
+        const codecs = await getFFmpegCodecs(binaries.ffmpeg);
+        binaries.codecs = codecs;
+        
+        // Check for H.264
+        if (!codecs.encoders.includes('libx264')) {
+          console.warn('[binary-setup] H.264 encoding (libx264) not available');
+        }
+        
+        // Check for AV1
+        const hasAV1 = codecs.encoders.includes('libsvtav1') || 
+                       codecs.encoders.includes('libaom-av1') || 
+                       codecs.encoders.includes('av1') ||
+                       codecs.encoders.includes('av1_nvenc');
+        if (!hasAV1) {
+          console.warn('[binary-setup] AV1 encoding not available');
+          binaries.hasAV1 = false;
+        } else {
+          console.log('[binary-setup] AV1 encoder available');
+          binaries.hasAV1 = true;
+        }
+      } catch (error) {
+        console.error('[binary-setup] Error checking codecs:', error.message);
+        binaries.hasAV1 = false;
+      }
+    } else {
+      console.error('[binary-setup] FFmpeg not found at:', binaries.ffmpeg);
+    }
+    
+    if (fs.existsSync(binaries.ffprobe)) {
+      console.log('[binary-setup] FFprobe found at:', binaries.ffprobe);
+    } else {
+      console.error('[binary-setup] FFprobe not found at:', binaries.ffprobe);
+    }
+    
+    return binaries;
+  }
+  
+  // Otherwise try to find them
   const bundledBinaries = getBundledBinaryPaths();
-  console.log('Bundled binary paths:', bundledBinaries);
+  console.log('[binary-setup] Bundled binary paths:', bundledBinaries);
   
   const binaries = {
     ffmpeg: options.ffmpegPath || bundledBinaries.ffmpeg || await findBinary('ffmpeg', false),
@@ -76,20 +128,11 @@ export async function setupBinaries(options = {}) {
  */
 function getBundledBinaryPaths() {
   const platform = os.platform();
-  const isPackaged = app.isPackaged;
-  let resourcesPath;
   
-  if (isPackaged) {
-    // In production, binaries are in the app resources
-    resourcesPath = process.resourcesPath;
-  } else {
-    // In development, use app.getAppPath() to get the correct base path
-    const appPath = app.getAppPath();
-    resourcesPath = path.join(appPath, 'resources');
-  }
-  
-  console.log('App path:', app.getAppPath());
-  console.log('Resources path:', resourcesPath);
+  // Since we can't access electron's app here, we'll just return empty
+  // The handler should provide the correct paths
+  console.log('[binary-setup] getBundledBinaryPaths called without app access');
+  return {};
   
   const ext = platform === 'win32' ? '.exe' : '';
   
@@ -200,27 +243,13 @@ async function verifyFFmpeg(ffmpegPath) {
     const match = stdout.match(/ffmpeg version ([^\s]+)/);
     
     if (!match) {
-      throw new Error('Could not parse FFmpeg version');
-    }
-
-    // Check for required codecs
-    const codecs = await getFFmpegCodecs(ffmpegPath);
-    
-    // Verify H.264 encoding support
-    if (!codecs.encoders.includes('libx264')) {
-      throw new Error('FFmpeg does not support H.264 encoding (libx264)');
-    }
-
-    // Check for AV1 encoding support (optional but recommended)
-    const hasAV1 = codecs.encoders.includes('libsvtav1') || codecs.encoders.includes('libaom-av1');
-    if (!hasAV1) {
-      console.warn('FFmpeg does not support AV1 encoding, AV1 renditions will be skipped');
-    } else {
-      console.log('AV1 encoder available:', codecs.encoders.find(e => e.includes('av1')));
+      console.warn('[binary-setup] Could not parse FFmpeg version');
+      return 'unknown';
     }
 
     return match[1];
   } catch (error) {
+    console.error('[binary-setup] Failed to verify FFmpeg:', error.message);
     throw new Error(`Failed to verify FFmpeg: ${error.message}`);
   }
 }

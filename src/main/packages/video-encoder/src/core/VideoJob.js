@@ -3,7 +3,8 @@ import path from 'path';
 import fs from 'fs-extra';
 import PQueue from 'p-queue';
 import { 
-  H264_LADDER, 
+  H264_LADDER,
+  AV1_LADDER,
   PROGRESS_WEIGHTS,
   RESOURCE_LIMITS,
   H264_ENCODING_PARAMS,
@@ -11,8 +12,9 @@ import {
   AUDIO_PARAMS,
   THUMBNAIL_PARAMS,
   AV1_CONFIG,
-  ENCODING_OPTIONS,
+  calculateBitrate,
 } from '../config/encoding-presets.js';
+import { filterLadderBySettings } from '../utils/settings-loader.js';
 import { ProgressTracker } from '../utils/progress-tracker.js';
 import { FluentFFmpegWrapper } from '../utils/fluent-ffmpeg-wrapper.js';
 import { generateHLSManifest } from '../utils/hls-manifest.js';
@@ -31,6 +33,7 @@ export class VideoJob extends EventEmitter {
     this.outputDir = options.outputDir;
     this.tempDir = options.tempDir;
     this.binaries = options.binaries;
+    this.encodingSettings = options.encodingSettings;
     
     // Job state
     this.status = 'pending';
@@ -75,37 +78,49 @@ export class VideoJob extends EventEmitter {
    */
   async encode() {
     try {
+      console.log(`[VideoJob ${this.id}] Starting encode...`);
       this.status = 'processing';
       this.startTime = Date.now();
 
       // Stage 1: Probe video metadata
+      console.log(`[VideoJob ${this.id}] Stage 1: Probing...`);
       await this._probe();
       
       // Stage 2: Plan encoding renditions
+      console.log(`[VideoJob ${this.id}] Stage 2: Planning renditions...`);
       await this._planRenditions();
+      console.log(`[VideoJob ${this.id}] Planned ${this.renditions.length} renditions`);
       
       // Stage 3: Extract audio
+      console.log(`[VideoJob ${this.id}] Stage 3: Extracting audio...`);
       await this._extractAudio();
       
       // Stage 4: Encode video streams
+      console.log(`[VideoJob ${this.id}] Stage 4: Encoding streams...`);
       await this._encodeStreams();
       
       // Stage 5: Generate visual assets
+      console.log(`[VideoJob ${this.id}] Stage 5: Generating assets...`);
       await this._genAssets();
       
       // Stage 6: Generate captions (if whisper is available)
+      console.log(`[VideoJob ${this.id}] Stage 6: Generating captions...`);
       await this._genCaptions();
       
       // Stage 7: Generate HLS manifests
+      console.log(`[VideoJob ${this.id}] Stage 7: Generating manifest...`);
       await this._genManifest();
       
       // Stage 8: Write metadata
+      console.log(`[VideoJob ${this.id}] Stage 8: Writing metadata...`);
       await this._writeMetadata();
       
       // Stage 9: Finalize
+      console.log(`[VideoJob ${this.id}] Stage 9: Finalizing...`);
       await this._finalize();
       
       this.status = 'complete';
+      console.log(`[VideoJob ${this.id}] Encode complete!`);
       this.emit('complete', {
         metadata: this.metadata,
         duration: Date.now() - this.startTime,
@@ -114,6 +129,7 @@ export class VideoJob extends EventEmitter {
       return this.metadata;
       
     } catch (error) {
+      console.error(`[VideoJob ${this.id}] Encode error:`, error);
       this.status = 'error';
       this.emit('error', error);
       throw error;
@@ -178,23 +194,58 @@ export class VideoJob extends EventEmitter {
     const sourceHeight = this.metadata.video.height;
     const sourceWidth = this.metadata.video.width;
     const aspectRatio = sourceWidth / sourceHeight;
+    const frameRate = this.metadata.video.frameRate;
     
-    // Filter ladder rungs that are <= source height
-    this.renditions = H264_LADDER
-      .filter(rung => rung.height <= sourceHeight)
-      .map(rung => ({
-        ...rung,
-        // Override width if aspect ratio is different from reference
-        width: Math.round(rung.height * aspectRatio / 2) * 2, // Ensure even number
-        outputPath: path.join(this.outputDir, 'renditions', 'h264', rung.name),
-      }));
+    // Filter H.264 ladder based on settings and source height
+    if (this.encodingSettings.h264.enabled) {
+      const enabledH264Ladder = filterLadderBySettings(H264_LADDER, this.encodingSettings.h264);
+      
+      const h264Renditions = enabledH264Ladder
+        .filter(rung => rung.height <= sourceHeight)
+        .map(rung => {
+          const width = Math.round(rung.height * aspectRatio / 2) * 2; // Ensure even number
+          
+          // Calculate bitrate based on actual pixel count
+          const bitrateConfig = calculateBitrate(width, rung.height, rung.targetBpp, frameRate);
+          
+          console.log(`[Encoding] H.264 ${rung.name}: ${width}x${rung.height} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
+          
+          return {
+            ...rung,
+            codec: 'h264',
+            width,
+            ...bitrateConfig,
+            outputPath: path.join(this.outputDir, 'renditions', 'h264', rung.name),
+          };
+        });
+        
+      this.renditions.push(...h264Renditions);
+    }
     
-    // Add AV1 rung if enabled and source is 4K
-    if (ENCODING_OPTIONS.enableAV1 && sourceHeight >= 2160) {
-      this.renditions.push({
-        ...AV1_CONFIG,
-        outputPath: path.join(this.outputDir, 'renditions', 'av1', '2160p'),
-      });
+    // Add AV1 renditions based on settings
+    if (this.encodingSettings.av1.enabled) {
+      const enabledAV1Ladder = filterLadderBySettings(AV1_LADDER, this.encodingSettings.av1);
+      
+      const av1Renditions = enabledAV1Ladder
+        .filter(rung => rung.height <= sourceHeight)
+        .map(rung => {
+          const width = Math.round(rung.height * aspectRatio / 2) * 2; // Ensure even number
+          
+          // Calculate bitrate based on actual pixel count
+          const bitrateConfig = calculateBitrate(width, rung.height, rung.targetBpp, frameRate);
+          
+          console.log(`[Encoding] AV1 ${rung.name}: ${width}x${rung.height} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
+          
+          return {
+            ...rung,
+            ...AV1_CONFIG,
+            width,
+            ...bitrateConfig,
+            outputPath: path.join(this.outputDir, 'renditions', 'av1', rung.name),
+          };
+        });
+        
+      this.renditions.push(...av1Renditions);
     }
     
     // Create output directories for each rendition
@@ -253,7 +304,7 @@ export class VideoJob extends EventEmitter {
         
         try {
           // Prepare encoding options based on codec
-          const encodingOptions = rendition.codec === 'av1' 
+          const encodingOptions = rendition.codec === 'libsvtav1' 
             ? this._getAV1Options(rendition)
             : this._getH264Options(rendition);
           
@@ -347,7 +398,9 @@ export class VideoJob extends EventEmitter {
     this.progressTracker.startStage('assets');
     
     try {
-      // Generate hero thumbnail
+      const aspectRatio = this.metadata.video.width / this.metadata.video.height;
+      
+      // Generate hero thumbnail maintaining aspect ratio
       const heroPath = path.join(this.outputDir, 'thumbnails', 'hero_4k.jpg');
       await extractThumbnails(
         this.inputPath,
@@ -358,6 +411,10 @@ export class VideoJob extends EventEmitter {
         }
       );
       
+      // Calculate storyboard thumbnail dimensions maintaining aspect ratio
+      const storyboardHeight = THUMBNAIL_PARAMS.storyboard.height;
+      const storyboardWidth = Math.round(storyboardHeight * aspectRatio / 2) * 2; // Ensure even
+      
       // Generate storyboard sprite
       const storyboardPath = path.join(this.outputDir, 'thumbnails', 'storyboard.jpg');
       const storyboardData = await extractThumbnails(
@@ -365,6 +422,8 @@ export class VideoJob extends EventEmitter {
         storyboardPath,
         {
           ...THUMBNAIL_PARAMS.storyboard,
+          width: storyboardWidth,
+          height: storyboardHeight,
           duration: this.metadata.duration,
           ffmpegPath: this.binaries.ffmpeg,
           sprite: true,

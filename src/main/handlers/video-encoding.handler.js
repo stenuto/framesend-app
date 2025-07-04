@@ -23,7 +23,21 @@ let encodingService = null;
 export default async function registerVideoHandlers(ipcMain, { app }) {
   // Register a simple test handler first to verify registration works
   ipcMain.handle('video:test', async () => {
+    console.log('[video:test] Test handler called!');
     return { success: true, message: 'Video handlers are registered!' };
+  });
+  
+  // Test if encoding service can be created
+  ipcMain.handle('video:testService', async () => {
+    console.log('[video:testService] Testing service creation...');
+    try {
+      const service = await getEncodingService();
+      console.log('[video:testService] Service created successfully');
+      return { success: true, hasService: !!service };
+    } catch (error) {
+      console.error('[video:testService] Error creating service:', error);
+      return { success: false, error: error.message };
+    }
   });
   
   // Load the video encoder modules
@@ -96,6 +110,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
         console.error('FFprobe binary not found at:', ffprobePath);
       }
       
+      console.log('[getEncodingService] Creating new VideoEncodingService');
       encodingService = new VideoEncodingService({
         outputDir: path.join(app.getPath('userData'), 'encoded-videos'),
         tempDir: path.join(app.getPath('userData'), 'temp', 'framesend-encoding'),
@@ -104,14 +119,28 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
         ffprobePath,
       });
       
-      // Don't wait for ready - let it initialize in background
-      encodingService.once('ready', () => {});
-      
-      encodingService.once('error', (error) => {
-        console.error('Video encoding service error:', error);
+      // Wait for initialization to complete
+      console.log('[getEncodingService] Waiting for service initialization...');
+      await new Promise((resolve, reject) => {
+        encodingService.once('ready', (data) => {
+          console.log('[getEncodingService] Service ready:', data);
+          resolve();
+        });
+        
+        encodingService.once('error', (error) => {
+          console.error('[getEncodingService] Service initialization error:', error);
+          reject(error);
+        });
+        
+        // Add timeout
+        setTimeout(() => {
+          reject(new Error('Service initialization timeout'));
+        }, 10000); // 10 second timeout
       });
       
-      // Add error listener only
+      console.log('[getEncodingService] Service initialized successfully');
+      
+      // Add error listener for ongoing errors
       encodingService.on('job:error', (data) => {
         console.error('Job error:', data);
       });
@@ -150,13 +179,24 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
    * Returns job information
    */
   ipcMain.handle('video:encode', async (event, { filePath, options = {} }) => {
+    console.log('[video:encode] Handler called with:', filePath, options);
     try {
+      console.log('[video:encode] Getting encoding service...');
       const service = await getEncodingService();
+      console.log('[video:encode] Service obtained, queuing video...');
       
       // Queue the video
       const job = await service.queueVideo(filePath, options);
+      console.log('[video:encode] Job queued:', job);
       
       // Set up event forwarding for this job
+      const startHandler = (data) => {
+        if (data.jobId === job.id) {
+          console.log(`[video:encode] Forwarding start event for job ${job.id}`);
+          event.sender.send('encoding:start', data);
+        }
+      };
+      
       const progressHandler = (progress) => {
         if (progress.jobId === job.id) {
           event.sender.send('encoding:progress', progress);
@@ -182,6 +222,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
             stack: error.stack
           });
           // Clean up listeners
+          service.off('job:start', startHandler);
           service.off('job:progress', progressHandler);
           service.off('job:complete', completeHandler);
           service.off('job:error', errorHandler);
@@ -194,6 +235,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           console.log(`[video:encode] Forwarding cancelled event for job ${job.id}`);
           event.sender.send('encoding:cancelled', data);
           // Clean up listeners
+          service.off('job:start', startHandler);
           service.off('job:progress', progressHandler);
           service.off('job:complete', completeHandler);
           service.off('job:error', errorHandler);
@@ -202,11 +244,13 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       };
       
       // Listen for job events
+      service.on('job:start', startHandler);
       service.on('job:progress', progressHandler);
       service.on('job:complete', completeHandler);
       service.on('job:error', errorHandler);
       service.on('job:cancelled', cancelledHandler);
       
+      console.log('[video:encode] Returning success with job ID:', job.id);
       return {
         success: true,
         data: {
@@ -215,6 +259,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
         },
       };
     } catch (error) {
+      console.error('[video:encode] Handler error:', error);
       return {
         success: false,
         error: error.message,
@@ -327,6 +372,32 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
     }
   });
 
+  /**
+   * Select video files
+   */
+  ipcMain.handle('video:selectFiles', async () => {
+    console.log('[video:selectFiles] Opening file dialog...');
+    const { dialog } = await import('electron');
+    
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: 'Videos', extensions: ['mp4', 'mov', 'avi', 'mkk', 'webm', 'm4v', 'mpg', 'mpeg', 'wmv', 'flv'] },
+        { name: 'All Files', extensions: ['*'] }
+      ]
+    });
+    
+    if (result.canceled) {
+      return null;
+    }
+    
+    return result.filePaths.map(filePath => ({
+      path: filePath,
+      name: path.basename(filePath),
+      size: fs.statSync(filePath).size
+    }));
+  });
+  
   /**
    * Test fluent-ffmpeg kill
    */

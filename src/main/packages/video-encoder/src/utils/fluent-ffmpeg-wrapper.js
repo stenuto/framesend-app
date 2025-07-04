@@ -137,6 +137,7 @@ export class FluentFFmpegWrapper extends EventEmitter {
       // AV1 options
       if (options.codec === 'libsvtav1') {
         command
+          .videoCodec('libsvtav1')
           .outputOptions('-crf', String(options.crf || 35))
           .outputOptions('-preset', String(options.preset || 8))
           .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p10le');

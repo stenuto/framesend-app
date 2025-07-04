@@ -20,6 +20,10 @@
         <Button variant="default" class-name="bg-cyan-500 hover:bg-cyan-600 text-white" @click="browseFiles">
           Browse Files
         </Button>
+        
+        <Button variant="ghost" class-name="mt-2" @click="testVideoAPI">
+          Test API
+        </Button>
       </div>
     </div>
 
@@ -176,6 +180,26 @@ export default {
       const files = await window.api.video.selectFiles()
       if (files) {
         await addFilesToQueue(files)
+      }
+    }
+    
+    // Test function to debug encoding service
+    const testVideoAPI = async () => {
+      console.log('Testing video API...');
+      
+      try {
+        // Test basic handler
+        console.log('Testing basic handler...');
+        const testResult = await window.api.video.test();
+        console.log('Test result:', testResult);
+        
+        // Test service creation
+        console.log('Testing service creation...');
+        const serviceResult = await window.api.video.testService();
+        console.log('Service test result:', serviceResult);
+        
+      } catch (error) {
+        console.error('Test error:', error);
       }
     }
 
@@ -462,6 +486,7 @@ export default {
       formatFileSize,
       handleSignOut,
       handleCancelJob,
+      testVideoAPI,
 
       // Video store methods
       pauseQueue: videoStore.pauseQueue,

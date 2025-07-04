@@ -1,0 +1,22 @@
+{
+  "h264": {
+    "enabled": true,
+    "rungs": {
+      "360p": true,
+      "540p": false,
+      "720p": true,
+      "1080p": false,
+      "1440p": true,
+      "2160p": false
+    }
+  },
+  "av1": {
+    "enabled": true,
+    "rungs": {
+      "720p": false,
+      "1080p": false,
+      "1440p": false,
+      "2160p": true
+    }
+  }
+}

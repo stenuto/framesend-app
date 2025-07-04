@@ -36,18 +36,19 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
     );
   }
   
-  // Add video variants (sorted by bitrate, lowest first)
-  const sortedRenditions = [...renditions]
-    .filter(r => r.codec !== 'av1') // H.264 variants first
-    .sort((a, b) => {
-      const bitrateA = parseInt(a.bitrate) || 0;
-      const bitrateB = parseInt(b.bitrate) || 0;
-      return bitrateA - bitrateB;
-    });
+  // Group renditions by codec
+  const h264Renditions = renditions.filter(r => r.codec === 'h264' || !r.codec);
+  const av1Renditions = renditions.filter(r => r.codec === 'av1');
   
-  lines.push('# Video Variants');
+  // Sort by height (lowest first)
+  const sortByHeight = (a, b) => a.height - b.height;
   
-  for (const rendition of sortedRenditions) {
+  // Add H.264 variants first
+  if (h264Renditions.length > 0) {
+    lines.push('# H.264 Variants');
+    h264Renditions.sort(sortByHeight);
+    
+    for (const rendition of h264Renditions) {
     // Calculate bandwidth using maxrate + audio bitrate
     const videoBandwidth = parseInt(rendition.maxrate.replace('k', '')) * 1000;
     const audioBandwidth = rendition.audioUpgrade ? 192000 : 128000;
@@ -81,12 +82,13 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
       rendition.playlistPath,
       ''
     );
+    }
   }
   
   // Add AV1 variants as alternative renditions
-  const av1Renditions = renditions.filter(r => r.codec === 'av1');
   if (av1Renditions.length > 0) {
-    lines.push('# AV1 Variants (Alternative)');
+    lines.push('# AV1 Variants');
+    av1Renditions.sort(sortByHeight);
     
     for (const rendition of av1Renditions) {
       // Calculate bandwidth using maxrate + audio bitrate

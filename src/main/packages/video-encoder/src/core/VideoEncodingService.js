@@ -8,6 +8,7 @@ import { VideoJob } from './VideoJob.js';
 import { RESOURCE_LIMITS } from '../config/encoding-presets.js';
 import { validateVideoFile } from '../utils/validation.js';
 import { setupBinaries } from '../utils/binary-setup.js';
+import { loadEncodingSettings } from '../utils/settings-loader.js';
 
 /**
  * Main video encoding service that manages encoding jobs
@@ -37,21 +38,37 @@ export class VideoEncodingService extends EventEmitter {
 
     // Track active jobs
     this.activeJobs = new Map();
+    
+    // Encoding settings - use default for now
+    this.encodingSettings = null;
+    // Put settings file in the app data directory root
+    const appDataDir = path.dirname(this.config.outputDir);
+    this.settingsPath = path.join(appDataDir, 'encoding-settings.json');
+    console.log('[VideoEncodingService] Settings path:', this.settingsPath);
 
     // Setup required directories
     this._setupDirectories();
 
-    // Initialize binary paths
-    this._initializeBinaries().catch(error => {
-      console.error('Binary initialization error:', error);
+    // Initialize binary paths and settings
+    this._initialize().catch(error => {
+      console.error('Initialization error:', error);
     });
   }
 
   /**
-   * Initialize and verify FFmpeg/FFprobe/Whisper binaries
+   * Initialize service
    */
-  async _initializeBinaries() {
+  async _initialize() {
     try {
+      console.log('[VideoEncodingService] Starting initialization...');
+      
+      // Load encoding settings
+      console.log('[VideoEncodingService] Loading settings from:', this.settingsPath);
+      this.encodingSettings = await loadEncodingSettings(this.settingsPath);
+      console.log('[VideoEncodingService] Loaded encoding settings:', JSON.stringify(this.encodingSettings, null, 2));
+      
+      // Setup binaries
+      console.log('[VideoEncodingService] Setting up binaries...');
       const binaries = await setupBinaries({
         ffmpegPath: this.config.ffmpegPath,
         ffprobePath: this.config.ffprobePath,
@@ -59,15 +76,17 @@ export class VideoEncodingService extends EventEmitter {
       });
       
       this.binaries = binaries;
+      console.log('[VideoEncodingService] Binaries ready');
       
       // Emit ready asynchronously to avoid issues
       process.nextTick(() => {
         this.emit('ready', { binaries });
       });
     } catch (error) {
+      console.error('[VideoEncodingService] Initialization error:', error);
       this.emit('error', {
         type: 'initialization',
-        message: 'Failed to initialize encoding binaries',
+        message: 'Failed to initialize encoding service',
         error,
       });
       throw error;
@@ -89,32 +108,51 @@ export class VideoEncodingService extends EventEmitter {
    * @returns {Promise<Object>} Job information
    */
   async queueVideo(inputPath, options = {}) {
-    // Make sure binaries are initialized
-    if (!this.binaries) {
-      await this._initializeBinaries();
+    console.log('[VideoEncodingService.queueVideo] Called with:', inputPath);
+    console.log('[VideoEncodingService.queueVideo] Options:', options);
+    console.log('[VideoEncodingService.queueVideo] Binaries exist:', !!this.binaries);
+    console.log('[VideoEncodingService.queueVideo] Settings exist:', !!this.encodingSettings);
+    
+    // Make sure service is initialized
+    if (!this.binaries || !this.encodingSettings) {
+      console.log('[VideoEncodingService.queueVideo] Need to initialize...');
+      await this._initialize();
+      console.log('[VideoEncodingService.queueVideo] Initialization complete');
     }
     
+    // Always reload settings to pick up any changes
+    console.log('[VideoEncodingService.queueVideo] Reloading encoding settings...');
+    this.encodingSettings = await loadEncodingSettings(this.settingsPath);
+    console.log('[VideoEncodingService.queueVideo] Current encoding settings:', JSON.stringify(this.encodingSettings, null, 2));
+    
     // Validate input file
+    console.log('[VideoEncodingService.queueVideo] Validating input file...');
     const validation = await validateVideoFile(inputPath);
+    console.log('[VideoEncodingService.queueVideo] Validation result:', validation);
     if (!validation.isValid) {
       throw new Error(`Invalid video file: ${validation.errors.join(', ')}`);
     }
 
     // Generate unique job ID
     const jobId = nanoid();
+    console.log('[VideoEncodingService.queueVideo] Generated job ID:', jobId);
     
     // Create job output directory
     const jobOutputDir = path.join(this.config.outputDir, jobId);
+    console.log('[VideoEncodingService.queueVideo] Creating output dir:', jobOutputDir);
     await fs.ensureDir(jobOutputDir);
 
     // Create job instance
-    console.log('Creating VideoJob with binaries:', this.binaries);
+    console.log('[VideoEncodingService.queueVideo] Creating VideoJob with:');
+    console.log('  - binaries:', this.binaries);
+    console.log('  - encodingSettings:', JSON.stringify(this.encodingSettings, null, 2));
     const job = new VideoJob({
       id: jobId,
       inputPath,
       outputDir: jobOutputDir,
       tempDir: path.join(this.config.tempDir, jobId),
       binaries: this.binaries,
+      encodingSettings: this.encodingSettings,
       ...options,
     });
 
@@ -137,8 +175,10 @@ export class VideoEncodingService extends EventEmitter {
     });
 
     // Add to queue
+    console.log('[VideoEncodingService.queueVideo] Adding job to queue...');
     const jobPromise = this.jobQueue.add(async () => {
-      console.log(`Starting job ${jobId}`);
+      console.log(`[VideoEncodingService.queueVideo] Queue running job ${jobId}`);
+      console.log(`[VideoEncodingService.queueVideo] Emitting job:start event`);
       this.emit('job:start', { 
         jobId, 
         inputPath,
@@ -146,15 +186,17 @@ export class VideoEncodingService extends EventEmitter {
       });
       
       try {
+        console.log(`[VideoEncodingService.queueVideo] Calling job.encode()`);
         const result = await job.encode();
-        console.log(`Job ${jobId} completed`);
+        console.log(`[VideoEncodingService.queueVideo] Job ${jobId} completed`);
         return result;
       } catch (error) {
-        console.error(`Job ${jobId} failed:`, error);
+        console.error(`[VideoEncodingService.queueVideo] Job ${jobId} failed:`, error);
         throw error;
       }
     });
 
+    console.log('[VideoEncodingService.queueVideo] Job queued, returning job info');
     return {
       id: jobId,
       promise: jobPromise,

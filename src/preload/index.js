@@ -39,6 +39,8 @@ const api = {
   
   // Video encoding
   video: {
+    test: () => ipcRenderer.invoke('video:test'),
+    testService: () => ipcRenderer.invoke('video:testService'),
     validate: (filePath) => ipcRenderer.invoke('video:validate', filePath),
     encode: (filePath, options) => ipcRenderer.invoke('video:encode', { filePath, options }),
     cancel: (jobId) => ipcRenderer.invoke('video:cancel', jobId),
@@ -52,6 +54,11 @@ const api = {
     selectFiles: () => ipcRenderer.invoke('video:selectFiles'),
     
     // Event listeners
+    onStart: (callback) => {
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('encoding:start', listener);
+      return () => ipcRenderer.removeListener('encoding:start', listener);
+    },
     onProgress: (callback) => {
       const listener = (event, data) => callback(data);
       ipcRenderer.on('encoding:progress', listener);

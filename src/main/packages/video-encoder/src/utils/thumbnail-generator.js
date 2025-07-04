@@ -52,7 +52,8 @@ async function extractSingleThumbnail(inputPath, outputPath, options) {
   
   // Add scaling if width specified
   if (options.width) {
-    args.push('-vf', `scale=${options.width}:-1`);
+    // Maintain aspect ratio when scaling
+    args.push('-vf', `scale=${options.width}:-1:force_original_aspect_ratio=decrease`);
   }
   
   args.push('-y', outputPath);

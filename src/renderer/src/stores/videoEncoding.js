@@ -48,6 +48,18 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
   function initializeListeners() {
     // Clean up existing listeners
     cleanupListeners();
+    
+    // Start listener
+    if (window.api.video.onStart) {
+      eventCleanups.value.start = window.api.video.onStart((data) => {
+        console.log('[VideoStore] Received start event for job:', data.jobId);
+        const job = jobs.value.get(data.jobId);
+        if (job) {
+          job.status = 'encoding';
+          job.startedAt = new Date();
+        }
+      });
+    }
 
     // Progress listener
     eventCleanups.value.progress = window.api.video.onProgress((data) => {
@@ -190,7 +202,9 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     }
 
     // Queue for encoding
+    console.log('[VideoStore] Calling window.api.video.encode with:', filePath);
     const result = await window.api.video.encode(filePath);
+    console.log('[VideoStore] Encode result:', result);
     
     if (!result.success) {
       throw new Error(result.error);

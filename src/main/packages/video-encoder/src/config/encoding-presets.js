@@ -3,80 +3,113 @@
  * Following best practices for HLS streaming with adaptive bitrate
  */
 
-// Adaptive bitrate ladder for H.264 encoding
-// Following Apple HLS recommendations with capped-CRF mode
+/**
+ * Calculate bitrate based on resolution and bits per pixel
+ * This ensures aspect ratio aware bitrates (e.g., square videos get higher bitrates)
+ * @param {number} width - Video width in pixels
+ * @param {number} height - Video height in pixels
+ * @param {number} bpp - Target bits per pixel
+ * @param {number} fps - Frame rate (default 30)
+ * @returns {Object} Bitrate configuration with maxrate and bufsize
+ */
+export function calculateBitrate(width, height, bpp, fps = 30) {
+  const pixels = width * height;
+  const bitrate = Math.round(pixels * bpp * fps / 1000); // in kbps
+
+  return {
+    maxrate: `${bitrate}k`,
+    bufsize: `${Math.round(bitrate * 1.5)}k`, // 1.5x bitrate for buffer
+  };
+}
+
+// H.264 ladder - all available rungs
 export const H264_LADDER = [
   {
     name: '360p',
     height: 360,
-    width: 640,
-    maxrate: '800k',
-    bufsize: '1200k',
+    targetBpp: 0.10,
     profile: 'main',
     level: '3.0',
   },
-  // {
-  //   name: '540p',
-  //   height: 540,
-  //   width: 960,
-  //   maxrate: '1300k',
-  //   bufsize: '2000k',
-  //   profile: 'main',
-  //   level: '3.1',
-  // },
   {
-    name: '720p',
-    height: 720,
-    width: 1280,
-    maxrate: '3000k',
-    bufsize: '4500k',
+    name: '540p',
+    height: 540,
+    targetBpp: 0.09,
     profile: 'main',
     level: '3.1',
   },
-  // {
-  //   name: '1080p',
-  //   height: 1080,
-  //   width: 1920,
-  //   maxrate: '7800k',
-  //   bufsize: '11700k',
-  //   profile: 'high',
-  //   level: '4.0',
-  //   audioUpgrade: true, // Flag to upgrade audio to 192k
-  // },
+  {
+    name: '720p',
+    height: 720,
+    targetBpp: 0.08,
+    profile: 'main',
+    level: '3.1',
+  },
+  {
+    name: '1080p',
+    height: 1080,
+    targetBpp: 0.07,
+    profile: 'high',
+    level: '4.0',
+    audioUpgrade: true,
+  },
   {
     name: '1440p',
     height: 1440,
-    width: 2560,
-    maxrate: '11000k',
-    bufsize: '16500k',
+    targetBpp: 0.065,
     profile: 'high',
     level: '5.0',
     audioUpgrade: true,
   },
-  // {
-  //   name: '2160p',
-  //   height: 2160,
-  //   width: 3840,
-  //   maxrate: '13000k',
-  //   bufsize: '18000k',
-  //   profile: 'high',
-  //   level: '5.1',
-  //   audioUpgrade: true,
-  // },
+  {
+    name: '2160p',
+    height: 2160,
+    targetBpp: 0.05,
+    profile: 'high',
+    level: '5.1',
+    audioUpgrade: true,
+  },
 ];
 
-// AV1 configuration for 4K rung using libsvtav1
+// AV1 ladder - matching H.264 rungs but with better efficiency
+export const AV1_LADDER = [
+  {
+    name: '720p',
+    height: 720,
+    targetBpp: 0.06, // ~25% more efficient than H.264
+    preset: 8,
+    crf: 32,
+  },
+  {
+    name: '1080p',
+    height: 1080,
+    targetBpp: 0.06,
+    preset: 7,
+    crf: 30,
+    audioUpgrade: true,
+  },
+  {
+    name: '1440p',
+    height: 1440,
+    targetBpp: 0.06,
+    preset: 6,
+    crf: 28,
+    audioUpgrade: true,
+  },
+  {
+    name: '2160p',
+    height: 2160,
+    targetBpp: 0.06,
+    preset: 6,
+    crf: 28,
+    audioUpgrade: true,
+  },
+];
+
+// AV1 general configuration
 export const AV1_CONFIG = {
-  name: 'av1_2160p',
   codec: 'libsvtav1',
-  preset: 6, // Good balance of speed and quality (~20x faster than very-slow)
-  crf: 28, // Better quality than H.264 at lower bitrate
-  width: 3840,
-  height: 2160,
-  maxrate: '18000k',
-  bufsize: '27000k',
   pixelFormat: 'yuv420p10le', // 10-bit for future-proofing
-  audioUpgrade: true, // 192k audio
   // SVT-AV1 specific parameters
   svtav1Params: {
     'aq-mode': 2, // Adaptive quantization mode
@@ -176,6 +209,30 @@ export const VALIDATION = {
   supportedExtensions: ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.mpg', '.mpeg', '.wmv', '.flv'],
   supportedCodecs: ['h264', 'hevc', 'vp9', 'vp8', 'mpeg4', 'mpeg2video'],
   supportedContainers: ['mov,mp4,m4a,3gp,3g2,mj2', 'matroska,webm', 'avi'],
+};
+
+// Default encoding settings structure
+export const DEFAULT_ENCODING_SETTINGS = {
+  h264: {
+    enabled: true,
+    rungs: {
+      '360p': true,
+      '540p': false,
+      '720p': true,
+      '1080p': false,
+      '1440p': true,
+      '2160p': false,
+    }
+  },
+  av1: {
+    enabled: true,
+    rungs: {
+      '720p': false,
+      '1080p': false,
+      '1440p': false,
+      '2160p': true,
+    }
+  }
 };
 
 // System resource limits
