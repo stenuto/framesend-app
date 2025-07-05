@@ -24,7 +24,7 @@
     </div>
 
     <!-- Queue (Bottom Half) -->
-    <div v-if="queue.length > 0" class="flex-1 border-t border-zinc-700">
+    <div v-if="queue.length > 0" class=" border-t border-zinc-700">
       <div class="h-full flex flex-col">
         <!-- Queue Header -->
         <div class="px-6 py-3 border-b border-zinc-300 dark:border-zinc-700 flex items-center justify-between">
@@ -47,22 +47,15 @@
 
           <div v-else class="p-4 space-y-2">
             <div v-for="file in queue" :key="file.id"
-              class="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg p-4">
+              class="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-700 rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 flex items-end">
                   <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{{ file.name }}</p>
                   <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                     <span>{{ formatFileSize(file.size) }}</span>
-                    <span v-if="file.validation?.fileInfo?.mimeType" class="text-zinc-400 dark:text-zinc-600">•</span>
-                    <span v-if="file.validation?.fileInfo?.mimeType">{{
-                      file.validation.fileInfo.mimeType.replace('video/', '') }}</span>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" class-name="ml-4" @click="removeFromQueue(file.id)">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </Button>
+                <Button icon-name="x" size="sm" class-name="ml-4" @click="removeFromQueue(file.id)" />
               </div>
 
               <!-- Progress Bar -->
