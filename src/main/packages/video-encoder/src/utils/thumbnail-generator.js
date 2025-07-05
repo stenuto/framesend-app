@@ -87,9 +87,24 @@ async function generateStoryboardSprite(inputPath, outputPath, options) {
   await fs.ensureDir(tempDir);
   
   try {
-    const interval = options.interval || 10; // Every 10 seconds
     const duration = options.duration || await getVideoDuration(inputPath, ffmpegPath);
-    const thumbnailCount = Math.floor(duration / interval);
+    
+    // Calculate dynamic interval based on video duration
+    let interval;
+    if (options.interval) {
+      interval = options.interval;
+    } else {
+      interval = calculateOptimalInterval(duration);
+    }
+    
+    const thumbnailCount = Math.max(1, Math.floor(duration / interval)); // At least 1 thumbnail
+    
+    console.log(`[Storyboard] Duration: ${duration.toFixed(1)}s, Interval: ${interval}s, Thumbnails: ${thumbnailCount}`);
+    
+    // Validate dimensions
+    if (!options.width || options.width <= 0 || !options.height || options.height <= 0) {
+      throw new Error(`Invalid thumbnail dimensions: width=${options.width}, height=${options.height}`);
+    }
     
     // Extract frames at intervals
     const framePromises = [];
@@ -112,10 +127,15 @@ async function generateStoryboardSprite(inputPath, outputPath, options) {
     const framePaths = await Promise.all(framePromises);
     
     // Create sprite sheet using sharp
-    const columns = options.columns || 10;
+    const columns = Math.min(options.columns || 10, thumbnailCount); // Don't have more columns than thumbnails
     const rows = Math.ceil(thumbnailCount / columns);
     const spriteWidth = options.width * columns;
     const spriteHeight = options.height * rows;
+    
+    // Validate sprite dimensions
+    if (spriteWidth <= 0 || spriteHeight <= 0) {
+      throw new Error(`Invalid sprite dimensions: ${spriteWidth}x${spriteHeight}`);
+    }
     
     // Create composite operations
     const composites = [];
@@ -149,6 +169,7 @@ async function generateStoryboardSprite(inputPath, outputPath, options) {
     return {
       path: outputPath,
       interval,
+      duration,
       count: thumbnailCount,
       columns,
       rows,
@@ -181,6 +202,50 @@ async function getVideoDuration(inputPath, ffmpegPath) {
   
   const { stdout } = await execa(ffprobePath, args);
   return parseFloat(stdout);
+}
+
+/**
+ * Calculate optimal thumbnail interval based on video duration
+ * @private
+ * @param {number} duration - Video duration in seconds
+ * @returns {number} Interval in seconds
+ */
+function calculateOptimalInterval(duration) {
+  // Target approximately 100-150 thumbnails for optimal scrubbing
+  const targetThumbnails = 120;
+  
+  // Define duration thresholds and their intervals
+  const thresholds = [
+    { maxDuration: 10, interval: 1 },        // < 10 seconds: 1 second intervals
+    { maxDuration: 60, interval: 2 },        // 10-60 seconds: 2 second intervals
+    { maxDuration: 300, interval: 5 },       // 1-5 minutes: 5 second intervals
+    { maxDuration: 1800, interval: 10 },     // 5-30 minutes: 10 second intervals
+    { maxDuration: 7200, interval: 30 },     // 30 min - 2 hours: 30 second intervals
+    { maxDuration: 21600, interval: 60 },    // 2-6 hours: 60 second intervals
+    { maxDuration: Infinity, interval: 120 } // 6+ hours: 120 second intervals
+  ];
+  
+  // Find the appropriate interval based on duration
+  let selectedInterval = 10;
+  for (const threshold of thresholds) {
+    if (duration <= threshold.maxDuration) {
+      selectedInterval = threshold.interval;
+      break;
+    }
+  }
+  
+  // Additionally, ensure we don't create too many thumbnails
+  const calculatedInterval = Math.ceil(duration / targetThumbnails);
+  
+  // Use the larger of the two intervals to avoid too many thumbnails
+  const finalInterval = Math.max(selectedInterval, calculatedInterval);
+  
+  // For very short videos, ensure interval doesn't exceed duration/4
+  if (duration < 4) {
+    return Math.max(1, Math.floor(duration / 4));
+  }
+  
+  return finalInterval;
 }
 
 /**

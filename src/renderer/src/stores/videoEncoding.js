@@ -202,9 +202,7 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     }
 
     // Queue for encoding
-    console.log('[VideoStore] Calling window.api.video.encode with:', filePath);
     const result = await window.api.video.encode(filePath);
-    console.log('[VideoStore] Encode result:', result);
     
     if (!result.success) {
       throw new Error(result.error);
@@ -226,8 +224,6 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     };
 
     jobs.value.set(job.id, job);
-    console.log('[VideoStore] Job added to store:', job.id);
-    console.log('[VideoStore] Current jobs in store:', Array.from(jobs.value.keys()));
     
     // Update queue status
     await updateQueueStatus();

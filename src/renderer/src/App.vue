@@ -1,5 +1,5 @@
 <template>
-  <div class=" bg-zinc-800">
+  <div class="bg-zinc-50 dark:bg-zinc-800">
     <div class="fixed top-0 left-0 right-0 h-8.5 drag" />
     <div class="non-draggable h-dvh w-dvw pt-8.5 px-3 pb-3">
       <component :is="currentComponent" v-if="currentComponent" />

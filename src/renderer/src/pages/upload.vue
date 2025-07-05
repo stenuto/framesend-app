@@ -3,26 +3,22 @@
     <!-- Drag and Drop Area (Top Half) -->
     <div class="flex-1">
       <div :class="[
-        'h-full border-2 border-dashed rounded-smooth-md transition-colors',
+        'h-full border-2 border-zinc-300 dark:border-zinc-700 border-dashed rounded-smooth-md transition-colors',
         'flex flex-col items-center justify-center',
-        isDragging ? 'border-cyan-500 bg-cyan-500/10' : 'border-zinc-700'
+        isDragging ? 'border-cyan-500 bg-cyan-500/10' : 'dark:border-zinc-700 border-zinc-300 bg-zinc-100 dark:bg-zinc-900/50'
       ]" @drop="handleDrop" @dragover.prevent @dragenter.prevent @dragleave="isDragging = false"
         @dragenter="isDragging = true">
-        <Icon name="upload" class="size-6 text-zinc-500 mb-4" />
+        <Icon name="upload" class="size-6 text-zinc-500 dark:text-zinc-400 mb-4" />
 
-        <p class="text-zinc-300 text-sm mb-2">
+        <p class="text-zinc-500 dark:text-zinc-300 text-sm mb-2">
           {{ isDragging ? 'Drop files here' : 'Drag and drop files here' }}
         </p>
-        <p class="text-zinc-500 text-sm mb-4">
+        <p class="text-zinc-500 dark:text-zinc-300 text-sm mb-4">
           or
         </p>
 
         <Button variant="default" class-name="bg-cyan-500 hover:bg-cyan-600 text-white" @click="browseFiles">
           Browse Files
-        </Button>
-        
-        <Button variant="ghost" class-name="mt-2" @click="testVideoAPI">
-          Test API
         </Button>
       </div>
     </div>
@@ -31,32 +27,33 @@
     <div v-if="queue.length > 0" class="flex-1 border-t border-zinc-700">
       <div class="h-full flex flex-col">
         <!-- Queue Header -->
-        <div class="px-6 py-3 border-b border-zinc-700 flex items-center justify-between">
+        <div class="px-6 py-3 border-b border-zinc-300 dark:border-zinc-700 flex items-center justify-between">
           <h2 class="text-sm font-medium text-zinc-300">
             Upload Queue ({{ queue.length }} {{ queue.length === 1 ? 'file' : 'files' }})
             <span v-if="activeJobs.length > 0" class="ml-2 text-xs text-cyan-500">
               • {{ activeJobs.length }} encoding
             </span>
           </h2>
-          <Button v-if="queue.length > 0" variant="ghost" size="sm" @click="clearQueue">
+          <Button v-if="queue.length > 0" size="sm" @click="clearQueue">
             Clear All
           </Button>
         </div>
 
         <!-- Queue List -->
-        <div class="flex-1 overflow-y-auto">
+        <div class="overflow-y-auto">
           <div v-if="queue.length === 0" class="h-full flex items-center justify-center">
-            <p class="text-zinc-500">No files in queue</p>
+            <p class="text-zinc-500 dark:text-zinc-400">No files in queue</p>
           </div>
 
           <div v-else class="p-4 space-y-2">
-            <div v-for="file in queue" :key="file.id" class="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
+            <div v-for="file in queue" :key="file.id"
+              class="bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-zinc-100 truncate">{{ file.name }}</p>
-                  <div class="flex items-center gap-2 text-xs text-zinc-500">
+                  <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{{ file.name }}</p>
+                  <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                     <span>{{ formatFileSize(file.size) }}</span>
-                    <span v-if="file.validation?.fileInfo?.mimeType" class="text-zinc-600">•</span>
+                    <span v-if="file.validation?.fileInfo?.mimeType" class="text-zinc-400 dark:text-zinc-600">•</span>
                     <span v-if="file.validation?.fileInfo?.mimeType">{{
                       file.validation.fileInfo.mimeType.replace('video/', '') }}</span>
                   </div>
@@ -70,11 +67,11 @@
 
               <!-- Progress Bar -->
               <div v-if="file.status === 'encoding' || file.status === 'queued'" class="mt-2">
-                <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
+                <div class="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-500 mb-1">
                   <span>{{ Math.round(file.progress) }}%</span>
                   <span class="capitalize">{{ file.status }}</span>
                 </div>
-                <div class="h-1 bg-zinc-700 rounded-full overflow-hidden">
+                <div class="h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                   <div class="h-full bg-cyan-500 transition-all duration-300" :style="{ width: `${file.progress}%` }" />
                 </div>
               </div>
@@ -83,15 +80,16 @@
               <div v-else class="mt-2 flex items-center justify-between text-xs">
                 <span :class="[
                   'capitalize',
-                  file.status === 'completed' ? 'text-green-500' :
-                    file.status === 'error' || file.status === 'invalid' ? 'text-red-500' :
-                      file.validation?.isValid ? 'text-green-500' :
-                        'text-zinc-500'
+                  file.status === 'completed' ? 'text-green-600 dark:text-green-500' :
+                    file.status === 'error' || file.status === 'invalid' ? 'text-red-600 dark:text-red-500' :
+                      file.validation?.isValid ? 'text-green-600 dark:text-green-500' :
+                        'text-zinc-600 dark:text-zinc-500'
                 ]">
                   {{ file.validation?.isValid && file.status === 'pending' ? 'Ready to encode' : file.status }}
                   <span v-if="file.error" class="normal-case ml-1">({{ file.error }})</span>
-                  <span v-if="file.warnings && file.warnings.length > 0" class="normal-case ml-1 text-yellow-500">({{
-                    file.warnings.join(', ') }})</span>
+                  <span v-if="file.warnings && file.warnings.length > 0"
+                    class="normal-case ml-1 text-yellow-600 dark:text-yellow-500">({{
+                      file.warnings.join(', ') }})</span>
                 </span>
 
               </div>
@@ -147,7 +145,7 @@ export default {
       for (const file of files) {
         // In Electron, the File object has a 'path' property
         const filePath = file.path || file.webkitRelativePath || null
-        
+
 
         if (filePath) {
           // We have a path, use it directly
@@ -182,26 +180,7 @@ export default {
         await addFilesToQueue(files)
       }
     }
-    
-    // Test function to debug encoding service
-    const testVideoAPI = async () => {
-      console.log('Testing video API...');
-      
-      try {
-        // Test basic handler
-        console.log('Testing basic handler...');
-        const testResult = await window.api.video.test();
-        console.log('Test result:', testResult);
-        
-        // Test service creation
-        console.log('Testing service creation...');
-        const serviceResult = await window.api.video.testService();
-        console.log('Service test result:', serviceResult);
-        
-      } catch (error) {
-        console.error('Test error:', error);
-      }
-    }
+
 
     const addFilesToQueue = async (files) => {
       // For drag and drop, we get File objects
@@ -296,11 +275,11 @@ export default {
 
     const removeFromQueue = async (id) => {
       const file = queue.value.find(f => f.id === id)
-      
+
       if (!file) {
         return;
       }
-      
+
       // If the file has a jobId and is being processed, cancel the job first
       if (file.jobId && (file.status === 'queued' || file.status === 'encoding')) {
         try {
@@ -312,12 +291,12 @@ export default {
           // Continue with removal even if cancel fails
         }
       }
-      
+
       // Clean up temporary file
       if (file.isTemp && file.path) {
         await window.api.file.cleanTemp(file.path)
       }
-      
+
       // Remove from queue
       queue.value = queue.value.filter(f => f.id !== id)
     }
@@ -333,13 +312,13 @@ export default {
             console.error('Failed to cancel job:', error);
           }
         }
-        
+
         // Clean up temporary files
         if (file.isTemp && file.path) {
           await window.api.file.cleanTemp(file.path)
         }
       }
-      
+
       queue.value = []
     }
 
@@ -348,20 +327,20 @@ export default {
         alert('Cannot cancel: No job ID found for this file');
         return;
       }
-      
+
       const message = `Are you sure you want to cancel "${file.name}"?`;
-      
+
       if (confirm(message)) {
         try {
           // Use the regular cancel which now includes aggressive process killing
           await videoStore.cancelJob(file.jobId);
-          
+
           // Remove from queue immediately
           queue.value = queue.value.filter(item => item.jobId !== file.jobId)
-          
+
           // Remove from video store
           videoStore.removeJob(file.jobId);
-          
+
         } catch (error) {
           console.error('Failed to cancel job:', error)
           alert(`Failed to cancel job: ${error.message}`)
@@ -427,12 +406,12 @@ export default {
     const handleSignOut = () => {
       router.navigateTo('signin')
     }
-    
-    
+
+
     // Expose for debugging
     window.__videoStore = videoStore;
     window.__queue = queue;
-    
+
     // Debug function to check process status
     window.checkProcesses = async () => {
       const status = await window.api.video.processStatus();
@@ -445,7 +424,7 @@ export default {
       });
       return status.data;
     };
-    
+
     // Debug function to test fluent-ffmpeg kill
     window.testKill = async () => {
       console.log('Testing fluent-ffmpeg kill...');
@@ -486,7 +465,6 @@ export default {
       formatFileSize,
       handleSignOut,
       handleCancelJob,
-      testVideoAPI,
 
       // Video store methods
       pauseQueue: videoStore.pauseQueue,

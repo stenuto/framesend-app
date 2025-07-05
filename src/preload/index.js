@@ -39,8 +39,6 @@ const api = {
   
   // Video encoding
   video: {
-    test: () => ipcRenderer.invoke('video:test'),
-    testService: () => ipcRenderer.invoke('video:testService'),
     validate: (filePath) => ipcRenderer.invoke('video:validate', filePath),
     encode: (filePath, options) => ipcRenderer.invoke('video:encode', { filePath, options }),
     cancel: (jobId) => ipcRenderer.invoke('video:cancel', jobId),

@@ -201,19 +201,21 @@ export class VideoJob extends EventEmitter {
       const enabledH264Ladder = filterLadderBySettings(H264_LADDER, this.encodingSettings.h264);
       
       const h264Renditions = enabledH264Ladder
-        .filter(rung => rung.height <= sourceHeight)
         .map(rung => {
-          const width = Math.round(rung.height * aspectRatio / 2) * 2; // Ensure even number
+          // If source is smaller than target, use source dimensions
+          const targetHeight = Math.min(rung.height, sourceHeight);
+          const width = Math.round(targetHeight * aspectRatio / 2) * 2; // Ensure even number
           
           // Calculate bitrate based on actual pixel count
-          const bitrateConfig = calculateBitrate(width, rung.height, rung.targetBpp, frameRate);
+          const bitrateConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
           
-          console.log(`[Encoding] H.264 ${rung.name}: ${width}x${rung.height} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
+          console.log(`[Encoding] H.264 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
           
           return {
             ...rung,
             codec: 'h264',
             width,
+            height: targetHeight,
             ...bitrateConfig,
             outputPath: path.join(this.outputDir, 'renditions', 'h264', rung.name),
           };
@@ -227,19 +229,21 @@ export class VideoJob extends EventEmitter {
       const enabledAV1Ladder = filterLadderBySettings(AV1_LADDER, this.encodingSettings.av1);
       
       const av1Renditions = enabledAV1Ladder
-        .filter(rung => rung.height <= sourceHeight)
         .map(rung => {
-          const width = Math.round(rung.height * aspectRatio / 2) * 2; // Ensure even number
+          // If source is smaller than target, use source dimensions
+          const targetHeight = Math.min(rung.height, sourceHeight);
+          const width = Math.round(targetHeight * aspectRatio / 2) * 2; // Ensure even number
           
           // Calculate bitrate based on actual pixel count
-          const bitrateConfig = calculateBitrate(width, rung.height, rung.targetBpp, frameRate);
+          const bitrateConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
           
-          console.log(`[Encoding] AV1 ${rung.name}: ${width}x${rung.height} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
+          console.log(`[Encoding] AV1 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
           
           return {
             ...rung,
             ...AV1_CONFIG,
             width,
+            height: targetHeight,
             ...bitrateConfig,
             outputPath: path.join(this.outputDir, 'renditions', 'av1', rung.name),
           };
@@ -354,7 +358,7 @@ export class VideoJob extends EventEmitter {
   _getH264Options(rendition) {
     return {
       ...H264_ENCODING_PARAMS,
-      videoFilters: `scale=${rendition.width}:${rendition.height}`,
+      videoFilters: `scale=${rendition.width}:${rendition.height || rendition.targetHeight}`,
       maxrate: rendition.maxrate,
       bufsize: rendition.bufsize,
       profile: rendition.profile,
@@ -381,7 +385,7 @@ export class VideoJob extends EventEmitter {
       crf: rendition.crf,
       preset: rendition.preset,
       pixelFormat: rendition.pixelFormat,
-      videoFilters: `scale=${rendition.width}:${rendition.height}`,
+      videoFilters: `scale=${rendition.width}:${rendition.height || rendition.targetHeight}`,
       maxrate: rendition.maxrate,
       bufsize: rendition.bufsize,
       // SVT-AV1 specific parameters
@@ -413,37 +417,57 @@ export class VideoJob extends EventEmitter {
       
       // Calculate storyboard thumbnail dimensions maintaining aspect ratio
       const storyboardHeight = THUMBNAIL_PARAMS.storyboard.height;
-      const storyboardWidth = Math.round(storyboardHeight * aspectRatio / 2) * 2; // Ensure even
+      let storyboardWidth = Math.round(storyboardHeight * aspectRatio / 2) * 2; // Ensure even
       
-      // Generate storyboard sprite
-      const storyboardPath = path.join(this.outputDir, 'thumbnails', 'storyboard.jpg');
-      const storyboardData = await extractThumbnails(
-        this.inputPath,
-        storyboardPath,
-        {
-          ...THUMBNAIL_PARAMS.storyboard,
-          width: storyboardWidth,
-          height: storyboardHeight,
-          duration: this.metadata.duration,
-          ffmpegPath: this.binaries.ffmpeg,
-          sprite: true,
+      // Ensure minimum width
+      if (storyboardWidth < 16) {
+        storyboardWidth = 16; // Minimum reasonable width
+      }
+      
+      // Generate storyboard sprite (skip if video is too short)
+      let storyboardData = null;
+      if (this.metadata.duration >= 1) { // Only generate storyboard for videos longer than 1 second
+        const storyboardPath = path.join(this.outputDir, 'thumbnails', 'storyboard.jpg');
+        try {
+          storyboardData = await extractThumbnails(
+            this.inputPath,
+            storyboardPath,
+            {
+              ...THUMBNAIL_PARAMS.storyboard,
+              width: storyboardWidth,
+              height: storyboardHeight,
+              duration: this.metadata.duration,
+              ffmpegPath: this.binaries.ffmpeg,
+              sprite: true,
+            }
+          );
+        } catch (error) {
+          console.warn(`[VideoJob ${this.id}] Storyboard generation failed:`, error.message);
+          // Continue without storyboard
         }
-      );
+      }
       
-      // Save storyboard metadata
-      await fs.writeJson(
-        path.join(this.outputDir, 'thumbnails', 'storyboard.json'),
-        storyboardData,
-        { spaces: 2 }
-      );
-      
-      this.metadata.thumbnails = {
-        hero: 'thumbnails/hero_4k.jpg',
-        storyboard: {
-          image: 'thumbnails/storyboard.jpg',
-          data: 'thumbnails/storyboard.json',
-        },
-      };
+      // Save storyboard metadata if generated
+      if (storyboardData) {
+        await fs.writeJson(
+          path.join(this.outputDir, 'thumbnails', 'storyboard.json'),
+          storyboardData,
+          { spaces: 2 }
+        );
+        
+        this.metadata.thumbnails = {
+          hero: 'thumbnails/hero_4k.jpg',
+          storyboard: {
+            image: 'thumbnails/storyboard.jpg',
+            data: 'thumbnails/storyboard.json',
+          },
+        };
+      } else {
+        // Only hero thumbnail
+        this.metadata.thumbnails = {
+          hero: 'thumbnails/hero_4k.jpg',
+        };
+      }
       
       this.progressTracker.completeStage('assets');
       

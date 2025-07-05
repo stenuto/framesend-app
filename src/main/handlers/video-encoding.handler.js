@@ -21,24 +21,6 @@ let encodingService = null;
  * Register video encoding IPC handlers
  */
 export default async function registerVideoHandlers(ipcMain, { app }) {
-  // Register a simple test handler first to verify registration works
-  ipcMain.handle('video:test', async () => {
-    console.log('[video:test] Test handler called!');
-    return { success: true, message: 'Video handlers are registered!' };
-  });
-  
-  // Test if encoding service can be created
-  ipcMain.handle('video:testService', async () => {
-    console.log('[video:testService] Testing service creation...');
-    try {
-      const service = await getEncodingService();
-      console.log('[video:testService] Service created successfully');
-      return { success: true, hasService: !!service };
-    } catch (error) {
-      console.error('[video:testService] Error creating service:', error);
-      return { success: false, error: error.message };
-    }
-  });
   
   // Load the video encoder modules
   try {
@@ -110,20 +92,17 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
         console.error('FFprobe binary not found at:', ffprobePath);
       }
       
-      console.log('[getEncodingService] Creating new VideoEncodingService');
       encodingService = new VideoEncodingService({
         outputDir: path.join(app.getPath('userData'), 'encoded-videos'),
         tempDir: path.join(app.getPath('userData'), 'temp', 'framesend-encoding'),
-        maxParallelJobs: 1, // Start with just 1 job for debugging
+        maxParallelJobs: 1,
         ffmpegPath,
         ffprobePath,
       });
       
       // Wait for initialization to complete
-      console.log('[getEncodingService] Waiting for service initialization...');
       await new Promise((resolve, reject) => {
-        encodingService.once('ready', (data) => {
-          console.log('[getEncodingService] Service ready:', data);
+        encodingService.once('ready', () => {
           resolve();
         });
         
@@ -137,8 +116,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           reject(new Error('Service initialization timeout'));
         }, 10000); // 10 second timeout
       });
-      
-      console.log('[getEncodingService] Service initialized successfully');
       
       // Add error listener for ongoing errors
       encodingService.on('job:error', (data) => {
@@ -179,20 +156,15 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
    * Returns job information
    */
   ipcMain.handle('video:encode', async (event, { filePath, options = {} }) => {
-    console.log('[video:encode] Handler called with:', filePath, options);
     try {
-      console.log('[video:encode] Getting encoding service...');
       const service = await getEncodingService();
-      console.log('[video:encode] Service obtained, queuing video...');
       
       // Queue the video
       const job = await service.queueVideo(filePath, options);
-      console.log('[video:encode] Job queued:', job);
       
       // Set up event forwarding for this job
       const startHandler = (data) => {
         if (data.jobId === job.id) {
-          console.log(`[video:encode] Forwarding start event for job ${job.id}`);
           event.sender.send('encoding:start', data);
         }
       };
@@ -232,7 +204,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       
       const cancelledHandler = (data) => {
         if (data.jobId === job.id) {
-          console.log(`[video:encode] Forwarding cancelled event for job ${job.id}`);
           event.sender.send('encoding:cancelled', data);
           // Clean up listeners
           service.off('job:start', startHandler);
@@ -250,7 +221,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       service.on('job:error', errorHandler);
       service.on('job:cancelled', cancelledHandler);
       
-      console.log('[video:encode] Returning success with job ID:', job.id);
       return {
         success: true,
         data: {
@@ -376,7 +346,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
    * Select video files
    */
   ipcMain.handle('video:selectFiles', async () => {
-    console.log('[video:selectFiles] Opening file dialog...');
     const { dialog } = await import('electron');
     
     const result = await dialog.showOpenDialog({
