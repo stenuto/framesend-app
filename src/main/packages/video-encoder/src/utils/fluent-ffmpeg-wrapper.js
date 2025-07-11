@@ -140,7 +140,11 @@ export class FluentFFmpegWrapper extends EventEmitter {
           .videoCodec('libsvtav1')
           .outputOptions('-crf', String(options.crf || 35))
           .outputOptions('-preset', String(options.preset || 8))
-          .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p10le');
+          .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p10le')
+          // GOP settings for AV1 - 2 second GOP
+          .outputOptions('-g', '240')
+          .outputOptions('-keyint_min', '240')
+          .outputOptions('-sc_threshold', '40');
         
         if (options.maxrate) {
           command.outputOptions('-maxrate', options.maxrate);
@@ -151,6 +155,8 @@ export class FluentFFmpegWrapper extends EventEmitter {
         if (options['svtav1-params']) {
           command.outputOptions('-svtav1-params', options['svtav1-params']);
         }
+        // Add movflags for AV1
+        command.outputOptions('-movflags', '+faststart');
       }
       
       // Audio

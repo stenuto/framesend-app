@@ -4,7 +4,7 @@
     sizeClasses[size],
     className
   ]">
-    <img v-if="src" :src="src" :alt="alt" class="h-full w-full object-cover" />
+    <img v-if="src" :src="src" :alt="alt" class="h-full w-full object-cover" >
     <span v-else :class="['font-medium text-zinc-300', textSizeClasses[size]]">
       {{ initials }}
     </span>

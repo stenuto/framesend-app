@@ -11,9 +11,9 @@
       'disabled:cursor-not-allowed disabled:opacity-50',
       className
     ]"
-    @input="$emit('update:modelValue', $event.target.value)"
     v-bind="$attrs"
-  />
+    @input="$emit('update:modelValue', $event.target.value)"
+  >
 </template>
 
 <script setup>

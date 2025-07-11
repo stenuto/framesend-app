@@ -40,6 +40,7 @@ const api = {
   // Video encoding
   video: {
     validate: (filePath) => ipcRenderer.invoke('video:validate', filePath),
+    validateBatch: (filePaths) => ipcRenderer.invoke('video:validateBatch', filePaths),
     encode: (filePath, options) => ipcRenderer.invoke('video:encode', { filePath, options }),
     cancel: (jobId) => ipcRenderer.invoke('video:cancel', jobId),
     forceKill: (jobId) => ipcRenderer.invoke('video:forceKill', jobId),
@@ -77,6 +78,12 @@ const api = {
       ipcRenderer.on('encoding:cancelled', listener);
       return () => ipcRenderer.removeListener('encoding:cancelled', listener);
     }
+  },
+  
+  // Settings operations
+  settings: {
+    load: () => ipcRenderer.invoke('settings:load'),
+    save: (settings) => ipcRenderer.invoke('settings:save', settings)
   }
 }
 

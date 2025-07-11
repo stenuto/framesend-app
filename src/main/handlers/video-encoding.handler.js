@@ -152,6 +152,50 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
   });
 
   /**
+   * Batch validate multiple video files
+   * Returns array of validation results
+   */
+  ipcMain.handle('video:validateBatch', async (event, filePaths) => {
+    try {
+      // Make sure validateVideoFile is loaded
+      if (!validateVideoFile) {
+        throw new Error('Video validation not initialized');
+      }
+      
+      // Validate files in parallel
+      const validationPromises = filePaths.map(async (filePath) => {
+        try {
+          const validation = await validateVideoFile(filePath);
+          return {
+            filePath,
+            success: true,
+            data: validation
+          };
+        } catch (error) {
+          return {
+            filePath,
+            success: false,
+            error: error.message
+          };
+        }
+      });
+      
+      const results = await Promise.all(validationPromises);
+      
+      return {
+        success: true,
+        data: results
+      };
+    } catch (error) {
+      console.error('Batch validation error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  });
+
+  /**
    * Queue a video for encoding
    * Returns job information
    */

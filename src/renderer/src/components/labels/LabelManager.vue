@@ -1,13 +1,14 @@
 <template>
   <div class="p-4">
-    <h2 class="text-lg font-semibold mb-4">Manage Labels</h2>
+    <h2 class="text-lg font-semibold mb-4">
+Manage Labels
+</h2>
     
     <!-- Label List -->
     <div class="space-y-2 mb-4">
       <div v-for="label in labelsStore.labels" :key="label.id" 
         class="flex items-center gap-2 p-2 rounded-lg border border-zinc-200 hover:bg-zinc-50">
-        
-        <!-- Label Preview -->
+<!-- Label Preview -->
         <Badge :variant="'custom'" :color="label.color" :shade="label.shade" class="text-xs">
           {{ label.name }}
         </Badge>
@@ -25,22 +26,30 @@
           
           <!-- Shade Picker -->
           <select v-model.number="editForm.shade" class="text-sm border border-zinc-300 rounded px-2 py-1">
-            <option value="100">Light</option>
-            <option value="500">Medium</option>
+            <option value="100">
+Light
+</option>
+            <option value="500">
+Medium
+</option>
           </select>
           
-          <Button @click="saveEdit" size="sm" variant="secondary">Save</Button>
-          <Button @click="cancelEdit" size="sm" variant="ghost">Cancel</Button>
+          <Button size="sm" variant="secondary" @click="saveEdit">
+Save
+</Button>
+          <Button size="sm" variant="ghost" @click="cancelEdit">
+Cancel
+</Button>
         </div>
         
         <!-- View Mode -->
         <div v-else class="flex-1 flex items-center justify-between">
           <span class="text-sm text-zinc-700">{{ label.name }}</span>
           <div class="flex items-center gap-1">
-            <Button @click="startEdit(label)" size="sm" variant="ghost">
+            <Button size="sm" variant="ghost" @click="startEdit(label)">
               <Icon name="pencil" size="sm" />
             </Button>
-            <Button @click="deleteLabel(label.id)" size="sm" variant="ghost" class="text-red-600 hover:text-red-700">
+            <Button size="sm" variant="ghost" class="text-red-600 hover:text-red-700" @click="deleteLabel(label.id)">
               <Icon name="trash" size="sm" />
             </Button>
           </div>
@@ -50,7 +59,9 @@
     
     <!-- Add New Label -->
     <div class="border-t pt-4">
-      <h3 class="text-sm font-medium mb-2">Add New Label</h3>
+      <h3 class="text-sm font-medium mb-2">
+Add New Label
+</h3>
       <div class="flex items-center gap-2">
         <Input v-model="newLabel.name" placeholder="Label name" class="flex-1" size="sm" />
         
@@ -63,11 +74,15 @@
         
         <!-- Shade Picker -->
         <select v-model.number="newLabel.shade" class="text-sm border border-zinc-300 rounded px-2 py-1">
-          <option value="100">Light</option>
-          <option value="500">Medium</option>
+          <option value="100">
+Light
+</option>
+          <option value="500">
+Medium
+</option>
         </select>
         
-        <Button @click="createLabel" :disabled="!newLabel.name" size="sm" variant="primary">
+        <Button :disabled="!newLabel.name" size="sm" variant="primary" @click="createLabel">
           Add Label
         </Button>
       </div>

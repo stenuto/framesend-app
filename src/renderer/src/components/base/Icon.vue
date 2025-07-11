@@ -22,7 +22,9 @@ const iconMappings = {
   'volume-2': 'Volume2',
   'volume-x': 'VolumeX',
   'maximize': 'Maximize',
-  'upload': 'Upload'
+  'upload': 'Upload',
+  'settings': 'Settings',
+  'x': 'X'
 }
 
 const props = defineProps({

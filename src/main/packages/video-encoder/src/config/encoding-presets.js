@@ -22,7 +22,7 @@ export function calculateBitrate(width, height, bpp, fps = 30) {
   };
 }
 
-// H.264 ladder - all available rungs
+// H.264 ladder - simplified to only essential rungs
 export const H264_LADDER = [
   {
     name: '360p',
@@ -30,13 +30,6 @@ export const H264_LADDER = [
     targetBpp: 0.10,
     profile: 'main',
     level: '3.0',
-  },
-  {
-    name: '540p',
-    height: 540,
-    targetBpp: 0.09,
-    profile: 'main',
-    level: '3.1',
   },
   {
     name: '720p',
@@ -54,14 +47,6 @@ export const H264_LADDER = [
     audioUpgrade: true,
   },
   {
-    name: '1440p',
-    height: 1440,
-    targetBpp: 0.065,
-    profile: 'high',
-    level: '5.0',
-    audioUpgrade: true,
-  },
-  {
     name: '2160p',
     height: 2160,
     targetBpp: 0.05,
@@ -71,52 +56,36 @@ export const H264_LADDER = [
   },
 ];
 
-// AV1 ladder - matching H.264 rungs but with better efficiency
+// AV1 ladder - only 4K HQ option
 export const AV1_LADDER = [
   {
-    name: '720p',
-    height: 720,
-    targetBpp: 0.06, // ~25% more efficient than H.264
-    preset: 8,
-    crf: 32,
-  },
-  {
-    name: '1080p',
-    height: 1080,
-    targetBpp: 0.06,
-    preset: 7,
-    crf: 30,
-    audioUpgrade: true,
-  },
-  {
-    name: '1440p',
-    height: 1440,
-    targetBpp: 0.06,
-    preset: 6,
-    crf: 28,
-    audioUpgrade: true,
-  },
-  {
-    name: '2160p',
+    name: '2160p_hq',
     height: 2160,
-    targetBpp: 0.06,
-    preset: 6,
-    crf: 28,
+    targetBpp: 0.06, // Will be overridden by CRF mode
+    preset: 5,
+    crf: 18,
     audioUpgrade: true,
+    // AV1 HQ specific settings per user requirements
+    profile: 0, // Main 10 profile
+    pixelFormat: 'yuv420p10le', // 10-bit 4:2:0
   },
 ];
 
-// AV1 general configuration
+// AV1 general configuration - HQ 4K mode
 export const AV1_CONFIG = {
   codec: 'libsvtav1',
-  pixelFormat: 'yuv420p10le', // 10-bit for future-proofing
-  // SVT-AV1 specific parameters
+  pixelFormat: 'yuv420p10le', // 10-bit 4:2:0
+  // SVT-AV1 HQ parameters
   svtav1Params: {
-    'aq-mode': 2, // Adaptive quantization mode
-    'tile-columns': 2, // 4 tiles (2x1) for faster decode
+    'preset': 5, // Speed-quality sweet spot
+    'profile': 0, // Main 10 profile
+    'tune': 0, // PSNR/BDRate-centric default
+    'aq-mode': 1, // Content-adaptive quantization
+    'sc-threshold': 40, // Modest scene-cut sensitivity
+    'tile-columns': 2, // 1x2 tiling for smooth parallel decoding
     'tile-rows': 1,
-    'row-mt': 1, // Row-based multithreading
-    'enable-overlays': 1, // Enable overlay frames
+    'film-grain': 0, // Disabled by default (can be enabled for grain sources)
+    'fast-decode': 0, // Standard decode complexity
   },
 };
 
@@ -129,9 +98,9 @@ export const H264_ENCODING_PARAMS = {
   colorSpace: 'bt709', // HD color space
   // x264 specific parameters for HLS optimization
   'x264-params': [
-    'keyint=60',       // Keyframe interval: 2 seconds at 30fps (Apple recommendation)
-    'min-keyint=60',   // Fixed GOP size for HLS
-    'no-scenecut',     // Disable scene cut detection for predictable segments
+    'keyint=240',       // Keyframe interval: 2 seconds GOP (240 frames at 30fps for AV1 compatibility)
+    'min-keyint=240',   // Fixed GOP size for HLS
+    'scenecut=40',      // Enable scene cut detection with threshold
     'bframes=3',       // B-frames as per reference
     'ref=4',           // Reference frames as per reference
     'rc-lookahead=40', // Lookahead as per reference
@@ -217,20 +186,15 @@ export const DEFAULT_ENCODING_SETTINGS = {
     enabled: true,
     rungs: {
       '360p': true,
-      '540p': false,
       '720p': true,
-      '1080p': false,
-      '1440p': true,
-      '2160p': false,
+      '1080p': true,
+      '2160p': true,
     }
   },
   av1: {
-    enabled: true,
+    enabled: false, // AV1 4K HQ is optional, disabled by default
     rungs: {
-      '720p': false,
-      '1080p': false,
-      '1440p': false,
-      '2160p': true,
+      '2160p_hq': true,
     }
   }
 };

@@ -1,15 +1,17 @@
 <template>
   <div class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md px-6">
-      <h1 class="text-2xl font-bold text-zinc-100 text-center mb-8">Sign In</h1>
-      <form @submit.prevent="handleSignIn" class="space-y-6">
+      <h1 class="text-2xl font-bold text-zinc-100 text-center mb-8">
+Sign In
+</h1>
+      <form class="space-y-6" @submit.prevent="handleSignIn">
         <div>
           <label class="block text-sm font-medium text-zinc-300 mb-2">
             Email
           </label>
           <input v-model="email" type="email" required
             class="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 rounded-md text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            placeholder="you@example.com" />
+            placeholder="you@example.com" >
         </div>
 
         <div>
@@ -18,13 +20,13 @@
           </label>
           <input v-model="password" type="password" required
             class="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 rounded-md text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            placeholder="••••••••" />
+            placeholder="••••••••" >
         </div>
 
         <div class="flex items-center justify-between">
           <label class="flex items-center">
             <input v-model="rememberMe" type="checkbox"
-              class="w-4 h-4 bg-zinc-800 border-zinc-600 rounded text-emerald-500 focus:ring-emerald-500" />
+              class="w-4 h-4 bg-zinc-800 border-zinc-600 rounded text-emerald-500 focus:ring-emerald-500" >
             <span class="ml-2 text-sm text-zinc-400">Remember me</span>
           </label>
 
@@ -45,8 +47,7 @@
           <a href="#" class="text-emerald-500 hover:text-emerald-400">Sign up</a>
         </p>
       </div>
-
-    </div>
+</div>
   </div>
 </template>
 

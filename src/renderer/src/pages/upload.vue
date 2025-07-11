@@ -1,5 +1,16 @@
 <template>
   <div class="flex flex-col h-full">
+    <!-- Header with Settings Button -->
+    <div class="flex items-center justify-between mb-2">
+      <h1 class="font-semibold text-zinc-900 dark:text-zinc-100">
+        Upload Videos
+      </h1>
+      <Button variant="ghost" size="sm" @click="goToSettings">
+        <Icon name="settings" class="w-4 h-4 mr-2" />
+        Settings
+      </Button>
+    </div>
+
     <!-- Drag and Drop Area (Top Half) -->
     <div class="flex-1">
       <div :class="[
@@ -42,7 +53,9 @@
         <!-- Queue List -->
         <div class="overflow-y-auto">
           <div v-if="queue.length === 0" class="h-full flex items-center justify-center">
-            <p class="text-zinc-500 dark:text-zinc-400">No files in queue</p>
+            <p class="text-zinc-500 dark:text-zinc-400">
+              No files in queue
+            </p>
           </div>
 
           <div v-else class="p-4 space-y-2">
@@ -50,7 +63,9 @@
               class="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-700 rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex-1 min-w-0 flex items-end">
-                  <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">{{ file.name }}</p>
+                  <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">
+                    {{ file.name }}
+                  </p>
                   <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
                     <span>{{ formatFileSize(file.size) }}</span>
                   </div>
@@ -84,21 +99,20 @@
                     class="normal-case ml-1 text-yellow-600 dark:text-yellow-500">({{
                       file.warnings.join(', ') }})</span>
                 </span>
-
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { useRouterStore } from '../stores/router'
 import { useVideoEncodingStore } from '../stores/videoEncoding'
+import { useQueueStore } from '../stores/queue'
 import Icon from '../components/base/Icon.vue'
 import Button from '../components/base/Button.vue'
 import '../debug-utils.js' // Import debug utilities
@@ -116,16 +130,16 @@ export default {
   setup() {
     const router = useRouterStore()
     const videoStore = useVideoEncodingStore()
+    const queueStore = useQueueStore()
     const isDragging = ref(false)
-    const queue = ref([])
     const validationErrors = ref([])
-    let fileIdCounter = 0
 
     // Computed properties
-    const activeJobs = computed(() => videoStore.activeJobs)
-    const completedJobs = computed(() => videoStore.completedJobs)
-    const failedJobs = computed(() => videoStore.failedJobs)
-    const totalProgress = computed(() => videoStore.totalProgress)
+    const queue = computed(() => queueStore.queue)
+    const activeJobs = computed(() => queueStore.activeJobs)
+    const completedJobs = computed(() => queueStore.completedJobs)
+    const failedJobs = computed(() => queueStore.failedJobs)
+    const totalProgress = computed(() => queueStore.totalProgress)
     const isPaused = computed(() => videoStore.queueStatus.isPaused)
 
     const handleDrop = async (e) => {
@@ -174,6 +188,10 @@ export default {
       }
     }
 
+    const goToSettings = () => {
+      router.navigateTo('settings')
+    }
+
 
     const addFilesToQueue = async (files) => {
       // For drag and drop, we get File objects
@@ -208,111 +226,181 @@ export default {
       // Clear previous errors
       validationErrors.value = []
 
-      // Add files to local queue for preview
-      const newFiles = videoFiles.map(file => ({
-        id: ++fileIdCounter,
-        name: file.name,
-        size: file.size,
-        path: file.path,
-        file: file.file || file, // Use the File object if available, otherwise the normalized object
-        isTemp: file.isTemp || false, // Track if this is a temporary file
-        status: 'pending',
-        progress: 0,
-        validation: null,
-        jobId: null
-      }))
+      // Add files to queue store
+      const newFiles = queueStore.addToQueue(videoFiles)
 
-      queue.value.push(...newFiles)
+      // Process files in batches for better performance
+      const BATCH_SIZE = 10
+      const batches = []
+      for (let i = 0; i < newFiles.length; i += BATCH_SIZE) {
+        batches.push(newFiles.slice(i, i + BATCH_SIZE))
+      }
 
-      // Validate each file that has a path
-      for (const queueItem of newFiles) {
-        if (!queueItem.path) {
-          queueItem.status = 'error'
-          queueItem.error = 'File path not available - please use Browse Files button'
+      // Process each batch
+      for (const batch of batches) {
+        // Filter out items without paths
+        const itemsWithPaths = batch.filter(item => item.path)
+        const itemsWithoutPaths = batch.filter(item => !item.path)
+
+        // Handle items without paths
+        if (itemsWithoutPaths.length > 0) {
+          const noPathUpdates = itemsWithoutPaths.map(item => ({
+            id: item.id,
+            updates: {
+              status: 'error',
+              error: 'File path not available - please use Browse Files button'
+            }
+          }))
+          queueStore.batchUpdateQueueItems(noPathUpdates)
+        }
+
+        // Skip if no items with paths
+        if (itemsWithPaths.length === 0) continue
+
+        // Batch validate all files with paths
+        const filePaths = itemsWithPaths.map(item => item.path)
+        const batchResult = await window.api.video.validateBatch(filePaths)
+
+        if (!batchResult.success) {
+          // Handle batch validation failure
+          const failureUpdates = itemsWithPaths.map(item => ({
+            id: item.id,
+            updates: {
+              status: 'error',
+              error: batchResult.error
+            }
+          }))
+          queueStore.batchUpdateQueueItems(failureUpdates)
           continue
         }
 
-        try {
-          const validation = await videoStore.validateVideo(queueItem)
-          queueItem.validation = validation
+        // Process validation results and queue valid files
+        const updates = []
+        const validFiles = []
 
-          if (!validation.isValid) {
-            queueItem.status = 'invalid'
-            queueItem.error = validation.errors.join(', ')
+        for (let i = 0; i < itemsWithPaths.length; i++) {
+          const queueItem = itemsWithPaths[i]
+          const validationResult = batchResult.data[i]
+
+          if (!validationResult.success) {
+            updates.push({
+              id: queueItem.id,
+              updates: {
+                status: 'error',
+                error: validationResult.error
+              }
+            })
           } else {
-            // File is valid, start encoding immediately
-            if (validation.warnings && validation.warnings.length > 0) {
-              queueItem.warnings = validation.warnings
+            const validation = validationResult.data
+            const itemUpdates = { validation }
+
+            if (!validation.isValid) {
+              itemUpdates.status = 'invalid'
+              itemUpdates.error = validation.errors.join(', ')
+            } else {
+              if (validation.warnings && validation.warnings.length > 0) {
+                itemUpdates.warnings = validation.warnings
+              }
+              validFiles.push({ queueItem, validation })
             }
 
-            // Start encoding this file
-            try {
-              queueItem.status = 'queuing'
-              const job = await videoStore.queueVideo(queueItem)
-              queueItem.jobId = job.id
-              queueItem.status = 'queued'
-
-              // Watch for this job's progress
-              watchJobProgress(queueItem, job.id)
-            } catch (error) {
-              queueItem.status = 'error'
-              queueItem.error = error.message
-            }
+            updates.push({ id: queueItem.id, updates: itemUpdates })
           }
-        } catch (error) {
-          queueItem.status = 'error'
-          queueItem.error = error.message
+        }
+
+        // Batch update with validation results
+        queueStore.batchUpdateQueueItems(updates)
+
+        // Queue valid files for encoding
+        const encodingUpdates = []
+        for (const { queueItem } of validFiles) {
+          try {
+            const job = await videoStore.queueVideo(queueItem)
+            encodingUpdates.push({
+              id: queueItem.id,
+              updates: {
+                jobId: job.id,
+                status: 'queued'
+              }
+            })
+          } catch (error) {
+            encodingUpdates.push({
+              id: queueItem.id,
+              updates: {
+                status: 'error',
+                error: error.message
+              }
+            })
+          }
+        }
+
+        // Batch update with encoding results
+        if (encodingUpdates.length > 0) {
+          queueStore.batchUpdateQueueItems(encodingUpdates)
         }
       }
+
+      // Start a single progress watcher for all jobs
+      startProgressWatcher()
     }
 
     const removeFromQueue = async (id) => {
-      const file = queue.value.find(f => f.id === id)
-
-      if (!file) {
-        return;
-      }
-
-      // If the file has a jobId and is being processed, cancel the job first
-      if (file.jobId && (file.status === 'queued' || file.status === 'encoding')) {
-        try {
-          await videoStore.cancelJob(file.jobId);
-          // Remove from video store
-          videoStore.removeJob(file.jobId);
-        } catch (error) {
-          console.error('Failed to cancel job:', error);
-          // Continue with removal even if cancel fails
-        }
-      }
-
-      // Clean up temporary file
-      if (file.isTemp && file.path) {
-        await window.api.file.cleanTemp(file.path)
-      }
-
-      // Remove from queue
-      queue.value = queue.value.filter(f => f.id !== id)
+      await queueStore.removeFromQueue(id)
     }
 
     const clearQueue = async () => {
-      // Cancel all active jobs first
-      for (const file of queue.value) {
-        if (file.jobId && (file.status === 'queued' || file.status === 'encoding')) {
-          try {
-            await videoStore.cancelJob(file.jobId);
-            videoStore.removeJob(file.jobId);
-          } catch (error) {
-            console.error('Failed to cancel job:', error);
+      await queueStore.clearQueue()
+    }
+
+    // Single progress watcher for all jobs
+    let progressWatcherInterval = null
+
+    const startProgressWatcher = () => {
+      // Don't start multiple watchers
+      if (progressWatcherInterval) return
+
+      progressWatcherInterval = setInterval(() => {
+        const updates = []
+        let hasActiveJobs = false
+
+        // Check all queue items with jobs
+        for (const queueItem of queue.value) {
+          if (queueItem.jobId) {
+            const job = videoStore.jobs.get(queueItem.jobId)
+            if (job) {
+              hasActiveJobs = true
+
+              // Prepare update if needed
+              const newStatus = job.status === 'complete' ? 'completed' :
+                job.status === 'error' ? 'error' :
+                  job.status === 'cancelled' ? 'cancelled' :
+                    job.status === 'queued' ? 'queued' :
+                      'encoding'
+
+              if (queueItem.progress !== job.progress || queueItem.status !== newStatus) {
+                updates.push({
+                  id: queueItem.id,
+                  updates: {
+                    progress: job.progress,
+                    status: newStatus
+                  }
+                })
+              }
+            }
           }
         }
 
-        // Clean up temporary files
-        if (file.isTemp && file.path) {
-          await window.api.file.cleanTemp(file.path)
+        // Batch update if there are changes
+        if (updates.length > 0) {
+          queueStore.batchUpdateQueueItems(updates)
         }
-      }
 
-      queue.value = []
+        // Stop watcher if no active jobs
+        if (!hasActiveJobs && progressWatcherInterval) {
+          clearInterval(progressWatcherInterval)
+          progressWatcherInterval = null
+        }
+      }, 1000)
     }
 
     const handleCancelJob = async (file) => {
@@ -328,8 +416,8 @@ export default {
           // Use the regular cancel which now includes aggressive process killing
           await videoStore.cancelJob(file.jobId);
 
-          // Remove from queue immediately
-          queue.value = queue.value.filter(item => item.jobId !== file.jobId)
+          // Remove from queue
+          await queueStore.removeFromQueue(file.id)
 
           // Remove from video store
           videoStore.removeJob(file.jobId);
@@ -339,54 +427,6 @@ export default {
           alert(`Failed to cancel job: ${error.message}`)
         }
       }
-    }
-
-
-    // Watch encoding progress for a specific queue item
-    const watchJobProgress = (queueItem, jobId) => {
-      const checkInterval = setInterval(() => {
-        const job = videoStore.jobs.get(jobId)
-
-        if (!job) {
-          clearInterval(checkInterval)
-          return
-        }
-
-        // Update queue item with job progress
-        const itemIndex = queue.value.findIndex(item => item.id === queueItem.id)
-        if (itemIndex !== -1) {
-          queue.value[itemIndex] = {
-            ...queue.value[itemIndex],
-            progress: job.progress || 0,
-            status: job.status,
-            jobId: jobId // Preserve the jobId
-          }
-        }
-
-        if (job.status === 'complete') {
-          const itemIndex = queue.value.findIndex(item => item.id === queueItem.id)
-          if (itemIndex !== -1) {
-            queue.value[itemIndex] = {
-              ...queue.value[itemIndex],
-              status: 'completed',
-              metadata: job.metadata,
-              jobId: jobId // Preserve the jobId
-            }
-          }
-          clearInterval(checkInterval)
-        } else if (job.status === 'error') {
-          const itemIndex = queue.value.findIndex(item => item.id === queueItem.id)
-          if (itemIndex !== -1) {
-            queue.value[itemIndex] = {
-              ...queue.value[itemIndex],
-              status: 'error',
-              error: job.error?.message || 'Encoding failed',
-              jobId: jobId // Preserve the jobId
-            }
-          }
-          clearInterval(checkInterval)
-        }
-      }, 1000)
     }
 
     const formatFileSize = (bytes) => {
@@ -401,9 +441,23 @@ export default {
     }
 
 
+    // Sync with active jobs on mount
+    onMounted(() => {
+      // Sync queue with any active jobs from video store
+      queueStore.syncWithVideoStore()
+
+      // Start the progress watcher if there are active jobs
+      const hasActiveJobs = queue.value.some(item =>
+        item.jobId && (item.status === 'encoding' || item.status === 'queued')
+      )
+      if (hasActiveJobs) {
+        startProgressWatcher()
+      }
+    })
+
     // Expose for debugging
     window.__videoStore = videoStore;
-    window.__queue = queue;
+    window.__queueStore = queueStore;
 
     // Debug function to check process status
     window.checkProcesses = async () => {
@@ -428,6 +482,12 @@ export default {
 
     // Cleanup on unmount
     onUnmounted(async () => {
+      // Stop the progress watcher
+      if (progressWatcherInterval) {
+        clearInterval(progressWatcherInterval)
+        progressWatcherInterval = null
+      }
+
       // Clean up any temporary files
       for (const file of queue.value) {
         if (file.isTemp && file.path) {
@@ -453,6 +513,7 @@ export default {
       // Methods
       handleDrop,
       browseFiles,
+      goToSettings,
       removeFromQueue,
       clearQueue,
       formatFileSize,

@@ -7,6 +7,8 @@ const modules = { app, BrowserWindow }
 
 export async function registerHandlers() {
   console.log('=== Starting handler registration ===');
+  console.log('import.meta.url:', import.meta.url);
+  console.log('import.meta.dirname:', import.meta.dirname);
   const handlersDir = import.meta.url.includes('/out/main/') 
     ? join(import.meta.dirname, '../../src/main/handlers')
     : join(import.meta.dirname, '.');
@@ -52,7 +54,7 @@ export async function registerHandlers() {
   console.log('\n=== Registered IPC handlers ===');
   const handlers = ipcMain._events || {};
   Object.keys(handlers).forEach(channel => {
-    if (channel.startsWith('video:') || channel.startsWith('window:') || channel.startsWith('file:') || channel.startsWith('dialog:') || channel.startsWith('app:')) {
+    if (channel.startsWith('video:') || channel.startsWith('window:') || channel.startsWith('file:') || channel.startsWith('dialog:') || channel.startsWith('app:') || channel.startsWith('settings:')) {
       console.log(`- ${channel}`);
     }
   });
