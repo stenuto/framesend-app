@@ -42,19 +42,31 @@ H.264 Encoding
               <span class="ml-2 text-sm text-zinc-700 dark:text-zinc-300">Enable H.264 encoding</span>
             </label>
 
-            <div v-if="settings.h264.enabled" class="ml-6 space-y-3">
-              <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-Quality rungs:
-</p>
+            <div v-if="settings.h264.enabled" class="ml-6 space-y-4">
+              <div class="space-y-3">
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  Quality setting:
+                </p>
+                <QualitySlider
+                  v-model="settings.h264.quality"
+                  left-label="Faster encoding"
+                  right-label="Higher quality"
+                />
+              </div>
               
-              <label v-for="rung in h264Rungs" :key="rung" class="flex items-center">
-                <input 
-                  v-model="settings.h264.rungs[rung]" 
-                  type="checkbox"
-                  class="w-4 h-4 text-cyan-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-cyan-500 focus:ring-2"
-                >
-                <span class="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{{ rung }}</span>
-              </label>
+              <div class="space-y-3">
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  Resolution rungs:
+                </p>
+                <label v-for="rung in h264Rungs" :key="rung" class="flex items-center">
+                  <input 
+                    v-model="settings.h264.rungs[rung]" 
+                    type="checkbox"
+                    class="w-4 h-4 text-cyan-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-cyan-500 focus:ring-2"
+                  >
+                  <span class="ml-2 text-sm text-zinc-700 dark:text-zinc-300">{{ rung }}</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -74,16 +86,28 @@ AV1 4K HQ Mode
               <span class="ml-2 text-sm text-zinc-700 dark:text-zinc-300">Enable AV1 4K HQ encoding</span>
             </label>
 
-            <div v-if="settings.av1.enabled" class="ml-6">
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">
-                High-quality 4K encoding using AV1 codec with 10-bit color depth and optimized settings for maximum quality.
-              </p>
-              <ul class="mt-2 text-xs text-zinc-500 dark:text-zinc-500 space-y-1">
-                <li>• CRF 18 for excellent quality</li>
-                <li>• 10-bit 4:2:0 color</li>
-                <li>• Preset 5 (balanced speed/quality)</li>
-                <li>• Content-adaptive quantization</li>
-              </ul>
+            <div v-if="settings.av1.enabled" class="ml-6 space-y-4">
+              <div class="space-y-3">
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  Quality setting:
+                </p>
+                <QualitySlider
+                  v-model="settings.av1.quality"
+                  left-label="Faster encoding"
+                  right-label="Higher quality"
+                />
+              </div>
+              
+              <div class="space-y-3">
+                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                  High-quality 4K encoding using AV1 codec with 10-bit color depth and optimized settings.
+                </p>
+                <ul class="mt-2 text-xs text-zinc-500 dark:text-zinc-500 space-y-1">
+                  <li>• 10-bit 4:2:0 color</li>
+                  <li>• Preset 5 (balanced speed/quality)</li>
+                  <li>• Content-adaptive quantization</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -115,14 +139,16 @@ AV1 4K HQ Mode
 <script>
 import { ref, onMounted, toRaw } from 'vue'
 import { useRouterStore } from '../stores/router'
-import Button from '../components/base/Button.vue'
-import Icon from '../components/base/Icon.vue'
+import Button from '@components/base/Button.vue'
+import Icon from '@components/base/Icon.vue'
+import QualitySlider from '@components/base/QualitySlider.vue'
 
 export default {
   name: 'SettingsPage',
   components: {
     Button,
-    Icon
+    Icon,
+    QualitySlider
   },
   meta: {
     title: 'Settings'
@@ -139,13 +165,15 @@ export default {
           '720p': true,
           '1080p': true,
           '2160p': true
-        }
+        },
+        quality: 3  // Single quality for all H.264 renditions
       },
       av1: {
         enabled: false,
         rungs: {
           '2160p_hq': true
-        }
+        },
+        quality: 5  // Single quality for all AV1 renditions
       }
     })
 
@@ -158,6 +186,13 @@ export default {
         const loadedSettings = await window.api.settings.load()
         console.log('Loaded settings:', loadedSettings)
         if (loadedSettings) {
+          // Ensure quality properties exist for backward compatibility
+          if (!loadedSettings.h264.quality || typeof loadedSettings.h264.quality === 'object') {
+            loadedSettings.h264.quality = 3
+          }
+          if (!loadedSettings.av1.quality || typeof loadedSettings.av1.quality === 'object') {
+            loadedSettings.av1.quality = 5
+          }
           settings.value = loadedSettings
         }
       } catch (error) {
@@ -173,6 +208,7 @@ export default {
         // Use toRaw to get the plain object from Vue's reactive proxy
         const rawSettings = toRaw(settings.value)
         console.log('Saving settings:', rawSettings)
+        console.log('AV1 quality value:', rawSettings.av1.quality['2160p_hq'])
         const result = await window.api.settings.save(rawSettings)
         console.log('Save result:', result)
         saveStatus.value = 'saved'

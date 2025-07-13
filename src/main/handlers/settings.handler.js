@@ -30,19 +30,32 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
               '720p': true,
               '1080p': true,
               '2160p': true
-            }
+            },
+            quality: 3
           },
           av1: {
             enabled: false,
             rungs: {
               '2160p_hq': true
-            }
+            },
+            quality: 5
           }
         }
       }
       
       const content = await readFile(settingsPath, 'utf8')
-      return JSON.parse(content)
+      const settings = JSON.parse(content)
+      
+      // Ensure quality properties exist for backward compatibility
+      if (settings.h264 && (!settings.h264.quality || typeof settings.h264.quality === 'object')) {
+        settings.h264.quality = 3
+      }
+      
+      if (settings.av1 && (!settings.av1.quality || typeof settings.av1.quality === 'object')) {
+        settings.av1.quality = 5
+      }
+      
+      return settings
     } catch (error) {
       console.error('Failed to load settings:', error)
       throw error

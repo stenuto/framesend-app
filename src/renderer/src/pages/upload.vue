@@ -1,15 +1,5 @@
 <template>
   <div class="flex flex-col h-full">
-    <!-- Header with Settings Button -->
-    <div class="flex items-center justify-between mb-2">
-      <h1 class="font-semibold text-zinc-900 dark:text-zinc-100">
-        Upload Videos
-      </h1>
-      <Button variant="ghost" size="sm" @click="goToSettings">
-        <Icon name="settings" class="w-4 h-4 mr-2" />
-        Settings
-      </Button>
-    </div>
 
     <!-- Drag and Drop Area (Top Half) -->
     <div class="flex-1">
@@ -113,8 +103,8 @@ import { ref, computed, onUnmounted, onMounted } from 'vue'
 import { useRouterStore } from '../stores/router'
 import { useVideoEncodingStore } from '../stores/videoEncoding'
 import { useQueueStore } from '../stores/queue'
-import Icon from '../components/base/Icon.vue'
-import Button from '../components/base/Button.vue'
+import Icon from '@components/base/Icon.vue'
+import Button from '@components/base/Button.vue'
 import '../debug-utils.js' // Import debug utilities
 
 export default {
@@ -188,9 +178,6 @@ export default {
       }
     }
 
-    const goToSettings = () => {
-      router.navigateTo('settings')
-    }
 
 
     const addFilesToQueue = async (files) => {
@@ -513,7 +500,6 @@ export default {
       // Methods
       handleDrop,
       browseFiles,
-      goToSettings,
       removeFromQueue,
       clearQueue,
       formatFileSize,

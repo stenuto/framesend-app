@@ -4,6 +4,65 @@
  */
 
 /**
+ * Map quality slider value (1-5) to CRF value
+ * Lower CRF = better quality, larger files
+ * Higher CRF = lower quality, smaller files
+ * @param {number} quality - Quality slider value (1-5)
+ * @param {string} codec - 'h264' or 'av1'
+ * @returns {number} CRF value
+ */
+export function mapQualityToCRF(quality, codec = 'h264') {
+  // H.264 CRF range: 15-32 (lower is better)
+  // Quality 1 = CRF 32 (fastest encoding, smallest files, lower quality)
+  // Quality 3 = CRF 23 (balanced - good quality/size trade-off)
+  // Quality 5 = CRF 15 (excellent quality, larger files, slower encoding)
+  if (codec === 'h264') {
+    const crfMap = {
+      1: 32,    // Very compressed, suitable for preview/draft
+      2: 27.5,  // Compressed, acceptable quality
+      3: 23,    // Balanced - recommended default
+      4: 19,    // High quality
+      5: 15     // Excellent quality, near-lossless
+    };
+    return crfMap[quality] || 23;
+  }
+  
+  // AV1 CRF range: 12-40 (lower is better, different scale than H.264)
+  // Quality 1 = CRF 40 (fastest, very compressed)
+  // Quality 3 = CRF 25 (balanced - good for most use cases)
+  // Quality 5 = CRF 12 (exceptional quality for archival/master)
+  if (codec === 'av1') {
+    const crfMap = {
+      1: 40,    // Very compressed, fast encoding
+      2: 32.5,  // Compressed but acceptable
+      3: 25,    // Balanced - recommended default
+      4: 18.5,  // High quality
+      5: 12     // Exceptional quality, large files
+    };
+    return crfMap[quality] || 25;
+  }
+  
+  return 23; // Default fallback
+}
+
+/**
+ * Map quality to bitrate multiplier
+ * Higher quality should also slightly increase bitrate caps
+ * @param {number} quality - Quality slider value (1-5)
+ * @returns {number} Bitrate multiplier
+ */
+export function mapQualityToBitrateMultiplier(quality) {
+  const multiplierMap = {
+    1: 0.6,   // 40% lower bitrate cap - aggressive compression
+    2: 0.8,   // 20% lower bitrate cap
+    3: 1.0,   // Normal bitrate cap
+    4: 1.25,  // 25% higher bitrate cap
+    5: 1.5    // 50% higher bitrate cap - allow more bits for quality
+  };
+  return multiplierMap[quality] || 1.0;
+}
+
+/**
  * Calculate bitrate based on resolution and bits per pixel
  * This ensures aspect ratio aware bitrates (e.g., square videos get higher bitrates)
  * @param {number} width - Video width in pixels
@@ -93,7 +152,7 @@ export const AV1_CONFIG = {
 export const H264_ENCODING_PARAMS = {
   codec: 'libx264',
   preset: 'slow', // Good speed/quality trade-off
-  crf: 22, // Capped-CRF mode for consistent quality
+  crf: 23, // Default CRF for quality level 3 (will be overridden by per-rung settings)
   pixelFormat: 'yuv420p', // Standard 8-bit for maximum compatibility
   colorSpace: 'bt709', // HD color space
   // x264 specific parameters for HLS optimization

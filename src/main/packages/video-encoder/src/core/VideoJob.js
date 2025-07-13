@@ -13,6 +13,8 @@ import {
   THUMBNAIL_PARAMS,
   AV1_CONFIG,
   calculateBitrate,
+  mapQualityToCRF,
+  mapQualityToBitrateMultiplier,
 } from '../config/encoding-presets.js';
 import { filterLadderBySettings } from '../utils/settings-loader.js';
 import { ProgressTracker } from '../utils/progress-tracker.js';
@@ -206,10 +208,19 @@ export class VideoJob extends EventEmitter {
           const targetHeight = Math.min(rung.height, sourceHeight);
           const width = Math.round(targetHeight * aspectRatio / 2) * 2; // Ensure even number
           
-          // Calculate bitrate based on actual pixel count
-          const bitrateConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
+          // Get quality setting (single value for all H.264 renditions)
+          const quality = this.encodingSettings.h264.quality || 3;
+          const crf = mapQualityToCRF(quality, 'h264');
+          const bitrateMultiplier = mapQualityToBitrateMultiplier(quality);
           
-          console.log(`[Encoding] H.264 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
+          // Calculate bitrate based on actual pixel count and quality multiplier
+          const baseConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
+          const bitrateConfig = {
+            maxrate: `${Math.round(parseInt(baseConfig.maxrate) * bitrateMultiplier)}k`,
+            bufsize: `${Math.round(parseInt(baseConfig.bufsize) * bitrateMultiplier)}k`,
+          };
+          
+          console.log(`[Encoding] H.264 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp}, Quality: ${quality}, CRF: ${crf})`);
           
           return {
             ...rung,
@@ -217,6 +228,7 @@ export class VideoJob extends EventEmitter {
             width,
             height: targetHeight,
             ...bitrateConfig,
+            crf,
             outputPath: path.join(this.outputDir, 'renditions', 'h264', rung.name),
           };
         });
@@ -234,10 +246,19 @@ export class VideoJob extends EventEmitter {
           const targetHeight = Math.min(rung.height, sourceHeight);
           const width = Math.round(targetHeight * aspectRatio / 2) * 2; // Ensure even number
           
-          // Calculate bitrate based on actual pixel count
-          const bitrateConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
+          // Get quality setting (single value for all AV1 renditions)
+          const quality = this.encodingSettings.av1.quality || 5;
+          const crf = mapQualityToCRF(quality, 'av1');
+          const bitrateMultiplier = mapQualityToBitrateMultiplier(quality);
           
-          console.log(`[Encoding] AV1 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp})`);
+          // Calculate bitrate based on actual pixel count and quality multiplier
+          const baseConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
+          const bitrateConfig = {
+            maxrate: `${Math.round(parseInt(baseConfig.maxrate) * bitrateMultiplier)}k`,
+            bufsize: `${Math.round(parseInt(baseConfig.bufsize) * bitrateMultiplier)}k`,
+          };
+          
+          console.log(`[Encoding] AV1 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp}, Quality: ${quality}, CRF: ${crf})`);
           
           return {
             ...rung,
@@ -245,6 +266,7 @@ export class VideoJob extends EventEmitter {
             width,
             height: targetHeight,
             ...bitrateConfig,
+            crf,
             outputPath: path.join(this.outputDir, 'renditions', 'av1', rung.name),
           };
         });
@@ -358,6 +380,7 @@ export class VideoJob extends EventEmitter {
   _getH264Options(rendition) {
     return {
       ...H264_ENCODING_PARAMS,
+      crf: rendition.crf,
       videoFilters: `scale=${rendition.width}:${rendition.height || rendition.targetHeight}`,
       maxrate: rendition.maxrate,
       bufsize: rendition.bufsize,
