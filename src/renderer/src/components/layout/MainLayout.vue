@@ -1,7 +1,5 @@
 <template>
   <div class="app-container flex-col flex h-screen w-screen overflow-hidden bg-zinc-800">
-    <!-- Nav -->
-    <Nav />
     <!-- Main Content -->
     <div class="flex-1 flex h-0">
       <Sidebar v-if="sidebarOpen" />
@@ -15,7 +13,6 @@
 <script setup>
 import { useUIStore } from '@/stores/ui'
 import { storeToRefs } from 'pinia'
-import Nav from './Nav.vue'
 import Sidebar from './Sidebar.vue'
 
 const uiStore = useUIStore()

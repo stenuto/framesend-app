@@ -1,11 +1,14 @@
 <template>
-  <div class="flex h-full w-64 flex-col shrink-0">
+  <div class="flex h-full w-64 flex-col shrink-0 pt-6">
 
     <div class="flex items-center gap-3 px-5 mt-4">
       <img src="https://placehold.co/100" alt="Framesend" class="size-8 rounded-smooth" />
       <div class="flex gap-2 items-center">
         <div class="text-base font-medium text-zinc-200">Framesend</div>
         <Icon name="chevron-down" class="size-3.5 text-zinc-500" />
+      </div>
+      <div class="flex-1 flex justify-end">
+        <Icon name="panel-left-close" class="size-4 text-zinc-500" />
       </div>
     </div>
 
