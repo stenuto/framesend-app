@@ -1,8 +1,9 @@
 <template>
   <div>
     <!-- Folder Row -->
-    <div v-if="item.type === 'folder'" class="group hover:bg-zinc-800/30 transition-colors relative" :class="{
+    <div v-if="item.type === 'folder'" class="group hover:bg-white/5 relative" :class="{
       'bg-blue-400/10': dragOverFolder === item.id,
+      'bg-zinc-800/50': isInLastExpandedFolder,
       'border-b border-zinc-800/50': depth === 0 && !(isExpanded && children.length > 0)
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
@@ -44,8 +45,10 @@
     </div>
 
     <!-- Video Row -->
-    <div v-else-if="item.type === 'video'" class="group hover:bg-zinc-800/30 transition-colors relative"
-      :class="{ 'border-b border-zinc-800/50': depth === 0 }">
+    <div v-else-if="item.type === 'video'" class="group hover:bg-white/5 relative" :class="{
+      'border-b border-zinc-800/50': depth === 0,
+      'bg-zinc-800/50': isInLastExpandedFolder
+    }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
         :style="hierarchyLineConfig.getLineStyle(i)">
@@ -57,7 +60,7 @@
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
-            <Icon name="video" class="size-3.5 text-indigo-600/50 flex-shrink-0" />
+            <Icon name="video" class="size-3.5 text-indigo-500 flex-shrink-0" :stroke-width="2" />
             <span class="text-sm text-zinc-200 truncate">{{ item.name }}</span>
           </div>
         </div>
@@ -86,7 +89,7 @@
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
                 :stroke-dasharray="`${2 * Math.PI * 10}`"
                 :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
-                class="text-sky-500 transition-all duration-500" />
+                class="text-indigo-500 duration-500" />
             </svg>
             <span class="text-sm font-medium text-zinc-300">
               {{ Math.round(item.progress || 0) }}%
@@ -123,7 +126,8 @@
     <template v-if="item.type === 'folder' && isExpanded">
       <FileSystemItem v-for="child in children" :key="child.id" :item="child" :depth="depth + 1"
         :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
-        :get-folder-video-count="getFolderVideoCount" @toggle-folder="$emit('toggle-folder', $event)"
+        :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
+        :get-ancestor-ids="getAncestorIds" @toggle-folder="$emit('toggle-folder', $event)"
         @drag-start="$emit('drag-start', $event)" @drag-end="$emit('drag-end', $event)" @drop="$emit('drop', $event)"
         @drag-over="$emit('drag-over', $event)" @drag-leave="$emit('drag-leave', $event)"
         @external-drop="$emit('external-drop', $event)" @cancel-encoding="$emit('cancel-encoding', $event)" />
@@ -164,6 +168,14 @@ export default {
     getFolderVideoCount: {
       type: Function,
       required: true
+    },
+    lastExpandedFolder: {
+      type: String,
+      default: null
+    },
+    getAncestorIds: {
+      type: Function,
+      default: () => () => []
     }
   },
   emits: ['toggle-folder', 'drag-start', 'drag-end', 'drop', 'drag-over', 'drag-leave', 'external-drop', 'cancel-encoding'],
@@ -172,12 +184,25 @@ export default {
       props.expandedFolders.has(props.item.id)
     )
 
+    // Check if this item should be highlighted
+    const isInLastExpandedFolder = computed(() => {
+      if (!props.lastExpandedFolder) return false
+      // Check if this item is the last expanded folder
+      if (props.item.id === props.lastExpandedFolder) {
+        return true
+      }
+      // Check if this item is a descendant of the last expanded folder
+      const ancestors = props.getAncestorIds(props.item.id)
+      const result = ancestors.includes(props.lastExpandedFolder)
+      return result
+    })
+
     // Hierarchy line configuration
     const hierarchyLineConfig = computed(() => {
       const config = {
         // Visual style
         borderStyle: 'border-l',           // 'border-l' for solid, 'border-l-2' for thicker, 'border-l border-dashed' for dashed
-        borderColor: 'border-zinc-800', // Color and opacity
+        borderColor: 'border-white/10', // Color and opacity
 
         // Positioning
         indentSize: 1.5,                   // rem - how much to indent per level
@@ -338,6 +363,7 @@ export default {
       totalFileCount,
       folderSize,
       hierarchyLineConfig,
+      isInLastExpandedFolder,
       handleDragStart,
       handleDragEnd,
       handleDrop,

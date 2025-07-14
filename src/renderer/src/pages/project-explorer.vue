@@ -8,10 +8,7 @@
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <Button variant="ghost" size="sm" icon-name="cog-6-tooth" @click="goToSettings">
-          Settings
-        </Button>
-        <Button variant="default" icon-name="plus" @click="browseFiles" class="text-sm">
+        <Button variant="default" icon-name="plus" @click="browseFiles" size="sm">
           Add Videos
         </Button>
       </div>
@@ -36,10 +33,11 @@
           <!-- Root Items using recursive component -->
           <FileSystemItem v-for="item in rootItems" :key="item.id" :item="item" :depth="0"
             :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
-            :get-folder-video-count="getFolderVideoCount" @toggle-folder="toggleFolder"
-            @drag-start="handleDragStartWrapper" @drag-end="handleDragEnd" @drop="handleDropWrapper"
-            @drag-over="handleDragOverWrapper" @drag-leave="handleDragLeaveWrapper"
-            @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" />
+            :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
+            :get-ancestor-ids="getAncestorIds" @toggle-folder="toggleFolder" @drag-start="handleDragStartWrapper"
+            @drag-end="handleDragEnd" @drop="handleDropWrapper" @drag-over="handleDragOverWrapper"
+            @drag-leave="handleDragLeaveWrapper" @external-drop="handleExternalDropWrapper"
+            @cancel-encoding="handleCancelEncoding" />
         </div>
       </div>
     </div>
@@ -83,6 +81,7 @@ export default {
     const expandedFolders = ref(new Set())
     const draggedItem = ref(null)
     const dragOverFolder = ref(null)
+    const lastExpandedFolder = ref(null)
 
     const rootItems = computed(() => {
       return getProjectFileSystem(selectedProject.value?.id)
@@ -104,8 +103,14 @@ export default {
     const toggleFolder = (folderId) => {
       if (expandedFolders.value.has(folderId)) {
         expandedFolders.value.delete(folderId)
+        // If we're closing the last expanded folder, clear it
+        if (folderId === lastExpandedFolder.value) {
+          lastExpandedFolder.value = null
+        }
       } else {
         expandedFolders.value.add(folderId)
+        // Always update lastExpandedFolder when any folder is expanded
+        lastExpandedFolder.value = folderId
       }
     }
 
@@ -198,6 +203,17 @@ export default {
         current = fileSystem.value.find(i => i.id === current.parentId)
       }
       return false
+    }
+
+    // Helper to get all ancestor IDs of an item
+    const getAncestorIds = (itemId) => {
+      const ancestors = []
+      let current = fileSystem.value.find(i => i.id === itemId)
+      while (current && current.parentId) {
+        ancestors.push(current.parentId)
+        current = fileSystem.value.find(i => i.id === current.parentId)
+      }
+      return ancestors
     }
 
     // Root level drop handlers
@@ -462,18 +478,15 @@ export default {
       handleExternalDropWrapper,
       handleCancelEncoding,
       browseFiles,
-      goToSettings
+      goToSettings,
+      getAncestorIds,
+      lastExpandedFolder
     }
   }
 }
 </script>
 
 <style scoped>
-/* Smooth transitions */
-.transition-all {
-  transition: all 0.2s ease;
-}
-
 /* Dragging styles */
 [draggable="true"] {
   cursor: move;
