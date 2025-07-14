@@ -2,7 +2,7 @@
   <MainLayout>
     <component :is="currentComponent" v-if="currentComponent" />
     <div v-else class="flex items-center justify-center h-full">
-      <p class="text-zinc-500">
+      <p class="text-slate-500">
         Loading...
       </p>
     </div>

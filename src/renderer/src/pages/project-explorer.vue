@@ -39,14 +39,6 @@
           @drag-over="handleDragOverWrapper"
           @drag-leave="handleDragLeaveWrapper"
         />
-        
-        <!-- Root Drop Zone Indicator (at bottom) -->
-        <div 
-          v-if="dragOverRoot"
-          class="mt-4 p-4 border-2 border-dashed border-cyan-500 bg-cyan-500/10 rounded-lg text-center"
-        >
-          <span class="text-sm text-cyan-400">Drop here to move to root</span>
-        </div>
       </div>
     </div>
   </div>
@@ -87,7 +79,6 @@ export default {
     const expandedFolders = ref(new Set())
     const draggedItem = ref(null)
     const dragOverFolder = ref(null)
-    const dragOverRoot = ref(false)
 
     const rootItems = computed(() => {
       return getProjectFileSystem(selectedProject.value?.id)
@@ -134,7 +125,6 @@ export default {
       e.target.style.opacity = ''
       draggedItem.value = null
       dragOverFolder.value = null
-      dragOverRoot.value = false
     }
 
     const handleDragOver = (e, folderId) => {
@@ -213,15 +203,13 @@ export default {
       
       if (!draggedItem.value) return
       
-      // Show root drop zone for both videos and folders
-      dragOverRoot.value = true
       e.dataTransfer.dropEffect = 'move'
     }
     
     const handleDragLeaveRoot = (e) => {
-      // Only clear if we're leaving the entire container
+      // Only process if we're leaving the entire container
       if (e.currentTarget === e.target) {
-        dragOverRoot.value = false
+        // No visual feedback needed
       }
     }
     
@@ -230,7 +218,6 @@ export default {
       e.stopPropagation()
       
       if (!draggedItem.value) {
-        dragOverRoot.value = false
         return
       }
       
@@ -241,7 +228,6 @@ export default {
         console.log(`Moved ${draggedItem.value.name} to root`)
       }
       
-      dragOverRoot.value = false
       draggedItem.value = null
     }
 
@@ -268,7 +254,6 @@ export default {
       rootItems,
       expandedFolders,
       dragOverFolder,
-      dragOverRoot,
       toggleFolder,
       getFolderItems,
       getVideosInFolder,
