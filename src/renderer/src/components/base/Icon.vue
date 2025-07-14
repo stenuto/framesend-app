@@ -1,5 +1,6 @@
 <template>
-  <component :is="iconComponent" v-if="iconComponent" :class="$attrs.class" :size="iconSize" />
+  <component :is="iconComponent" v-if="iconComponent" :class="$attrs.class" :size="iconSize"
+    :stroke-width="strokeWidth" />
   <span v-else class="inline-flex items-center justify-center text-zinc-400 leading-none">?</span>
 </template>
 
@@ -35,6 +36,10 @@ const props = defineProps({
   size: {
     type: [String, Number],
     default: 24
+  },
+  strokeWidth: {
+    type: [String, Number],
+    default: 3
   }
 })
 
@@ -46,7 +51,7 @@ const iconName = computed(() => {
   if (iconMappings[props.name]) {
     return iconMappings[props.name]
   }
-  
+
   // Otherwise convert kebab-case to PascalCase
   return props.name
     .split('-')
@@ -64,12 +69,12 @@ const iconSize = computed(() => {
   // Check if we have a class attribute with size classes
   const classAttr = attrs.class || ''
   const sizeMatch = classAttr.match(/size-(\d+(?:\.\d+)?)/)?.[1]
-  
+
   if (sizeMatch) {
     // Convert Tailwind size to pixels (size-4 = 1rem = 16px)
     return parseFloat(sizeMatch) * 4
   }
-  
+
   return props.size
 })
 </script>

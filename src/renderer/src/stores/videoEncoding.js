@@ -21,15 +21,15 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
   const allJobs = computed(() => Array.from(jobs.value.values()));
   
   const activeJobs = computed(() => 
-    allJobs.value.filter(job => job.status === 'encoding')
+    allJobs.value.filter(job => job.status === 'processing')
   );
   
   const completedJobs = computed(() => 
-    allJobs.value.filter(job => job.status === 'complete')
+    allJobs.value.filter(job => job.status === 'ready')
   );
   
   const failedJobs = computed(() => 
-    allJobs.value.filter(job => job.status === 'error')
+    allJobs.value.filter(job => job.status === 'failed')
   );
   
   const totalProgress = computed(() => {
@@ -55,7 +55,7 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
         console.log('[VideoStore] Received start event for job:', data.jobId);
         const job = jobs.value.get(data.jobId);
         if (job) {
-          job.status = 'encoding';
+          job.status = 'processing'; // Changed from 'encoding' to 'processing'
           job.startedAt = new Date();
         }
       });
@@ -69,7 +69,7 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
         job.stages = data.stages;
         job.currentStage = data.currentStage;
         job.details = data.details;
-        job.status = 'encoding';
+        job.status = 'processing'; // Changed from 'encoding' to 'processing'
         
         // Log detailed stage information
         if (data.currentStage) {
@@ -117,7 +117,7 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     eventCleanups.value.complete = window.api.video.onComplete((data) => {
       const job = jobs.value.get(data.jobId);
       if (job) {
-        job.status = 'complete';
+        job.status = 'ready'; // Changed from 'complete' to 'ready'
         job.progress = 100;
         job.metadata = data.metadata;
         job.duration = data.duration;
@@ -129,7 +129,7 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     eventCleanups.value.error = window.api.video.onError((data) => {
       const job = jobs.value.get(data.jobId);
       if (job) {
-        job.status = 'error';
+        job.status = 'failed'; // Changed from 'error' to 'failed'
         job.error = data.error;
         job.failedAt = new Date();
       }
@@ -141,7 +141,8 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
         console.log(`[VideoStore] Received cancelled event for job ${data.jobId}`);
         const job = jobs.value.get(data.jobId);
         if (job) {
-          job.status = 'cancelled';
+          job.status = 'failed';
+          job.error = 'Cancelled by user';
           job.cancelledAt = new Date();
         }
       });
@@ -269,7 +270,8 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
 
     const job = jobs.value.get(jobId);
     if (job) {
-      job.status = 'cancelled';
+      job.status = 'failed';
+      job.error = 'Cancelled by user';
       job.cancelledAt = new Date();
     }
 

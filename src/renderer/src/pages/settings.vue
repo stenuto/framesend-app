@@ -226,7 +226,11 @@ export default {
     }
 
     const goBack = () => {
-      router.navigateTo('upload')
+      if (router.canGoBack) {
+        router.goBack()
+      } else {
+        router.navigateTo('project-explorer')
+      }
     }
 
     onMounted(() => {

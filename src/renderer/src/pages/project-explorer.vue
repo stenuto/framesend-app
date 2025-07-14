@@ -7,9 +7,14 @@
           <h1 class="text-lg font-semibold text-zinc-100">{{ selectedProject?.name }}</h1>
         </div>
       </div>
-      <Button variant="default" icon-name="plus" @click="browseFiles" class="text-sm">
-        Add Videos
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button variant="ghost" size="sm" icon-name="cog-6-tooth" @click="goToSettings">
+          Settings
+        </Button>
+        <Button variant="default" icon-name="plus" @click="browseFiles" class="text-sm">
+          Add Videos
+        </Button>
+      </div>
     </div>
 
     <!-- File Explorer Table -->
@@ -17,12 +22,12 @@
       @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent>
       <div class="min-h-0 flex-1">
         <!-- Table Header -->
-        <div class="sticky top-0 bg-zinc-900 border-b border-zinc-700 z-10">
-          <div class="flex px-6 py-3 text-[11px] text-zinc-500">
+        <div class="sticky top-0 bg-zinc-900 border-b border-zinc-800 z-10">
+          <div class="flex px-6 py-2 text-[11px] text-zinc-500">
             <div class="flex-1">Name</div>
-            <div class="w-24 text-center">Files</div>
-            <div class="w-28 text-right">Size</div>
-            <div class="w-24 text-center">Status</div>
+            <div class="w-24">Files</div>
+            <div class="w-28">Size</div>
+            <div class="w-24">Status</div>
           </div>
         </div>
 
@@ -282,7 +287,7 @@ export default {
             duration: job.validation.metadata?.duration || '0:00',
             size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
             orderIndex: fileSystem.value.filter(i => i.parentId === parentId).length + index,
-            status: 'encoding',
+            status: 'queued',
             progress: 0,
             jobId: job.id,
             filePath: file.path
@@ -303,7 +308,7 @@ export default {
             duration: '0:00',
             size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
             orderIndex: fileSystem.value.filter(i => i.parentId === parentId).length + index,
-            status: 'error',
+            status: 'failed',
             error: error.message
           }
           fileSystem.value.push(failedVideo)
@@ -319,14 +324,14 @@ export default {
       const item = fileSystem.value.find(i => i.jobId === data.jobId)
       if (item) {
         item.progress = Math.round(data.global * 100)
-        item.status = 'encoding'
+        item.status = 'processing'
       }
     })
 
     const unsubscribeComplete = window.api.video.onComplete((data) => {
       const item = fileSystem.value.find(i => i.jobId === data.jobId)
       if (item) {
-        item.status = 'encoded'
+        item.status = 'ready'
         item.progress = 100
         if (data.metadata?.duration) {
           // Format duration from seconds to MM:SS
@@ -341,7 +346,7 @@ export default {
     const unsubscribeError = window.api.video.onError((data) => {
       const item = fileSystem.value.find(i => i.jobId === data.jobId)
       if (item) {
-        item.status = 'error'
+        item.status = 'failed'
         item.error = data.error
       }
     })
@@ -349,7 +354,8 @@ export default {
     const unsubscribeCancelled = window.api.video.onCancelled?.((data) => {
       const item = fileSystem.value.find(i => i.jobId === data.jobId)
       if (item) {
-        item.status = 'cancelled'
+        item.status = 'failed'
+        item.error = 'Cancelled by user'
       }
     })
 
@@ -410,7 +416,7 @@ export default {
               duration: job.validation.metadata?.duration || '0:00',
               size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
               orderIndex: fileSystem.value.filter(i => i.parentId === null).length + index,
-              status: 'encoding',
+              status: 'queued',
               progress: 0,
               jobId: job.id,
               filePath: file.path
@@ -423,6 +429,10 @@ export default {
           }
         }
       }
+    }
+
+    const goToSettings = () => {
+      router.navigateTo('settings')
     }
 
     return {
@@ -451,7 +461,8 @@ export default {
       handleDragLeaveWrapper,
       handleExternalDropWrapper,
       handleCancelEncoding,
-      browseFiles
+      browseFiles,
+      goToSettings
     }
   }
 }

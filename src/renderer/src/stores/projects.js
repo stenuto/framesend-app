@@ -81,7 +81,7 @@ export const useProjectsStore = defineStore('projects', () => {
     { id: 'fs1', type: 'folder', name: 'Raw_Footage', parentId: null, projectId: 'proj1', orderIndex: 0 },
     { id: 'fs2', type: 'folder', name: 'Edited_Videos', parentId: null, projectId: 'proj1', orderIndex: 1 },
     { id: 'fs3', type: 'folder', name: 'Graphics_Assets', parentId: null, projectId: 'proj1', orderIndex: 2 },
-    { id: 'fs4', type: 'video', name: 'Campaign_Overview.mp4', parentId: null, projectId: 'proj1', orderIndex: 3, duration: '3:45', size: '450 MB', status: 'encoded' },
+    { id: 'fs4', type: 'video', name: 'Campaign_Overview.mp4', parentId: null, projectId: 'proj1', orderIndex: 3, duration: '3:45', size: '450 MB', status: 'ready' },
     
     // Nested folders
     { id: 'fs5', type: 'folder', name: 'Interviews', parentId: 'fs1', projectId: 'proj1', orderIndex: 0 },
@@ -90,12 +90,12 @@ export const useProjectsStore = defineStore('projects', () => {
     { id: 'fs8', type: 'folder', name: 'Work_In_Progress', parentId: 'fs2', projectId: 'proj1', orderIndex: 1 },
     
     // Videos in folders
-    { id: 'fs9', type: 'video', name: 'CEO_Interview_Raw.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 0, duration: '15:32', size: '1.2 GB', status: 'encoding', progress: 67 },
-    { id: 'fs10', type: 'video', name: 'CTO_Interview_Raw.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 1, duration: '12:18', size: '980 MB', status: 'encoding', progress: 23 },
-    { id: 'fs11', type: 'video', name: 'Office_Tour_B-Roll.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 0, duration: '8:45', size: '750 MB' },
-    { id: 'fs12', type: 'video', name: 'Product_Shots.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 1, duration: '6:20', size: '520 MB' },
-    { id: 'fs13', type: 'video', name: 'Campaign_Final_1080p.mp4', parentId: 'fs7', projectId: 'proj1', orderIndex: 0, duration: '2:30', size: '180 MB', status: 'encoded' },
-    { id: 'fs14', type: 'video', name: 'Campaign_Final_4K.mp4', parentId: 'fs7', projectId: 'proj1', orderIndex: 1, duration: '2:30', size: '680 MB', status: 'encoded' },
+    { id: 'fs9', type: 'video', name: 'CEO_Interview_Raw.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 0, duration: '15:32', size: '1.2 GB', status: 'processing', progress: 67 },
+    { id: 'fs10', type: 'video', name: 'CTO_Interview_Raw.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 1, duration: '12:18', size: '980 MB', status: 'processing', progress: 23 },
+    { id: 'fs11', type: 'video', name: 'Office_Tour_B-Roll.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 0, duration: '8:45', size: '750 MB', status: 'queued' },
+    { id: 'fs12', type: 'video', name: 'Product_Shots.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 1, duration: '6:20', size: '520 MB', status: 'failed', error: 'Invalid video codec' },
+    { id: 'fs13', type: 'video', name: 'Campaign_Final_1080p.mp4', parentId: 'fs7', projectId: 'proj1', orderIndex: 0, duration: '2:30', size: '180 MB', status: 'ready' },
+    { id: 'fs14', type: 'video', name: 'Campaign_Final_4K.mp4', parentId: 'fs7', projectId: 'proj1', orderIndex: 1, duration: '2:30', size: '680 MB', status: 'ready' },
     
     // Product Demos - Root level
     { id: 'fs15', type: 'folder', name: 'Screen_Recordings', parentId: null, projectId: 'proj2', orderIndex: 0 },
