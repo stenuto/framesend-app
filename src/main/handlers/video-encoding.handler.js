@@ -386,30 +386,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
     }
   });
 
-  /**
-   * Select video files
-   */
-  ipcMain.handle('video:selectFiles', async () => {
-    const { dialog } = await import('electron');
-    
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile', 'multiSelections'],
-      filters: [
-        { name: 'Videos', extensions: ['mp4', 'mov', 'avi', 'mkk', 'webm', 'm4v', 'mpg', 'mpeg', 'wmv', 'flv'] },
-        { name: 'All Files', extensions: ['*'] }
-      ]
-    });
-    
-    if (result.canceled) {
-      return null;
-    }
-    
-    return result.filePaths.map(filePath => ({
-      path: filePath,
-      name: path.basename(filePath),
-      size: fs.statSync(filePath).size
-    }));
-  });
   
   /**
    * Test fluent-ffmpeg kill

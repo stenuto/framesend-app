@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full p-4">
 
     <!-- Drag and Drop Area (Top Half) -->
     <div class="flex-1">
