@@ -1,6 +1,7 @@
 <template>
-  <div class="flex h-full w-66 flex-col shrink-0 text-zinc-400">
-    <div class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5">
+  <div class="flex h-full w-66 flex-col shrink-0">
+    <div
+      class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5 text-zinc-500/75 dark:text-zinc-400/75">
       <Button icon-name="arrow-left" size="sm" variant="ghost" />
       <Button icon-name="arrow-right" size="sm" variant="ghost" />
       <Button icon-name="panel-right-open" size="sm" variant="ghost" />
@@ -12,21 +13,21 @@
       @click="handleAccountClick" />
 
     <!-- Project List -->
-    <div class="text-sm font-regular text-zinc-400/50 px-6 mt-6">
+    <div class="text-[11px] font-regular px-6 mt-6 text-current/60">
       Projects
     </div>
     <div class="flex-1 overflow-y-auto">
-      <div class="p-3 space-y-1">
+      <div class="p-3 space-y-0.5">
         <!-- Projects -->
         <div v-for="project in projects" :key="project.id" :class="[
-          'group flex items-center gap-2 px-3 py-1.5 rounded-smooth-lg cursor-pointer',
-          selectedProjectId === project.id ? 'bg-zinc-700/40 text-white' : 'hover:bg-zinc-700/40'
+          'group flex items-center gap-2 px-2.5 py-1.5 rounded-smooth-lg',
+          selectedProjectId === project.id ? 'dark:bg-zinc-600/20 bg-zinc-500/20 dark:text-zinc-50 text-zinc-800' : ''
         ]" @click="handleProjectClick(project.id)">
 
           <!-- Project Info -->
           <div class="flex-1 min-w-0">
             <h3
-              :class="[selectedProjectId === project.id ? 'text-zinc-200' : 'text-zinc-200/50 group-hover:text-zinc-200', 'text-[15px] font-regular truncate']">
+              :class="[selectedProjectId === project.id ? 'text-current' : 'group-hover:text-current', 'text-[13px] font-regular truncate']">
               {{
                 project.name }}</h3>
           </div>

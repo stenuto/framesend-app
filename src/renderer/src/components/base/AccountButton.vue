@@ -1,21 +1,22 @@
 <template>
-  <div class="flex items-center gap-2.5 mx-3 p-2 rounded-smooth-lg hover:bg-zinc-700/50 cursor-pointer"
+  <div
+    class="flex items-center gap-[9px] mx-3 p-2 rounded-smooth-lg hover:dark:bg-zinc-600/20 hover:bg-zinc-500/20 cursor-pointer"
     @click="$emit('click')">
     <!-- Avatar -->
-    <component :is="avatarComponent" v-bind="avatarProps" :class="[type === 'team' ? 'size-8.5' : 'size-7.5']" />
+    <component :is="avatarComponent" v-bind="avatarProps" :class="[type === 'team' ? 'size-8' : 'size-8']" />
 
     <!-- Account Info -->
-    <div class="flex gap-2.5 items-center">
+    <div class="flex gap-2 items-center">
       <div class="flex flex-col gap-[3px] leading-none">
-        <div :class="[type === 'team' ? 'text-base' : 'text-sm', 'text-zinc-200 leading-none']">{{ name }}</div>
-        <div :class="[type === 'team' ? 'text-sm' : 'text-sm', 'font-regular text-zinc-500 leading-none']">{{
+        <div :class="['text-sm leading-none']">{{ name }}</div>
+        <div :class="['text-xs font-regular leading-none text-current/60']">{{
           subtitle }}</div>
       </div>
     </div>
 
     <!-- Chevron Icon -->
     <div class="flex-1 flex justify-end">
-      <Icon name="chevrons-up-down" class="size-4 text-zinc-500" stroke-width="2.5" />
+      <Icon name="chevrons-up-down" class="size-4 opacity-60" stroke-width="2.5" />
     </div>
   </div>
 </template>

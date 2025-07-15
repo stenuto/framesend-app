@@ -19,8 +19,8 @@
     <!-- File Explorer Table -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Table Header -->
-      <div class="bg-zinc-900 border-b border-zinc-800 z-10 shrink-0">
-        <div class="flex px-3 py-1.5 text-[11px] text-zinc-500">
+      <div class="border-b border-zinc-800 z-10 shrink-0">
+        <div class="flex px-3 py-1.5 text-[11px] dark:text-zinc-500 text-zinc-500">
           <div class="flex-1">Name</div>
           <div class="w-24">Files</div>
           <div class="w-28">Size</div>

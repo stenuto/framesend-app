@@ -1,6 +1,6 @@
 <template>
   <button :class="[
-    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth font-medium text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
     variantClasses[variant],
     // Use icon-only size classes if only icon exists, otherwise regular size classes
     iconName && !hasDefaultSlot ? iconOnlySizeClasses[size] : sizeClasses[size],
@@ -53,11 +53,11 @@ const hasDefaultSlot = computed(() => {
 })
 
 const variantClasses = {
-  default: 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-600',
+  default: 'bg-zinc-50 dark:bg-zinc-700/50 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-600 ring-1 ring-black/10 dark:ring-white/10',
   destructive: 'bg-red-600 text-white hover:bg-red-700',
   outline: 'border border-zinc-600 bg-zinc-800 hover:bg-zinc-700 text-zinc-100',
   secondary: 'bg-zinc-700 text-zinc-100 hover:bg-zinc-600',
-  ghost: 'hover:bg-zinc-700 hover:text-zinc-100',
+  ghost: 'dark:hover:bg-white/7 dark:hover:text-zinc-50 bg-transparent hover:bg-black/7',
   link: 'text-zinc-100 underline-offset-4 hover:underline'
 }
 

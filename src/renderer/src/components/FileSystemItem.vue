@@ -1,9 +1,10 @@
 <template>
-  <div>
+  <div class="text-[13px]">
     <!-- Folder Row -->
-    <div v-if="item.type === 'folder'" class="group hover:bg-white/4 relative" :class="{
+    <div v-if="item.type === 'folder'" class="group dark:hover:bg-white/4 hover:bg-black/6 relative" :class="{
       'bg-indigo-400/10': dragOverFolder === item.id,
-      'bg-white/2': isInLastExpandedFolder
+      'bg-white/2 ': isInLastExpandedFolder,
+      'text-current/60': !isInLastExpandedFolder
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -11,42 +12,40 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-3 py-2 relative" :draggable="true" @click="$emit('toggle-folder', item.id)"
+      <div class="flex items-center px-3 py-1.5 relative " :draggable="true" @click="$emit('toggle-folder', item.id)"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @drop="handleDrop" @dragover.prevent="handleDragOver"
         @dragleave="handleDragLeave">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
-            <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3.5 text-zinc-600 flex-shrink-0"
+            <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3.5  flex-shrink-0"
               stroke-width="2" />
-            <Icon v-if="!isExpanded" name="folder" class="size-3.5 text-zinc-600 flex-shrink-0" />
-            <Icon v-else name="folder-open" class="size-3.5 text-zinc-600 flex-shrink-0" />
-            <span class="text-sm text-zinc-200 truncate">{{ item.name }}</span>
+            <Icon v-if="!isExpanded" name="folder" class="size-3.5  flex-shrink-0" />
+            <Icon v-else name="folder-open" class="size-3.5  flex-shrink-0" />
+            <span class="truncate">{{ item.name }}</span>
           </div>
         </div>
 
         <!-- Files column -->
-        <div class="w-24 text-sm text-zinc-400">
+        <div class="w-24 ">
           {{ totalFileCount }}
         </div>
 
         <!-- Size column -->
-        <div class="w-28 text-sm text-zinc-400">
+        <div class="w-28">
           {{ folderSize }}
         </div>
 
         <!-- Status column -->
         <div class="w-24">
-          <!-- <span class="text-sm text-zinc-500">
-            {{ totalFileCount }} {{ totalFileCount === 1 ? 'video' : 'videos' }}
-          </span> -->
+
         </div>
       </div>
     </div>
 
     <!-- Video Row -->
-    <div v-else-if="item.type === 'video'" class="group hover:bg-white/4 relative" :class="{
-      'bg-zinc-800/35': isInLastExpandedFolder
+    <div v-else-if="item.type === 'video'" class="group dark:hover:bg-white/4 hover:bg-black/6 relative" :class="{
+      'dark:bg-white/2': isInLastExpandedFolder
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -54,23 +53,25 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center pr-3 py-2 relative" :class="[depth === 0 ? 'pl-3' : 'pl-2.5']" :draggable="true"
+      <div class="flex items-center pr-3 py-1.5 relative" :class="[depth === 0 ? 'pl-3' : 'pl-2.5']" :draggable="true"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
-        <div class="flex-1 flex items-center gap-2 min-w-0" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="flex-1 flex items-center gap-2 min-w-0"
+          :class="{ 'opacity-40': item.status === 'processing' || item.status === 'queued' }">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
-            <Icon name="video" class="size-3.5 text-indigo-500 flex-shrink-0" :stroke-width="2" />
-            <span class="text-sm text-zinc-200 truncate">{{ item.name }}</span>
+            <Icon name="video" class="size-3.5 text-indigo-500 flex-shrink-0"
+              :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
+            <span class=" truncate">{{ item.name }}</span>
           </div>
         </div>
 
         <!-- Files column (empty for videos) -->
-        <div class="w-24  text-sm text-zinc-400" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="w-24" :class="{ 'opacity-50': item.status === 'processing' }">
           -
         </div>
 
         <!-- Size column -->
-        <div class="w-28 text-sm text-zinc-400" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="w-28" :class="{ 'opacity-50': item.status === 'processing' }">
           {{ item.size || '-' }}
         </div>
 
@@ -84,13 +85,13 @@
           <div v-else-if="item.status === 'processing'" class="inline-flex items-center gap-1.5">
             <svg class="size-5 -rotate-90" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
-                class="text-zinc-700/50" />
+                class="text-current/15" />
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
                 :stroke-dasharray="`${2 * Math.PI * 10}`"
                 :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
-                class="text-indigo-500 duration-500" />
+                class="dark:text-indigo-500 text-indigo-500 duration-500" />
             </svg>
-            <span class="text-sm text-zinc-300">
+            <span class="">
               {{ Math.round(item.progress || 0) }}%
             </span>
           </div>
@@ -112,7 +113,7 @@
       <div class="flex items-center px-6 py-3 bg-red-900/20">
         <div class="flex-1 flex items-center gap-2">
           <Icon name="exclamation-triangle" class="w-4 h-4 text-red-500" />
-          <span class="text-sm text-red-400">Unknown item type: {{ item.type }} ({{ item.name }})</span>
+          <span class="text-red-400">Unknown item type: {{ item.type }} ({{ item.name }})</span>
         </div>
         <div class="w-24"></div>
         <div class="w-28"></div>

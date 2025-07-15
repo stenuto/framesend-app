@@ -1,6 +1,5 @@
 import './assets/main.css'
 import './assets/utilities.css'
-import './assets/dark-mode.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
