@@ -22,7 +22,7 @@
       <div class="min-h-0 flex-1">
         <!-- Table Header -->
         <div class="sticky top-0 bg-zinc-900 border-b border-zinc-800 z-10">
-          <div class="flex px-6 py-2 text-[11px] text-zinc-500">
+          <div class="flex px-3 py-1.5 text-[11px] text-zinc-500">
             <div class="flex-1">Name</div>
             <div class="w-24">Files</div>
             <div class="w-28">Size</div>

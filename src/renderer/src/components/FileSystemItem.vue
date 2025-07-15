@@ -1,9 +1,9 @@
 <template>
   <div>
     <!-- Folder Row -->
-    <div v-if="item.type === 'folder'" class="group hover:bg-white/5 relative" :class="{
-      'bg-blue-400/10': dragOverFolder === item.id,
-      'bg-zinc-800/35': isInLastExpandedFolder
+    <div v-if="item.type === 'folder'" class="group hover:bg-white/4 relative" :class="{
+      'bg-indigo-400/10': dragOverFolder === item.id,
+      'bg-white/2': isInLastExpandedFolder
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -11,7 +11,7 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-6 py-2.5 cursor-pointer relative" :draggable="true"
+      <div class="flex items-center px-3 py-2 cursor-pointer relative" :draggable="true"
         @click="$emit('toggle-folder', item.id)" @dragstart="handleDragStart" @dragend="handleDragEnd"
         @drop.prevent="handleDrop" @dragover.prevent="handleDragOver" @dragleave="handleDragLeave">
         <!-- Name column -->
@@ -45,7 +45,7 @@
     </div>
 
     <!-- Video Row -->
-    <div v-else-if="item.type === 'video'" class="group hover:bg-white/5 relative" :class="{
+    <div v-else-if="item.type === 'video'" class="group hover:bg-white/4 relative" :class="{
       'bg-zinc-800/35': isInLastExpandedFolder
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
@@ -54,7 +54,7 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-6 py-3 cursor-move relative" :draggable="true" @dragstart="handleDragStart"
+      <div class="flex items-center px-3 py-2 cursor-move relative" :draggable="true" @dragstart="handleDragStart"
         @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
@@ -209,7 +209,7 @@ export default {
 
         // Positioning
         indentSize: 1.5,                   // rem - how much to indent per level
-        lineOffset: 1.9,                   // rem - offset from left edge for first line
+        lineOffset: 1.15,                   // rem - offset from left edge for first line
       }
 
       return {
