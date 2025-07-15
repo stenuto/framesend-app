@@ -1,10 +1,12 @@
 <template>
-  <div class="flex flex-col h-full bg-zinc-900 pt-6">
+  <div class="flex flex-col h-full bg-zinc-900 pt-6.5">
     <!-- Project Header with Back Button -->
     <div class="px-6 py-4 flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <div>
-          <h1 class="text-lg font-semibold text-zinc-100">{{ selectedProject?.name }}</h1>
+        <div class="relative">
+          <Icon name="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+          <input v-model="searchQuery" type="text" placeholder="Search"
+            class="w-80 pl-8 pr-3 py-1.5 bg-zinc-800/50 text-zinc-200 text-sm rounded-smooth-lg border-0.5 border-zinc-800 focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600 placeholder-zinc-500" />
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -31,13 +33,13 @@
         <!-- Table Body -->
         <div>
           <!-- Root Items using recursive component -->
-          <FileSystemItem v-for="item in rootItems" :key="item.id" :item="item" :depth="0"
+          <FileSystemItem v-for="(item, index) in rootItems" :key="item.id" :item="item" :depth="0"
             :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
             :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
-            :get-ancestor-ids="getAncestorIds" @toggle-folder="toggleFolder" @drag-start="handleDragStartWrapper"
-            @drag-end="handleDragEnd" @drop="handleDropWrapper" @drag-over="handleDragOverWrapper"
-            @drag-leave="handleDragLeaveWrapper" @external-drop="handleExternalDropWrapper"
-            @cancel-encoding="handleCancelEncoding" />
+            :get-ancestor-ids="getAncestorIds" :is-last-child="index === rootItems.length - 1"
+            @toggle-folder="toggleFolder" @drag-start="handleDragStartWrapper" @drag-end="handleDragEnd"
+            @drop="handleDropWrapper" @drag-over="handleDragOverWrapper" @drag-leave="handleDragLeaveWrapper"
+            @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" />
         </div>
       </div>
     </div>
@@ -82,13 +84,43 @@ export default {
     const draggedItem = ref(null)
     const dragOverFolder = ref(null)
     const lastExpandedFolder = ref(null)
+    const searchQuery = ref('')
+
+    // Helper function to recursively filter items
+    const filterItems = (items, query) => {
+      if (!query) return items
+
+      const lowerQuery = query.toLowerCase()
+      const filteredItems = []
+
+      items.forEach(item => {
+        // Check if this item matches
+        if (item.name.toLowerCase().includes(lowerQuery)) {
+          filteredItems.push(item)
+        } else if (item.type === 'folder') {
+          // Check if any children match
+          const children = fileSystem.value.filter(child => child.parentId === item.id)
+          const filteredChildren = filterItems(children, query)
+
+          if (filteredChildren.length > 0) {
+            // Include folder if it has matching children
+            filteredItems.push(item)
+            // Auto-expand folders with matching children
+            expandedFolders.value.add(item.id)
+          }
+        }
+      })
+
+      return filteredItems
+    }
 
     const rootItems = computed(() => {
-      return getProjectFileSystem(selectedProject.value?.id)
+      const allRootItems = getProjectFileSystem(selectedProject.value?.id)
+      return filterItems(allRootItems, searchQuery.value)
     })
 
     const getFolderItems = (folderId) => {
-      return fileSystem.value
+      let items = fileSystem.value
         .filter(item => item.parentId === folderId)
         .sort((a, b) => a.orderIndex - b.orderIndex)
         .map(item => {
@@ -98,6 +130,13 @@ export default {
           }
           return item
         })
+
+      // Apply search filter if query exists
+      if (searchQuery.value) {
+        items = filterItems(items, searchQuery.value)
+      }
+
+      return items
     }
 
     const toggleFolder = (folderId) => {
@@ -480,7 +519,8 @@ export default {
       browseFiles,
       goToSettings,
       getAncestorIds,
-      lastExpandedFolder
+      lastExpandedFolder,
+      searchQuery
     }
   }
 }

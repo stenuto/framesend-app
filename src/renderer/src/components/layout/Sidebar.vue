@@ -1,19 +1,9 @@
 <template>
   <div class="flex h-full w-64 flex-col shrink-0 pt-6">
 
-    <div class="flex items-center gap-2.5 mx-3 p-2 rounded-smooth-lg mt-4 hover:bg-zinc-700/50 cursor-pointer">
-      <img src="https://placehold.co/100" alt="Framesend" class="size-8 rounded-smooth-md" />
-      <div class="flex gap-2.5 items-center">
-        <div class="flex flex-col gap-1 leading-none">
-          <div class="text-base font-medium text-zinc-200 leading-none">Framesend</div>
-          <div class="text-xs font-regular text-zinc-500 leading-none">Business</div>
-        </div>
-
-      </div>
-      <div class="flex-1 flex justify-end">
-        <Icon name="chevrons-up-down" class="size-3.5 text-zinc-500" />
-      </div>
-    </div>
+    <!-- Account Button -->
+    <AccountButton type="team" name="Framesend" subtitle="Pro plan" :avatar-url="'https://placehold.co/100'"
+      @click="handleAccountClick" class="mt-4" />
 
     <!-- Project List -->
     <div class="text-xs font-regular text-zinc-500 px-5 mt-6">
@@ -41,13 +31,9 @@
       </div>
     </div>
 
-    <!-- Settings Button at Bottom -->
-    <div class="p-3 border-t border-zinc-700">
-      <div @click="goToSettings" class="flex items-center gap-2 px-3 py-2 rounded-smooth-lg hover:bg-zinc-700 cursor-pointer">
-        <Icon name="cog-6-tooth" class="w-4 h-4 text-zinc-400" />
-        <span class="text-sm text-zinc-300">Settings</span>
-      </div>
-    </div>
+    <AccountButton type="user" name="Steve Tenuto" subtitle="Admin"
+      avatar-url="https://pbs.twimg.com/profile_images/1800308863977291777/wawcQz6k_400x400.jpg"
+      @click="handleAccountClick" class="mb-3" />
   </div>
 </template>
 
@@ -58,11 +44,13 @@ import { useRouterStore } from '@/stores/router'
 import { storeToRefs } from 'pinia'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
+import AccountButton from '@components/base/AccountButton.vue'
 export default defineComponent({
   name: 'Sidebar',
   components: {
     Icon,
-    Button
+    Button,
+    AccountButton
   },
   setup() {
     const projectsStore = useProjectsStore()
@@ -92,12 +80,18 @@ export default defineComponent({
       router.navigateTo('settings')
     }
 
+    const handleAccountClick = () => {
+      // Handle account button click (e.g., show account menu, switch accounts, etc.)
+      console.log('Account button clicked')
+    }
+
     return {
       projects,
       selectedProjectId,
       handleProjectClick,
       formatDate,
-      goToSettings
+      goToSettings,
+      handleAccountClick
     }
   }
 })

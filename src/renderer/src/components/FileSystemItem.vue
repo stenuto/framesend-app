@@ -3,8 +3,7 @@
     <!-- Folder Row -->
     <div v-if="item.type === 'folder'" class="group hover:bg-white/5 relative" :class="{
       'bg-blue-400/10': dragOverFolder === item.id,
-      'bg-zinc-800/50': isInLastExpandedFolder,
-      'border-b border-zinc-800/50': depth === 0 && !(isExpanded && children.length > 0)
+      'bg-zinc-800/35': isInLastExpandedFolder
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -18,7 +17,8 @@
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
-            <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3.5 text-zinc-500 flex-shrink-0" />
+            <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3.5 text-zinc-600 flex-shrink-0"
+              stroke-width="2" />
             <Icon v-if="!isExpanded" name="folder" class="size-3.5 text-zinc-600 flex-shrink-0" />
             <Icon v-else name="folder-open" class="size-3.5 text-zinc-600 flex-shrink-0" />
             <span class="text-sm text-zinc-200 truncate">{{ item.name }}</span>
@@ -46,8 +46,7 @@
 
     <!-- Video Row -->
     <div v-else-if="item.type === 'video'" class="group hover:bg-white/5 relative" :class="{
-      'border-b border-zinc-800/50': depth === 0,
-      'bg-zinc-800/50': isInLastExpandedFolder
+      'bg-zinc-800/35': isInLastExpandedFolder
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -78,7 +77,7 @@
         <!-- Status column -->
         <div class="w-24 flex items-center">
           <div v-if="item.status === 'ready'"
-            class="size-5 rounded-full bg-zinc-700/50 flex items-center justify-center">
+            class="size-5 rounded-full bg-emerald-800/20 flex items-center justify-center">
             <Icon name="check" class="size-3.5 text-emerald-600" />
           </div>
           <!-- PROCESSING -->
@@ -91,20 +90,19 @@
                 :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
                 class="text-indigo-500 duration-500" />
             </svg>
-            <span class="text-sm font-medium text-zinc-300">
+            <span class="text-sm text-zinc-300">
               {{ Math.round(item.progress || 0) }}%
             </span>
           </div>
           <!-- QUEUED -->
-          <span v-else-if="item.status === 'queued'"
-            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-900/20 text-yellow-400 border border-yellow-900/50">
-            Queued
-          </span>
-          <span v-else-if="item.status === 'failed'"
-            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/20 text-red-400 border border-red-900/50"
-            :title="item.error">
-            Failed
-          </span>
+          <div v-if="item.status === 'queued'"
+            class="size-5 rounded-full bg-amber-800/20 flex items-center justify-center">
+            <Icon name="clock-fading" class="size-3.5 text-amber-400" :stroke-width="2" />
+          </div>
+          <div v-if="item.status === 'failed'"
+            class="size-5 rounded-full bg-rose-800/20 flex items-center justify-center">
+            <Icon name="x" class="size-3.5 text-rose-400" :stroke-width="2" />
+          </div>
         </div>
       </div>
     </div>
@@ -124,13 +122,14 @@
 
     <!-- Recursive children -->
     <template v-if="item.type === 'folder' && isExpanded">
-      <FileSystemItem v-for="child in children" :key="child.id" :item="child" :depth="depth + 1"
+      <FileSystemItem v-for="(child, index) in children" :key="child.id" :item="child" :depth="depth + 1"
         :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
         :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
-        :get-ancestor-ids="getAncestorIds" @toggle-folder="$emit('toggle-folder', $event)"
-        @drag-start="$emit('drag-start', $event)" @drag-end="$emit('drag-end', $event)" @drop="$emit('drop', $event)"
-        @drag-over="$emit('drag-over', $event)" @drag-leave="$emit('drag-leave', $event)"
-        @external-drop="$emit('external-drop', $event)" @cancel-encoding="$emit('cancel-encoding', $event)" />
+        :get-ancestor-ids="getAncestorIds" :is-last-child="index === children.length - 1"
+        @toggle-folder="$emit('toggle-folder', $event)" @drag-start="$emit('drag-start', $event)"
+        @drag-end="$emit('drag-end', $event)" @drop="$emit('drop', $event)" @drag-over="$emit('drag-over', $event)"
+        @drag-leave="$emit('drag-leave', $event)" @external-drop="$emit('external-drop', $event)"
+        @cancel-encoding="$emit('cancel-encoding', $event)" />
     </template>
   </div>
 </template>
@@ -176,6 +175,10 @@ export default {
     getAncestorIds: {
       type: Function,
       default: () => () => []
+    },
+    isLastChild: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['toggle-folder', 'drag-start', 'drag-end', 'drop', 'drag-over', 'drag-leave', 'external-drop', 'cancel-encoding'],
