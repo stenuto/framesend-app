@@ -1,9 +1,10 @@
 <template>
-  <div class="flex h-full w-64 flex-col shrink-0 pt-6">
+  <div class="flex h-full w-64 flex-col shrink-0">
+    <div class="drag h-8.5 w-full shrink-0 items-center" />
 
     <!-- Account Button -->
     <AccountButton type="team" name="Framesend" subtitle="Pro plan" :avatar-url="'https://placehold.co/100'"
-      @click="handleAccountClick" class="mt-4" />
+      @click="handleAccountClick" />
 
     <!-- Project List -->
     <div class="text-xs font-regular text-zinc-500 px-5 mt-6">
@@ -14,12 +15,15 @@
         <!-- Projects -->
         <div v-for="project in projects" :key="project.id" :class="[
           'group flex items-center gap-2 px-3 py-2 rounded-smooth-lg cursor-pointer',
-          selectedProjectId === project.id ? 'bg-zinc-700 text-white' : 'hover:bg-zinc-700'
+          selectedProjectId === project.id ? 'bg-zinc-700/40 text-white' : 'hover:bg-zinc-700/40'
         ]" @click="handleProjectClick(project.id)">
 
           <!-- Project Info -->
           <div class="flex-1 min-w-0">
-            <h3 class="text-sm font-medium text-zinc-200 truncate">{{ project.name }}</h3>
+            <h3
+              :class="[selectedProjectId === project.id ? 'text-zinc-200' : 'text-zinc-200/50 group-hover:text-zinc-200', 'text-sm font-regular truncate']">
+              {{
+                project.name }}</h3>
           </div>
 
           <!-- Last Modified -->

@@ -11,9 +11,9 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-3 py-2 cursor-pointer relative" :draggable="true"
-        @click="$emit('toggle-folder', item.id)" @dragstart="handleDragStart" @dragend="handleDragEnd"
-        @drop.prevent.stop="handleDrop" @dragover.prevent="handleDragOver" @dragleave="handleDragLeave">
+      <div class="flex items-center px-3 py-2 relative" :draggable="true" @click="$emit('toggle-folder', item.id)"
+        @dragstart="handleDragStart" @dragend="handleDragEnd" @drop="handleDrop" @dragover.prevent="handleDragOver"
+        @dragleave="handleDragLeave">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
@@ -54,8 +54,8 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-3 py-2 cursor-move relative" :draggable="true" @dragstart="handleDragStart"
-        @dragend="handleDragEnd" @drop.prevent.stop="handleDropOnSelf" @contextmenu.prevent="handleContextMenu">
+      <div class="flex items-center px-3 py-2 relative" :draggable="true" @dragstart="handleDragStart"
+        @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
@@ -205,7 +205,7 @@ export default {
       const config = {
         // Visual style
         borderStyle: 'border-l',           // 'border-l' for solid, 'border-l-2' for thicker, 'border-l border-dashed' for dashed
-        borderColor: 'border-white/10', // Color and opacity
+        borderColor: 'border-white/8', // Color and opacity
 
         // Positioning
         indentSize: 1.5,                   // rem - how much to indent per level
@@ -331,13 +331,35 @@ export default {
     }
 
     const handleDrop = (e) => {
+      // Only folders should handle drops
+      if (props.item.type !== 'folder') return
+
+      // Check if we're dropping on the same item that was dragged
+      const draggedData = e.dataTransfer.getData('text/plain')
+      if (draggedData) {
+        try {
+          const draggedItem = JSON.parse(draggedData)
+          if (draggedItem.id === props.item.id) {
+            // Dropping on self - prevent and stop
+            e.preventDefault()
+            e.stopPropagation()
+            return
+          }
+        } catch (err) {
+          // Invalid JSON, continue with normal drop
+        }
+      }
+
+      // This is a valid drop on a folder - handle it
+      e.preventDefault()
+      e.stopPropagation()
+
       // Check if this is an external file drop
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         emit('external-drop', { files: e.dataTransfer.files, folderId: props.item.id })
-        e.preventDefault()
-        e.stopPropagation()
         return
       }
+
       emit('drop', { event: e, folderId: props.item.id })
     }
 
@@ -358,13 +380,7 @@ export default {
         }
       }
     }
-    
-    const handleDropOnSelf = (e) => {
-      // Just prevent the drop event from bubbling up when a video is dropped on itself
-      // Don't emit any events - this effectively cancels the drag
-      e.preventDefault()
-      e.stopPropagation()
-    }
+
 
     return {
       isExpanded,
@@ -379,8 +395,7 @@ export default {
       handleDrop,
       handleDragOver,
       handleDragLeave,
-      handleContextMenu,
-      handleDropOnSelf
+      handleContextMenu
     }
   }
 }

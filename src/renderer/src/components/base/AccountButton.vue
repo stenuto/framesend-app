@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-2 mx-3 p-2 rounded-smooth-xl hover:bg-zinc-700/50 cursor-pointer"
+  <div class="flex items-center gap-2.5 mx-3 p-2 rounded-smooth-xl hover:bg-zinc-700/50 cursor-pointer"
     @click="$emit('click')">
     <!-- Avatar -->
     <component :is="avatarComponent" v-bind="avatarProps" class="size-8" />

@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col h-full bg-zinc-900 pt-6.5">
+  <div class="flex flex-col h-full">
     <!-- Project Header with Back Button -->
-    <div class="px-6 py-4 flex items-center justify-between">
+    <div class="px-5 pb-3 pt-2 flex items-center justify-between shrink-0">
       <div class="flex items-center gap-4">
         <div class="relative">
           <Icon name="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
@@ -17,21 +17,21 @@
     </div>
 
     <!-- File Explorer Table -->
-    <div class="flex-1 overflow-y-auto" @drop.prevent="handleDropOnRoot($event)"
-      @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent>
-      <div class="min-h-0 flex-1">
-        <!-- Table Header -->
-        <div class="sticky top-0 bg-zinc-900 border-b border-zinc-800 z-10">
-          <div class="flex px-3 py-1.5 text-[11px] text-zinc-500">
-            <div class="flex-1">Name</div>
-            <div class="w-24">Files</div>
-            <div class="w-28">Size</div>
-            <div class="w-24">Status</div>
-          </div>
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Table Header -->
+      <div class="bg-zinc-900 border-b border-zinc-800 z-10 shrink-0">
+        <div class="flex px-3 py-1.5 text-[11px] text-zinc-500">
+          <div class="flex-1">Name</div>
+          <div class="w-24">Files</div>
+          <div class="w-28">Size</div>
+          <div class="w-24">Status</div>
         </div>
+      </div>
 
-        <!-- Table Body -->
-        <div>
+      <!-- Table Body with drop zone -->
+      <div class="flex-1 overflow-y-auto h-full" @drop.prevent="handleDropOnRoot($event)"
+        @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent>
+        <div class="min-h-full pt-1.5">
           <!-- Root Items using recursive component -->
           <FileSystemItem v-for="(item, index) in rootItems" :key="item.id" :item="item" :depth="0"
             :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
@@ -273,6 +273,7 @@ export default {
     }
 
     const handleDropOnRoot = async (e) => {
+      console.log('handleDropOnRoot called', e.target, draggedItem.value)
       e.preventDefault()
       e.stopPropagation()
 
@@ -284,6 +285,14 @@ export default {
 
       // Otherwise handle internal drag and drop
       if (!draggedItem.value) {
+        console.log('No dragged item')
+        return
+      }
+
+      // Don't move if already at root
+      if (draggedItem.value.parentId === null) {
+        console.log('Item already at root')
+        draggedItem.value = null
         return
       }
 

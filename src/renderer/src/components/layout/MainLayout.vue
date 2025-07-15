@@ -1,10 +1,13 @@
 <template>
-  <div class="app-container flex-col flex h-screen w-screen overflow-hidden bg-zinc-900/75">
+  <div class="app-container flex-col flex h-screen w-screen overflow-hidden bg-zinc-900/75 select-none">
     <!-- Main Content -->
     <div class="flex-1 flex h-0">
       <Sidebar v-if="sidebarOpen" />
-      <div class="flex-1 overflow-auto">
-        <slot />
+      <div class="flex-1 bg-zinc-900 flex flex-col max-h-full">
+        <div class="drag h-8.5 w-full shrink-0 items-center" />
+        <div class="flex-1 min-h-0">
+          <slot />
+        </div>
       </div>
     </div>
   </div>
