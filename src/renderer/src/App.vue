@@ -23,7 +23,7 @@ const { currentComponent } = storeToRefs(router)
 // Initialize routes on mount
 onMounted(async () => {
   await router.registerRoutes()
-  
+
   // Navigate to the first project
   const firstProject = projectsStore.projects[0]
   if (firstProject) {

@@ -67,7 +67,7 @@ function createWindow() {
     vibrancy: 'under-window', // macOS only - adds blur effect
     visualEffectState: 'active', // macOS only
     titleBarStyle: 'hiddenInset', // macOS - hides title bar but shows traffic lights
-    trafficLightPosition: { x: 10, y: 9 }, // Adjust traffic light position
+    trafficLightPosition: { x: 16, y: 16 }, // Adjust traffic light position
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -83,7 +83,7 @@ function createWindow() {
       windowOptions.width = Math.max(savedState.width, windowWidth)
       windowOptions.height = Math.max(savedState.height, windowHeight)
     }
-    
+
     // Restore position
     if (savedState.x !== undefined && savedState.y !== undefined) {
       if (ensureVisibleOnSomeDisplay(savedState)) {
@@ -91,7 +91,7 @@ function createWindow() {
         windowOptions.y = savedState.y
       }
     }
-    
+
     // Handle maximized state
     if (savedState.isMaximized) {
       windowOptions.show = false

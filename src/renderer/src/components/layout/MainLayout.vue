@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container flex-col flex h-screen w-screen overflow-hidden bg-zinc-900/75 select-none">
+  <div class="app-container flex-col flex h-screen w-screen overflow-hidden bg-zinc-900/75 select-none text-zinc-300">
     <!-- Main Content -->
     <div class="flex-1 flex h-0">
       <Sidebar v-if="sidebarOpen" />

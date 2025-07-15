@@ -54,10 +54,10 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-3 py-2 relative" :draggable="true" @dragstart="handleDragStart"
-        @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
+      <div class="flex items-center pr-3 py-2 relative" :class="[depth === 0 ? 'pl-3' : 'pl-2.5']" :draggable="true"
+        @dragstart="handleDragStart" @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
-        <div class="flex-1 flex items-center gap-2 min-w-0">
+        <div class="flex-1 flex items-center gap-2 min-w-0" :class="{ 'opacity-50': item.status === 'processing' }">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
             <Icon name="video" class="size-3.5 text-indigo-500 flex-shrink-0" :stroke-width="2" />
             <span class="text-sm text-zinc-200 truncate">{{ item.name }}</span>
@@ -65,12 +65,12 @@
         </div>
 
         <!-- Files column (empty for videos) -->
-        <div class="w-24  text-sm text-zinc-400">
+        <div class="w-24  text-sm text-zinc-400" :class="{ 'opacity-50': item.status === 'processing' }">
           -
         </div>
 
         <!-- Size column -->
-        <div class="w-28 text-sm text-zinc-400">
+        <div class="w-28 text-sm text-zinc-400" :class="{ 'opacity-50': item.status === 'processing' }">
           {{ item.size || '-' }}
         </div>
 

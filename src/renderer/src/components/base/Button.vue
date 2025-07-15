@@ -1,6 +1,6 @@
 <template>
   <button :class="[
-    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth-md font-medium text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
     variantClasses[variant],
     // Use icon-only size classes if only icon exists, otherwise regular size classes
     iconName && !hasDefaultSlot ? iconOnlySizeClasses[size] : sizeClasses[size],
