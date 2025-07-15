@@ -13,7 +13,7 @@
       <!-- Content with padding -->
       <div class="flex items-center px-3 py-2 cursor-pointer relative" :draggable="true"
         @click="$emit('toggle-folder', item.id)" @dragstart="handleDragStart" @dragend="handleDragEnd"
-        @drop.prevent="handleDrop" @dragover.prevent="handleDragOver" @dragleave="handleDragLeave">
+        @drop.prevent.stop="handleDrop" @dragover.prevent="handleDragOver" @dragleave="handleDragLeave">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
@@ -55,7 +55,7 @@
 
       <!-- Content with padding -->
       <div class="flex items-center px-3 py-2 cursor-move relative" :draggable="true" @dragstart="handleDragStart"
-        @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
+        @dragend="handleDragEnd" @drop.prevent.stop="handleDropOnSelf" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
@@ -358,6 +358,13 @@ export default {
         }
       }
     }
+    
+    const handleDropOnSelf = (e) => {
+      // Just prevent the drop event from bubbling up when a video is dropped on itself
+      // Don't emit any events - this effectively cancels the drag
+      e.preventDefault()
+      e.stopPropagation()
+    }
 
     return {
       isExpanded,
@@ -372,7 +379,8 @@ export default {
       handleDrop,
       handleDragOver,
       handleDragLeave,
-      handleContextMenu
+      handleContextMenu,
+      handleDropOnSelf
     }
   }
 }
