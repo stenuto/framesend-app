@@ -1,8 +1,12 @@
 <template>
   <div class="flex flex-col h-full border-l border-black/10 dark:border-zinc-800">
     <!-- Project Header with Back Button -->
-    <div class="p-3 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900">
+    <div class="h-12 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900"
+      :class="[!sidebarOpen ? 'pl-20' : 'pl-4']">
       <div class="flex items-center gap-2">
+        <!-- Show sidebar button when hidden -->
+        <Button v-if="!sidebarOpen" icon-name="panel-left-open" size="sm" variant="ghost" class="text-zinc-500"
+          @click="uiStore.toggleSidebar" />
         <h3 class="text-sm font-medium">
           {{ selectedProject?.name }}
         </h3>
@@ -11,7 +15,7 @@
         <div class="relative">
           <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
           <input v-model="searchQuery" type="text" placeholder="Search"
-            class="w-60 pl-7 pr-3 py-1 dark:bg-zinc-800/50 bg-black/6 bg-white ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-black/12 dark:ring-zinc-700/50 dark:focus:ring-zinc-600 dark:placeholder-zinc-500 placeholder-zinc-500" />
+            class="w-50 pl-7 pr-3 py-1 dark:bg-zinc-800/50 bg-black/6 bg-white ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-black/12 dark:ring-zinc-700/50 dark:focus:ring-zinc-600 dark:placeholder-zinc-500 placeholder-zinc-500" />
         </div>
       </div>
 
@@ -52,6 +56,7 @@ import { ref, computed, onUnmounted } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
 import { useVideoEncodingStore } from '@/stores/videoEncoding'
+import { useUIStore } from '@/stores/ui'
 import { storeToRefs } from 'pinia'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
@@ -71,7 +76,9 @@ export default {
     const projectsStore = useProjectsStore()
     const router = useRouterStore()
     const videoEncodingStore = useVideoEncodingStore()
+    const uiStore = useUIStore()
     const { selectedProject } = storeToRefs(projectsStore)
+    const { sidebarOpen } = storeToRefs(uiStore)
     const {
       getProjectFileSystem,
       getVideosInFolder,
@@ -530,7 +537,9 @@ export default {
       goToSettings,
       getAncestorIds,
       lastExpandedFolder,
-      searchQuery
+      searchQuery,
+      sidebarOpen,
+      uiStore
     }
   }
 }

@@ -1,10 +1,10 @@
 <template>
-  <div class="flex h-full w-66 flex-col shrink-0 bg-zinc-300/25 dark:bg-zinc-900/75">
+  <div class="flex h-full w-60 flex-col shrink-0 bg-zinc-300/25 dark:bg-zinc-900/75">
     <div
       class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5 text-zinc-500/75 dark:text-zinc-400/75">
       <Button icon-name="arrow-left" size="sm" variant="ghost" />
       <Button icon-name="arrow-right" size="sm" variant="ghost" />
-      <Button icon-name="panel-right-open" size="sm" variant="ghost" />
+      <Button icon-name="panel-right-open" size="sm" variant="ghost" @click="toggleSidebar" />
     </div>
 
     <!-- Account Button -->
@@ -51,6 +51,7 @@
 import { computed, defineComponent } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
+import { useUIStore } from '@/stores/ui'
 import { storeToRefs } from 'pinia'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
@@ -65,8 +66,10 @@ export default defineComponent({
   setup() {
     const projectsStore = useProjectsStore()
     const router = useRouterStore()
+    const uiStore = useUIStore()
     const { projects, selectedProjectId } = storeToRefs(projectsStore)
     const { selectProject } = projectsStore
+    const { toggleSidebar } = uiStore
 
     const formatDate = (date) => {
       const now = new Date()
@@ -101,7 +104,8 @@ export default defineComponent({
       handleProjectClick,
       formatDate,
       goToSettings,
-      handleAccountClick
+      handleAccountClick,
+      toggleSidebar
     }
   }
 })

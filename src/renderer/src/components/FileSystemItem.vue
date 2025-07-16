@@ -18,7 +18,7 @@
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-1.5">
             <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3 flex-shrink-0" stroke-width="2" />
-            <div class="size-3 flex-shrink-0 relative text-current/50">
+            <div class="size-3 flex-shrink-0 relative dark:text-current/50 text-current/75">
               <Icon v-if="!isExpanded" name="folder" class="size-3" />
               <Icon v-else name="folder-open" class="size-3" />
             </div>
@@ -27,17 +27,17 @@
         </div>
 
         <!-- Files column -->
-        <div class="w-24 ">
+        <div class="w-24 dark:text-current/60 text-current/80">
           {{ totalFileCount }}
         </div>
 
         <!-- Size column -->
-        <div class="w-28">
+        <div class="w-28 dark:text-current/60 text-current/80">
           {{ folderSize }}
         </div>
 
         <!-- Status column -->
-        <div class="w-24">
+        <div class="w-24 dark:text-current/60 text-current/80">
 
         </div>
       </div>
@@ -66,12 +66,12 @@
         </div>
 
         <!-- Files column (empty for videos) -->
-        <div class="w-24" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="w-24 dark:text-current/60 text-current/80" :class="{ 'opacity-50': item.status === 'processing' }">
           -
         </div>
 
         <!-- Size column -->
-        <div class="w-28" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="w-28 dark:text-current/60 text-current/80" :class="{ 'opacity-50': item.status === 'processing' }">
           {{ item.size || '-' }}
         </div>
 
