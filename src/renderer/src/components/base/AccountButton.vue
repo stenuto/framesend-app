@@ -16,7 +16,7 @@
 
     <!-- Chevron Icon -->
     <div class="flex-1 flex justify-end">
-      <Icon name="chevrons-up-down" class="size-4 opacity-60" stroke-width="2.5" />
+      <Icon name="chevrons-up-down" class="size-3.5 opacity-60" stroke-width="2.5" />
     </div>
   </div>
 </template>
