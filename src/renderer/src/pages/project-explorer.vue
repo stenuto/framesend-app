@@ -1,26 +1,27 @@
 <template>
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full border-l border-black/16">
     <!-- Project Header with Back Button -->
-    <div class="px-5 pb-3 pt-2 flex items-center justify-between shrink-0">
+    <div class="p-3 flex items-center justify-between shrink-0 drag bg-white/50 dark:bg-zinc-900/75">
+      <div class="flex items-center gap-2">
+        <h3 class="text-sm font-medium">
+          {{ selectedProject?.name }}
+        </h3>
+      </div>
       <div class="flex items-center gap-4">
         <div class="relative">
-          <Icon name="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
+          <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
           <input v-model="searchQuery" type="text" placeholder="Search"
-            class="w-80 pl-8 pr-3 py-1.5 bg-zinc-800/50 text-zinc-200 text-sm rounded-smooth-lg border-0.5 border-zinc-800 focus:border-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-600 placeholder-zinc-500" />
+            class="w-60 pl-7 pr-3 py-1 dark:bg-zinc-800/50 bg-black/8 bg-white ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-black/20 dark:ring-zinc-700/50 dark:focus:ring-zinc-600 dark:placeholder-zinc-500 placeholder-zinc-500" />
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <Button variant="default" icon-name="plus" @click="browseFiles" size="sm">
-          Add Videos
-        </Button>
-      </div>
+
     </div>
 
     <!-- File Explorer Table -->
-    <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-900">
       <!-- Table Header -->
-      <div class="border-b border-zinc-800 z-10 shrink-0">
-        <div class="flex px-3 py-1.5 text-[11px] dark:text-zinc-500 text-zinc-500">
+      <div class="border-y dark:border-zinc-800 border-black/16 z-10 shrink-0">
+        <div class="flex px-3 py-1 text-[11px] dark:text-zinc-500 text-zinc-500">
           <div class="flex-1">Name</div>
           <div class="w-24">Files</div>
           <div class="w-28">Size</div>

@@ -3,8 +3,7 @@
     <!-- Folder Row -->
     <div v-if="item.type === 'folder'" class="group dark:hover:bg-white/4 hover:bg-black/6 relative" :class="{
       'bg-indigo-400/10': dragOverFolder === item.id,
-      'bg-white/2 ': isInLastExpandedFolder,
-      'text-current/60': !isInLastExpandedFolder
+      'dark:bg-white/2 bg-black/4': isInLastExpandedFolder,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -20,8 +19,8 @@
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
             <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3.5  flex-shrink-0"
               stroke-width="2" />
-            <Icon v-if="!isExpanded" name="folder" class="size-3.5  flex-shrink-0" />
-            <Icon v-else name="folder-open" class="size-3.5  flex-shrink-0" />
+            <Icon v-if="!isExpanded" name="folder" class="size-3  flex-shrink-0" />
+            <Icon v-else name="folder-open" class="size-3  flex-shrink-0" />
             <span class="truncate">{{ item.name }}</span>
           </div>
         </div>
@@ -45,7 +44,7 @@
 
     <!-- Video Row -->
     <div v-else-if="item.type === 'video'" class="group dark:hover:bg-white/4 hover:bg-black/6 relative" :class="{
-      'dark:bg-white/2': isInLastExpandedFolder
+      'dark:bg-white/2 bg-black/4': isInLastExpandedFolder,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -57,7 +56,7 @@
         @dragstart="handleDragStart" @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
-          :class="{ 'opacity-40': item.status === 'processing' || item.status === 'queued' }">
+          :class="{ 'opacity-60 dark:opacity-40': item.status === 'processing' || item.status === 'queued' }">
           <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
             <Icon name="video" class="size-3.5 text-indigo-500 flex-shrink-0"
               :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
@@ -78,8 +77,8 @@
         <!-- Status column -->
         <div class="w-24 flex items-center">
           <div v-if="item.status === 'ready'"
-            class="size-5 rounded-full bg-emerald-800/20 flex items-center justify-center">
-            <Icon name="check" class="size-3.5 text-emerald-600" />
+            class="size-5 rounded-full dark:bg-emerald-800/20 bg-emerald-100 flex items-center justify-center">
+            <Icon name="check" class="size-3.5 dark:text-emerald-600 text-emerald-500" />
           </div>
           <!-- PROCESSING -->
           <div v-else-if="item.status === 'processing'" class="inline-flex items-center gap-1.5">
@@ -91,18 +90,19 @@
                 :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
                 class="dark:text-indigo-500 text-indigo-500 duration-500" />
             </svg>
-            <span class="">
+            <span class="text-xs font-medium">
               {{ Math.round(item.progress || 0) }}%
             </span>
           </div>
           <!-- QUEUED -->
           <div v-if="item.status === 'queued'"
-            class="size-5 rounded-full bg-amber-800/20 flex items-center justify-center">
-            <Icon name="clock-fading" class="size-3.5 text-amber-400" :stroke-width="2" />
+            class="size-5 rounded-full dark:bg-amber-800/20 bg-amber-100 flex items-center justify-center">
+            <Icon name="clock-fading" class="size-3.5 dark:text-amber-400 text-amber-500" :stroke-width="2" />
           </div>
+          <!-- FAILED -->
           <div v-if="item.status === 'failed'"
-            class="size-5 rounded-full bg-rose-800/20 flex items-center justify-center">
-            <Icon name="x" class="size-3.5 text-rose-400" :stroke-width="2" />
+            class="size-5 rounded-full dark:bg-rose-800/20 bg-rose-100 flex items-center justify-center">
+            <Icon name="x" class="size-3.5 dark:text-rose-400 text-rose-500" :stroke-width="2" />
           </div>
         </div>
       </div>
@@ -115,9 +115,9 @@
           <Icon name="exclamation-triangle" class="w-4 h-4 text-red-500" />
           <span class="text-red-400">Unknown item type: {{ item.type }} ({{ item.name }})</span>
         </div>
-        <div class="w-24"></div>
-        <div class="w-28"></div>
-        <div class="w-24"></div>
+        <div :class="COLUMN_WIDTHS.files"></div>
+        <div :class="COLUMN_WIDTHS.size"></div>
+        <div :class="COLUMN_WIDTHS.status"></div>
       </div>
     </div>
 
@@ -138,11 +138,54 @@
 <script>
 import { computed } from 'vue'
 import Icon from '@components/base/Icon.vue'
+import HierarchyLines from './HierarchyLines.vue'
+
+// Constants
+const INDENT_SIZE = 1.5 // rem
+const COLUMN_WIDTHS = {
+  files: 'w-24',
+  size: 'w-28',
+  status: 'w-24'
+}
+
+// Utility functions
+const parseSize = (sizeStr) => {
+  if (!sizeStr || sizeStr === '-') return 0
+
+  const match = sizeStr.match(/^([\d.]+)\s*(MB|GB|KB)?$/i)
+  if (!match) return 0
+
+  const value = parseFloat(match[1])
+  const unit = match[2]?.toUpperCase() || 'B'
+
+  const multipliers = {
+    'GB': 1024 * 1024 * 1024,
+    'MB': 1024 * 1024,
+    'KB': 1024,
+    'B': 1
+  }
+
+  return value * (multipliers[unit] || 1)
+}
+
+const formatBytes = (bytes) => {
+  if (bytes === 0) return '-'
+  if (bytes >= 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+  } else if (bytes >= 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  } else if (bytes >= 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`
+  } else {
+    return `${bytes} B`
+  }
+}
 
 export default {
   name: 'FileSystemItem',
   components: {
-    Icon
+    Icon,
+    HierarchyLines
   },
   props: {
     item: {
@@ -188,6 +231,11 @@ export default {
       props.expandedFolders.has(props.item.id)
     )
 
+    // Base classes for row containers
+    const rowBaseClasses = computed(() =>
+      'group dark:hover:bg-white/4 hover:bg-black/6 relative'
+    )
+
     // Check if this item should be highlighted
     const isInLastExpandedFolder = computed(() => {
       if (!props.lastExpandedFolder) return false
@@ -209,8 +257,8 @@ export default {
         borderColor: 'border-white/8', // Color and opacity
 
         // Positioning
-        indentSize: 1.5,                   // rem - how much to indent per level
-        lineOffset: 1.15,                   // rem - offset from left edge for first line
+        indentSize: INDENT_SIZE,           // rem - how much to indent per level
+        lineOffset: 1.15,                  // rem - offset from left edge for first line
       }
 
       return {
@@ -266,61 +314,14 @@ export default {
 
       items.forEach(item => {
         if (item.type === 'video' && item.size) {
-          // Parse size string (e.g., "450 MB" -> 450 * 1024 * 1024)
-          const match = item.size.match(/^([\d.]+)\s*(MB|GB|KB)?$/i)
-          if (match) {
-            const value = parseFloat(match[1])
-            const unit = match[2]?.toUpperCase() || 'B'
-
-            switch (unit) {
-              case 'GB':
-                totalBytes += value * 1024 * 1024 * 1024
-                break
-              case 'MB':
-                totalBytes += value * 1024 * 1024
-                break
-              case 'KB':
-                totalBytes += value * 1024
-                break
-              default:
-                totalBytes += value
-            }
-          }
+          totalBytes += parseSize(item.size)
         } else if (item.type === 'folder') {
           const subFolderSize = calculateFolderSize(item.id)
-          const match = subFolderSize.match(/^([\d.]+)\s*(MB|GB|KB)?$/i)
-          if (match) {
-            const value = parseFloat(match[1])
-            const unit = match[2]?.toUpperCase() || 'B'
-
-            switch (unit) {
-              case 'GB':
-                totalBytes += value * 1024 * 1024 * 1024
-                break
-              case 'MB':
-                totalBytes += value * 1024 * 1024
-                break
-              case 'KB':
-                totalBytes += value * 1024
-                break
-              default:
-                totalBytes += value
-            }
-          }
+          totalBytes += parseSize(subFolderSize)
         }
       })
 
-      // Convert bytes to human readable format
-      if (totalBytes === 0) return '-'
-      if (totalBytes >= 1024 * 1024 * 1024) {
-        return `${(totalBytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
-      } else if (totalBytes >= 1024 * 1024) {
-        return `${(totalBytes / (1024 * 1024)).toFixed(1)} MB`
-      } else if (totalBytes >= 1024) {
-        return `${(totalBytes / 1024).toFixed(1)} KB`
-      } else {
-        return `${totalBytes} B`
-      }
+      return formatBytes(totalBytes)
     }
 
     const handleDragStart = (e) => {
@@ -391,12 +392,15 @@ export default {
       folderSize,
       hierarchyLineConfig,
       isInLastExpandedFolder,
+      rowBaseClasses,
       handleDragStart,
       handleDragEnd,
       handleDrop,
       handleDragOver,
       handleDragLeave,
-      handleContextMenu
+      handleContextMenu,
+      COLUMN_WIDTHS,
+      INDENT_SIZE
     }
   }
 }
