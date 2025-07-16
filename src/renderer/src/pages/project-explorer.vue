@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col h-full border-l border-black/16">
+  <div class="flex flex-col h-full border-l border-black/10 dark:border-zinc-800">
     <!-- Project Header with Back Button -->
-    <div class="p-3 flex items-center justify-between shrink-0 drag bg-white/50 dark:bg-zinc-900/75">
+    <div class="p-3 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900">
       <div class="flex items-center gap-2">
         <h3 class="text-sm font-medium">
           {{ selectedProject?.name }}
@@ -11,7 +11,7 @@
         <div class="relative">
           <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
           <input v-model="searchQuery" type="text" placeholder="Search"
-            class="w-60 pl-7 pr-3 py-1 dark:bg-zinc-800/50 bg-black/8 bg-white ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-black/20 dark:ring-zinc-700/50 dark:focus:ring-zinc-600 dark:placeholder-zinc-500 placeholder-zinc-500" />
+            class="w-60 pl-7 pr-3 py-1 dark:bg-zinc-800/50 bg-black/6 bg-white ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-black/12 dark:ring-zinc-700/50 dark:focus:ring-zinc-600 dark:placeholder-zinc-500 placeholder-zinc-500" />
         </div>
       </div>
 
@@ -20,7 +20,7 @@
     <!-- File Explorer Table -->
     <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-900">
       <!-- Table Header -->
-      <div class="border-y dark:border-zinc-800 border-black/16 z-10 shrink-0">
+      <div class="border-y dark:border-zinc-800 border-black/10 z-10 shrink-0">
         <div class="flex px-3 py-1 text-[11px] dark:text-zinc-500 text-zinc-500">
           <div class="flex-1">Name</div>
           <div class="w-24">Files</div>

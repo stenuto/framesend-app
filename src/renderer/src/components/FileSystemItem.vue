@@ -1,9 +1,9 @@
 <template>
   <div class="text-[13px]">
     <!-- Folder Row -->
-    <div v-if="item.type === 'folder'" class="group dark:hover:bg-white/4 hover:bg-black/6 relative" :class="{
+    <div v-if="item.type === 'folder'" class="group dark:hover:bg-white/4 hover:bg-black/5 relative" :class="{
       'bg-indigo-400/10': dragOverFolder === item.id,
-      'dark:bg-white/2 bg-black/4': isInLastExpandedFolder,
+      'dark:bg-white/2 bg-black/3': isInLastExpandedFolder,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -11,16 +11,17 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-3 py-1.5 relative " :draggable="true" @click="$emit('toggle-folder', item.id)"
+      <div class="flex items-center px-2.5 py-1 relative " :draggable="true" @click="$emit('toggle-folder', item.id)"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @drop="handleDrop" @dragover.prevent="handleDragOver"
         @dragleave="handleDragLeave">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
-          <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
-            <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3.5  flex-shrink-0"
-              stroke-width="2" />
-            <Icon v-if="!isExpanded" name="folder" class="size-3  flex-shrink-0" />
-            <Icon v-else name="folder-open" class="size-3  flex-shrink-0" />
+          <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-1.5">
+            <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3 flex-shrink-0" stroke-width="2" />
+            <div class="size-3 flex-shrink-0 relative text-current/50">
+              <Icon v-if="!isExpanded" name="folder" class="size-3" />
+              <Icon v-else name="folder-open" class="size-3" />
+            </div>
             <span class="truncate">{{ item.name }}</span>
           </div>
         </div>
@@ -43,8 +44,8 @@
     </div>
 
     <!-- Video Row -->
-    <div v-else-if="item.type === 'video'" class="group dark:hover:bg-white/4 hover:bg-black/6 relative" :class="{
-      'dark:bg-white/2 bg-black/4': isInLastExpandedFolder,
+    <div v-else-if="item.type === 'video'" class="group dark:hover:bg-white/4 hover:bg-black/4 relative" :class="{
+      'dark:bg-white/2 bg-black/3': isInLastExpandedFolder,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -52,12 +53,12 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center pr-3 py-1.5 relative" :class="[depth === 0 ? 'pl-3' : 'pl-2.5']" :draggable="true"
+      <div class="flex items-center pr-3 py-1 relative" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']" :draggable="true"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
           :class="{ 'opacity-60 dark:opacity-40': item.status === 'processing' || item.status === 'queued' }">
-          <div :style="{ marginLeft: `${depth * 1.5}rem` }" class="flex items-center gap-2">
+          <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-1.5">
             <Icon name="video" class="size-3.5 text-indigo-500 flex-shrink-0"
               :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
             <span class=" truncate">{{ item.name }}</span>
@@ -141,7 +142,7 @@ import Icon from '@components/base/Icon.vue'
 import HierarchyLines from './HierarchyLines.vue'
 
 // Constants
-const INDENT_SIZE = 1.5 // rem
+const INDENT_SIZE = 1 // rem
 const COLUMN_WIDTHS = {
   files: 'w-24',
   size: 'w-28',
@@ -253,12 +254,12 @@ export default {
     const hierarchyLineConfig = computed(() => {
       const config = {
         // Visual style
-        borderStyle: 'border-l',           // 'border-l' for solid, 'border-l-2' for thicker, 'border-l border-dashed' for dashed
-        borderColor: 'border-white/8', // Color and opacity
+        borderStyle: 'border-l -ml-[.5px]',           // 'border-l' for solid, 'border-l-2' for thicker, 'border-l border-dashed' for dashed
+        borderColor: 'dark:border-white/8 border-black/8', // Color and opacity
 
         // Positioning
         indentSize: INDENT_SIZE,           // rem - how much to indent per level
-        lineOffset: 1.15,                  // rem - offset from left edge for first line
+        lineOffset: 1,                  // rem - offset from left edge for first line
       }
 
       return {

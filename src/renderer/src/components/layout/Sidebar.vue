@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-full w-66 flex-col shrink-0">
+  <div class="flex h-full w-66 flex-col shrink-0 bg-zinc-300/25 dark:bg-zinc-900/75">
     <div
       class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5 text-zinc-500/75 dark:text-zinc-400/75">
       <Button icon-name="arrow-left" size="sm" variant="ghost" />

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="app-container flex-col flex h-screen w-screen overflow-hidden bg-zinc-100/50 dark:bg-zinc-900/75 select-none dark:text-zinc-300/90 text-zinc-700">
+    class="app-container flex-col flex h-screen w-screen overflow-hidden select-none dark:text-zinc-300/90 text-zinc-700">
     <!-- Main Content -->
     <div class="flex-1 flex h-0">
       <Sidebar v-if="sidebarOpen" />
