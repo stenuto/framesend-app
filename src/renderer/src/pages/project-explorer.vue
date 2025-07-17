@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col h-full border-l border-black/10 dark:border-zinc-800">
     <!-- Project Header with Back Button -->
-    <div class="h-12 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900"
+    <div class="h-12 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900 pr-3"
       :class="[!sidebarOpen ? 'pl-20' : 'pl-4']">
       <div class="flex items-center gap-2">
         <!-- Show sidebar button when hidden -->

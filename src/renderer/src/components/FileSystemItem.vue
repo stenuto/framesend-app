@@ -53,7 +53,8 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center pr-3 py-1 relative" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']" :draggable="true"
+      <div class="flex items-center pr-3 py-1 relative cursor-pointer" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']" :draggable="true"
+        @click="handleVideoClick"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
@@ -138,6 +139,7 @@
 
 <script>
 import { computed } from 'vue'
+import { useUIStore } from '@/stores/ui'
 import Icon from '@components/base/Icon.vue'
 import HierarchyLines from './HierarchyLines.vue'
 
@@ -228,6 +230,8 @@ export default {
   },
   emits: ['toggle-folder', 'drag-start', 'drag-end', 'drop', 'drag-over', 'drag-leave', 'external-drop', 'cancel-encoding'],
   setup(props, { emit }) {
+    const uiStore = useUIStore()
+    
     const isExpanded = computed(() =>
       props.expandedFolders.has(props.item.id)
     )
@@ -384,6 +388,12 @@ export default {
       }
     }
 
+    const handleVideoClick = () => {
+      if (props.item.type === 'video') {
+        uiStore.selectVideo(props.item)
+      }
+    }
+
 
     return {
       isExpanded,
@@ -400,6 +410,7 @@ export default {
       handleDragOver,
       handleDragLeave,
       handleContextMenu,
+      handleVideoClick,
       COLUMN_WIDTHS,
       INDENT_SIZE
     }

@@ -19,25 +19,26 @@
     <div class="flex-1 overflow-y-auto">
       <div class="p-3 space-y-0.5">
         <!-- Projects -->
-        <div v-for="project in projects" :key="project.id" :class="[
-          'group flex items-center gap-2 px-2.5 py-1.5 rounded-smooth-lg',
-          selectedProjectId === project.id ? 'dark:bg-zinc-600/20 bg-zinc-500/20 dark:text-zinc-50 text-zinc-800' : ''
-        ]" @click="handleProjectClick(project.id)">
-
-          <!-- Project Info -->
-          <div class="flex-1 min-w-0">
-            <h3
-              :class="[selectedProjectId === project.id ? 'text-current' : 'group-hover:text-current', 'text-[13px] font-regular truncate']">
-              {{
-                project.name }}</h3>
-          </div>
-
-          <!-- Last Modified -->
-          <!-- <span class="text-[11px] text-zinc-600 opacity-0 group-hover:opacity-100 transition-opacity">
-            {{ formatDate(project.lastModified) }}
-          </span> -->
-
-        </div>
+        <SidebarItem
+          v-for="project in projects"
+          :key="project.id"
+          :name="project.name"
+          icon-name="folder"
+          :highlighted="selectedProjectId === project.id"
+          @click="handleProjectClick(project.id)"
+        />
+      </div>
+      
+      <!-- Divider -->
+      <div class="border-t border-zinc-200 dark:border-zinc-700/50 mx-3" />
+      
+      <!-- Additional Items -->
+      <div class="p-3 space-y-0.5">
+        <SidebarItem
+          name="Settings"
+          icon-name="settings"
+          @click="goToSettings"
+        />
       </div>
     </div>
 
@@ -56,12 +57,14 @@ import { storeToRefs } from 'pinia'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
 import AccountButton from '@components/base/AccountButton.vue'
+import SidebarItem from '@components/base/SidebarItem.vue'
 export default defineComponent({
   name: 'Sidebar',
   components: {
     Icon,
     Button,
-    AccountButton
+    AccountButton,
+    SidebarItem
   },
   setup() {
     const projectsStore = useProjectsStore()

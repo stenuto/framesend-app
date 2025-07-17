@@ -4,6 +4,8 @@ import { ref } from 'vue'
 export const useUIStore = defineStore('ui', () => {
   const sidebarOpen = ref(true)
   const searchQuery = ref('')
+  const selectedVideo = ref(null)
+  const detailPanelWidth = ref(320) // Default width in pixels
 
   function toggleSidebar() {
     sidebarOpen.value = !sidebarOpen.value
@@ -13,10 +15,27 @@ export const useUIStore = defineStore('ui', () => {
     searchQuery.value = query
   }
 
+  function selectVideo(video) {
+    selectedVideo.value = video
+  }
+
+  function clearSelectedVideo() {
+    selectedVideo.value = null
+  }
+
+  function setDetailPanelWidth(width) {
+    detailPanelWidth.value = width
+  }
+
   return {
     sidebarOpen,
     searchQuery,
+    selectedVideo,
+    detailPanelWidth,
     toggleSidebar,
-    setSearchQuery
+    setSearchQuery,
+    selectVideo,
+    clearSelectedVideo,
+    setDetailPanelWidth
   }
 })
