@@ -52,7 +52,7 @@
 </template>
 
 <script>
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, watch, onMounted } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
 import { useVideoEncodingStore } from '@/stores/videoEncoding'
@@ -79,12 +79,14 @@ export default {
     const uiStore = useUIStore()
     const { selectedProject } = storeToRefs(projectsStore)
     const { sidebarOpen } = storeToRefs(uiStore)
+    const { currentParams } = storeToRefs(router)
     const {
       getProjectFileSystem,
       getVideosInFolder,
       getFolderVideoCount,
       moveFileSystemItem,
-      debugFileSystem
+      debugFileSystem,
+      selectProject
     } = projectsStore
     const { fileSystem } = storeToRefs(projectsStore)
 
@@ -93,6 +95,20 @@ export default {
     const dragOverFolder = ref(null)
     const lastExpandedFolder = ref(null)
     const searchQuery = ref('')
+    
+    // Watch for route param changes to sync project selection
+    watch(() => currentParams.value.projectId, (projectId) => {
+      if (projectId && selectedProject.value?.id !== projectId) {
+        selectProject(projectId)
+      }
+    }, { immediate: true })
+    
+    // Ensure we have a project selected
+    onMounted(() => {
+      if (!selectedProject.value && currentParams.value.projectId) {
+        selectProject(currentParams.value.projectId)
+      }
+    })
 
     // Helper function to recursively filter items
     const filterItems = (items, query) => {
@@ -539,7 +555,8 @@ export default {
       lastExpandedFolder,
       searchQuery,
       sidebarOpen,
-      uiStore
+      uiStore,
+      currentParams
     }
   }
 }

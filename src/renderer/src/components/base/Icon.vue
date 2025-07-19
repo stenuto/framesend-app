@@ -25,7 +25,8 @@ const iconMappings = {
   'maximize': 'Maximize',
   'upload': 'Upload',
   'settings': 'Settings',
-  'x': 'X'
+  'x': 'X',
+  'chevron-down': 'ChevronDown'
 }
 
 const props = defineProps({

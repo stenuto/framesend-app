@@ -3,9 +3,9 @@ import { ref, computed, markRaw } from 'vue'
 
 export const useRouterStore = defineStore('router', () => {
   // State
-  const currentRoute = ref('project-explorer')
-  const history = ref(['project-explorer'])
-  const historyIndex = ref(0)
+  const currentRoute = ref('')
+  const history = ref([])
+  const historyIndex = ref(-1)
   const routes = ref(new Map())
 
   // Getters
@@ -31,8 +31,18 @@ export const useRouterStore = defineStore('router', () => {
   })
   
   const currentComponent = computed(() => {
+    // Return null if no route is set yet
+    if (!currentRoute.value) return null
+    
     // Extract base route from current route (remove params)
     const baseRoute = currentRoute.value.split('?')[0]
+    
+    // Special handling for settings sub-pages
+    // Always return the settings index component for any settings/* route
+    if (baseRoute.startsWith('settings')) {
+      return routes.value.get('settings')?.component || null
+    }
+    
     return routes.value.get(baseRoute)?.component || null
   })
   
@@ -93,7 +103,11 @@ export const useRouterStore = defineStore('router', () => {
     
     // Check if base route exists
     const baseRoute = route.split('?')[0]
-    if (!routes.value.has(baseRoute)) {
+    
+    // Special handling for settings sub-pages
+    if (baseRoute.startsWith('settings') && routes.value.has('settings')) {
+      // Settings sub-routes are valid if settings page exists
+    } else if (!routes.value.has(baseRoute)) {
       console.warn(`Route "${baseRoute}" not found`)
       return
     }
@@ -162,17 +176,19 @@ export const useRouterStore = defineStore('router', () => {
       // Extract meta from component
       const meta = component.meta || {}
       
+      // Special handling for settings sub-pages
+      // Don't register individual routes for settings sub-pages
+      // They should be handled by settings/index.vue
+      if (route.startsWith('settings/') && route !== 'settings') {
+        // Skip registering individual settings sub-pages
+        continue
+      }
+      
       // Register the route
       registerRoute(route, component, meta)
     }
     
-    // Ensure current route is valid
-    if (!routes.value.has(currentRoute.value)) {
-      console.warn(`Current route "${currentRoute.value}" not found, navigating to project-explorer`)
-      currentRoute.value = 'project-explorer'
-      history.value = ['project-explorer']
-      historyIndex.value = 0
-    }
+    // Don't set a default route here - let App.vue handle initial navigation
   }
 
   return {

@@ -2,9 +2,9 @@
   <div class="flex h-full w-60 flex-col shrink-0 bg-zinc-300/25 dark:bg-zinc-900/75">
     <div
       class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5 text-zinc-500/75 dark:text-zinc-400/75">
-      <Button icon-name="arrow-left" size="sm" variant="ghost" />
-      <Button icon-name="arrow-right" size="sm" variant="ghost" />
-      <Button icon-name="panel-right-open" size="sm" variant="ghost" @click="toggleSidebar" />
+      <Button icon-name="arrow-left" size="sm" variant="ghost" :disabled="!canGoBack" @click="router.goBack()" />
+      <Button icon-name="arrow-right" size="sm" variant="ghost" :disabled="!canGoForward" @click="router.goForward()" />
+      <!-- <Button icon-name="panel-right-open" size="sm" variant="ghost" @click="toggleSidebar" /> -->
     </div>
 
     <!-- Account Button -->
@@ -19,26 +19,16 @@
     <div class="flex-1 overflow-y-auto">
       <div class="p-3 space-y-0.5">
         <!-- Projects -->
-        <SidebarItem
-          v-for="project in projects"
-          :key="project.id"
-          :name="project.name"
-          icon-name="folder"
-          :highlighted="selectedProjectId === project.id"
-          @click="handleProjectClick(project.id)"
-        />
+        <SidebarItem v-for="project in projects" :key="project.id" :name="project.name" icon-name="folder"
+          :highlighted="isProjectHighlighted(project.id)" @click="handleProjectClick(project.id)" />
       </div>
-      
+
       <!-- Divider -->
-      <div class="border-t border-zinc-200 dark:border-zinc-700/50 mx-3" />
-      
+      <div class="border-t border-black/10 dark:border-zinc-700/50 mx-3" />
+
       <!-- Additional Items -->
       <div class="p-3 space-y-0.5">
-        <SidebarItem
-          name="Settings"
-          icon-name="settings"
-          @click="goToSettings"
-        />
+        <SidebarItem name="Settings" icon-name="settings" :highlighted="isSettingsHighlighted" @click="goToSettings" />
       </div>
     </div>
 
@@ -49,7 +39,7 @@
 </template>
 
 <script>
-import { computed, defineComponent } from 'vue'
+import { computed, defineComponent, watch } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
 import { useUIStore } from '@/stores/ui'
@@ -71,8 +61,24 @@ export default defineComponent({
     const router = useRouterStore()
     const uiStore = useUIStore()
     const { projects, selectedProjectId } = storeToRefs(projectsStore)
+    const { currentPage, canGoBack, canGoForward, currentParams } = storeToRefs(router)
     const { selectProject } = projectsStore
     const { toggleSidebar } = uiStore
+
+    // Watch for route changes to update project selection
+    watch([currentPage, currentParams], ([page, params]) => {
+      if (page === 'project-explorer' && params.projectId) {
+        // Select the project from route params
+        selectProject(params.projectId)
+      } else if (page === 'project-explorer' && !params.projectId && projects.value.length > 0) {
+        // If no projectId in params but we're on project-explorer, 
+        // it might be from old navigation - select first project as fallback
+        const firstProject = projects.value[0]
+        if (firstProject && !selectedProjectId.value) {
+          selectProject(firstProject.id)
+        }
+      }
+    }, { immediate: true })
 
     const formatDate = (date) => {
       const now = new Date()
@@ -89,10 +95,12 @@ export default defineComponent({
 
     const handleProjectClick = (projectId) => {
       selectProject(projectId)
-      router.navigateTo('project-explorer')
+      router.navigateTo('project-explorer', { projectId })
     }
 
     const goToSettings = () => {
+      // Clear project selection when going to settings
+      selectProject(null)
       router.navigateTo('settings')
     }
 
@@ -101,6 +109,16 @@ export default defineComponent({
       console.log('Account button clicked')
     }
 
+    // Computed property to check if project is highlighted
+    const isProjectHighlighted = (projectId) => {
+      return selectedProjectId.value === projectId && currentPage.value === 'project-explorer'
+    }
+
+    // Computed property to check if settings is highlighted
+    const isSettingsHighlighted = computed(() => {
+      return currentPage.value === 'settings'
+    })
+
     return {
       projects,
       selectedProjectId,
@@ -108,8 +126,22 @@ export default defineComponent({
       formatDate,
       goToSettings,
       handleAccountClick,
-      toggleSidebar
+      toggleSidebar,
+      isProjectHighlighted,
+      isSettingsHighlighted,
+      canGoBack,
+      canGoForward,
+      router,
+      currentParams
     }
   }
 })
 </script>
+
+<style scoped>
+/* Disabled button styling */
+button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+</style>

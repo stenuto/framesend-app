@@ -24,11 +24,12 @@ const { currentComponent } = storeToRefs(router)
 onMounted(async () => {
   await router.registerRoutes()
 
-  // Navigate to the first project
+  // Navigate to the first project using proper navigation
   const firstProject = projectsStore.projects[0]
   if (firstProject) {
     projectsStore.selectProject(firstProject.id)
-    router.navigateTo('project-explorer')
+    // Use navigateTo with params to properly record in history
+    router.navigateTo('project-explorer', { projectId: firstProject.id })
   }
 })
 </script>
