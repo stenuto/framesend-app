@@ -61,6 +61,12 @@ framesend-app/
 - Keep components small and focused
 - Use composition API for Vue components
 
+### Settings Management
+
+- **All settings should save automatically on change** - No save buttons required
+- Settings changes should persist immediately to disk
+- Use watchers in Pinia stores to auto-save when values change
+
 ### Window State Persistence
 
 - The Electron app should remember window position and size between sessions

@@ -67,104 +67,36 @@
           </div>
         </div>
 
-        <!-- Save Button -->
-        <div class="pt-6 border-t border-zinc-200 dark:border-zinc-700">
-          <div class="flex items-center justify-between">
-            <p v-if="saveStatus" :class="[
-              'text-sm',
-              saveStatus === 'saved' ? 'text-green-600' : 'text-red-600'
-            ]">
-              {{ saveStatus === 'saved' ? 'Settings saved successfully' : 'Failed to save settings' }}
-            </p>
-            <div class="flex gap-3">
-              <button @click="loadSettings" 
-                class="px-4 py-2 text-sm border border-zinc-300 dark:border-zinc-600 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                Reset
-              </button>
-              <button @click="saveSettings" 
-                class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                Save Settings
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, toRaw } from 'vue'
+import { computed, watch } from 'vue'
+import { useSettingsStore } from '@/stores/settings'
+import { storeToRefs } from 'pinia'
 
 export default {
   name: 'EncodingSettings',
   setup() {
-    const loading = ref(true)
-    const saveStatus = ref('')
-    const settings = ref({
-      h264: {
-        enabled: true,
-        rungs: {
-          '360p': true,
-          '720p': true,
-          '1080p': true,
-          '2160p': true
-        },
-        quality: 3
-      },
-      av1: {
-        enabled: false,
-        rungs: {
-          '2160p_hq': true
-        },
-        quality: 5
-      }
-    })
+    const settingsStore = useSettingsStore()
+    const { settings, isLoading } = storeToRefs(settingsStore)
 
     const h264Rungs = ['360p', '720p', '1080p', '2160p']
 
-    const loadSettings = async () => {
-      try {
-        loading.value = true
-        const loadedSettings = await window.api.settings.load()
-        if (loadedSettings) {
-          settings.value = loadedSettings
-        }
-      } catch (error) {
-        console.error('Failed to load settings:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const saveSettings = async () => {
-      try {
-        const rawSettings = toRaw(settings.value)
-        await window.api.settings.save(rawSettings)
-        saveStatus.value = 'saved'
-        setTimeout(() => {
-          saveStatus.value = ''
-        }, 3000)
-      } catch (error) {
-        console.error('Failed to save settings:', error)
-        saveStatus.value = 'error'
-        setTimeout(() => {
-          saveStatus.value = ''
-        }, 3000)
-      }
-    }
-
-    onMounted(() => {
-      loadSettings()
-    })
+    // Create computed refs for encoding settings with auto-save
+    const encodingSettings = computed(() => settings.value.encoding)
+    
+    // Watch for changes and trigger save
+    watch(encodingSettings, () => {
+      // Settings will auto-save through the store's watcher
+    }, { deep: true })
 
     return {
-      loading,
-      saveStatus,
-      settings,
-      h264Rungs,
-      loadSettings,
-      saveSettings
+      loading: isLoading,
+      settings: encodingSettings,
+      h264Rungs
     }
   }
 }

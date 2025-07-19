@@ -14,10 +14,12 @@ import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouterStore } from './stores/router'
 import { useProjectsStore } from './stores/projects'
+import { useSettingsStore } from './stores/settings'
 import MainLayout from './components/layout/MainLayout.vue'
 
 const router = useRouterStore()
 const projectsStore = useProjectsStore()
+const settingsStore = useSettingsStore() // Initialize settings store to load and apply theme
 const { currentComponent } = storeToRefs(router)
 
 // Initialize routes on mount

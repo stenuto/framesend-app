@@ -2,45 +2,99 @@ import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 
 export const useSettingsStore = defineStore('settings', () => {
-  // Load settings from localStorage
-  const loadSettings = () => {
+  // State - all settings in one object
+  const settings = ref({
+    general: {
+      appearance: 'system' // 'system', 'light', 'dark'
+    },
+    encoding: {
+      h264: {
+        enabled: true,
+        rungs: {
+          '360p': true,
+          '720p': true,
+          '1080p': true,
+          '2160p': true
+        },
+        quality: 3
+      },
+      av1: {
+        enabled: false,
+        rungs: {
+          '2160p_hq': true
+        },
+        quality: 5
+      }
+    }
+  })
+  
+  const isLoading = ref(true)
+  
+  
+  // Actions
+  async function loadSettings() {
     try {
-      const saved = localStorage.getItem('app-settings')
-      return saved ? JSON.parse(saved) : {}
+      const loaded = await window.api.settings.load()
+      if (loaded) {
+        settings.value = loaded
+      }
     } catch (error) {
       console.error('Failed to load settings:', error)
-      return {}
+    } finally {
+      isLoading.value = false
+      // Apply theme after loading
+      applyTheme()
     }
   }
-
-  // Initialize state with saved settings
-  const savedSettings = loadSettings()
   
-  // Other settings can be added here
-  const sidebarCollapsed = ref(savedSettings.sidebarCollapsed ?? false)
-  const accentColor = ref(savedSettings.accentColor ?? 'amber')
-
-  // Save settings to localStorage whenever they change
-  const saveSettings = () => {
+  async function saveSettings() {
     try {
-      const settings = {
-        sidebarCollapsed: sidebarCollapsed.value,
-        accentColor: accentColor.value
-      }
-      localStorage.setItem('app-settings', JSON.stringify(settings))
+      await window.api.settings.save(settings.value)
     } catch (error) {
       console.error('Failed to save settings:', error)
     }
   }
-
-  // Watch for changes and save
-  watch([sidebarCollapsed, accentColor], saveSettings)
-
-  // No need to apply dark mode class anymore
-
+  
+  function updateAppearance(appearance) {
+    settings.value.general.appearance = appearance
+    applyTheme()
+  }
+  
+  function applyTheme() {
+    const body = document.body
+    const appearance = settings.value.general.appearance
+    
+    if (appearance === 'dark') {
+      body.classList.add('dark')
+    } else if (appearance === 'light') {
+      body.classList.remove('dark')
+    } else {
+      // system - let Tailwind handle it (default behavior)
+      body.classList.remove('dark')
+    }
+  }
+  
+  
+  // Watch for settings changes and save
+  watch(settings, () => {
+    if (!isLoading.value) {
+      saveSettings()
+    }
+  }, { deep: true })
+  
+  // Initialize
+  loadSettings()
+  
   return {
     // State
-    sidebarCollapsed,
-    accentColor
+    settings,
+    isLoading,
+    // Actions
+    loadSettings,
+    saveSettings,
+    updateAppearance,
+    // Getters
+    appearance: () => settings.value.general.appearance,
+    encodingSettings: () => settings.value.encoding
   }
 })

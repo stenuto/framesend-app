@@ -24,7 +24,8 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { useSettingsStore } from '@/stores/settings'
 import Select from '@/components/base/Select.vue'
 
 export default {
@@ -33,12 +34,18 @@ export default {
     Select
   },
   setup() {
-    const appearance = ref('System')
+    const settingsStore = useSettingsStore()
+    
+    // Computed property for v-model binding
+    const appearance = computed({
+      get: () => settingsStore.settings.general.appearance,
+      set: (value) => settingsStore.updateAppearance(value)
+    })
 
     const appearanceOptions = [
-      'System',
-      'Light',
-      'Dark'
+      { label: 'System', value: 'system' },
+      { label: 'Light', value: 'light' },
+      { label: 'Dark', value: 'dark' }
     ]
 
     return {
