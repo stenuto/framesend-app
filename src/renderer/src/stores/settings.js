@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, watch, toRaw } from 'vue'
 
 export const useSettingsStore = defineStore('settings', () => {
   // State - all settings in one object
@@ -49,7 +49,9 @@ export const useSettingsStore = defineStore('settings', () => {
   
   async function saveSettings() {
     try {
-      await window.api.settings.save(settings.value)
+      // Extract plain object from Vue reactive proxy
+      const rawSettings = toRaw(settings.value)
+      await window.api.settings.save(rawSettings)
     } catch (error) {
       console.error('Failed to save settings:', error)
     }

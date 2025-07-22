@@ -2,7 +2,7 @@
   <div class="text-[13px]">
     <!-- Folder Row -->
     <div v-if="item.type === 'folder'" class="group dark:hover:bg-white/4 hover:bg-black/5 relative" :class="{
-      'bg-indigo-400/10': dragOverFolder === item.id,
+      'bg-blue-400/10': dragOverFolder === item.id,
       'dark:bg-white/2 bg-black/3': isInLastExpandedFolder,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
@@ -13,7 +13,7 @@
       <!-- Content with padding -->
       <div class="flex items-center px-2.5 py-1 relative " :draggable="true" @click="$emit('toggle-folder', item.id)"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @drop="handleDrop" @dragover.prevent="handleDragOver"
-        @dragleave="handleDragLeave">
+        @dragleave="handleDragLeave" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-1.5">
@@ -22,7 +22,9 @@
               <Icon v-if="!isExpanded" name="folder" class="size-3" />
               <Icon v-else name="folder-open" class="size-3" />
             </div>
-            <span class="truncate">{{ item.name }}</span>
+            <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
+              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef" class="truncate outline-none"
+              :class="{ 'bg-zinc-100 dark:bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
 
@@ -53,16 +55,18 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center pr-3 py-1 relative cursor-pointer" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']" :draggable="true"
-        @click="handleVideoClick"
-        @dragstart="handleDragStart" @dragend="handleDragEnd" @contextmenu.prevent="handleContextMenu">
+      <div class="flex items-center pr-3 py-1 relative cursor-pointer" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']"
+        :draggable="true" @click="handleVideoClick" @dragstart="handleDragStart" @dragend="handleDragEnd"
+        @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
           :class="{ 'opacity-60 dark:opacity-40': item.status === 'processing' || item.status === 'queued' }">
           <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-1.5">
-            <Icon name="video" class="size-3.5 text-indigo-500 flex-shrink-0"
+            <Icon name="video" class="size-3.5 text-blue-500 flex-shrink-0"
               :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
-            <span class=" truncate">{{ item.name }}</span>
+            <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
+              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef" class="truncate outline-none"
+              :class="{ 'bg-zinc-100 dark:bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
 
@@ -90,7 +94,7 @@
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
                 :stroke-dasharray="`${2 * Math.PI * 10}`"
                 :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
-                class="dark:text-indigo-500 text-indigo-500 duration-500" />
+                class="dark:text-blue-500 text-blue-500 duration-500" />
             </svg>
             <span class="text-xs font-medium">
               {{ Math.round(item.progress || 0) }}%
@@ -129,16 +133,18 @@
         :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
         :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
         :get-ancestor-ids="getAncestorIds" :is-last-child="index === children.length - 1"
+        :editing-item-id="editingItemId" @set-editing-item="$emit('set-editing-item', $event)"
         @toggle-folder="$emit('toggle-folder', $event)" @drag-start="$emit('drag-start', $event)"
         @drag-end="$emit('drag-end', $event)" @drop="$emit('drop', $event)" @drag-over="$emit('drag-over', $event)"
         @drag-leave="$emit('drag-leave', $event)" @external-drop="$emit('external-drop', $event)"
-        @cancel-encoding="$emit('cancel-encoding', $event)" />
+        @cancel-encoding="$emit('cancel-encoding', $event)" @rename="$emit('rename', $event)"
+        @delete="$emit('delete', $event)" />
     </template>
   </div>
 </template>
 
 <script>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, ref, nextTick, watch } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import Icon from '@components/base/Icon.vue'
 import HierarchyLines from './HierarchyLines.vue'
@@ -226,15 +232,54 @@ export default {
     isLastChild: {
       type: Boolean,
       default: false
+    },
+    editingItemId: {
+      type: String,
+      default: null
     }
   },
-  emits: ['toggle-folder', 'drag-start', 'drag-end', 'drop', 'drag-over', 'drag-leave', 'external-drop', 'cancel-encoding'],
+  emits: ['toggle-folder', 'drag-start', 'drag-end', 'drop', 'drag-over', 'drag-leave', 'external-drop', 'cancel-encoding', 'rename', 'delete', 'set-editing-item'],
   setup(props, { emit }) {
     const uiStore = useUIStore()
-    
+    const editingName = ref(props.item.name)
+    const nameEditRef = ref(null)
+
+    // Compute if this item is being edited based on editingItemId
+    const isEditing = computed(() => props.editingItemId === props.item.id)
+
     const isExpanded = computed(() =>
       props.expandedFolders.has(props.item.id)
     )
+
+    // Watch for prop changes and update editingName
+    watch(() => props.item.name, (newName) => {
+      if (!isEditing.value) {
+        editingName.value = newName
+      }
+    })
+
+    // Watch for when this item becomes editable
+    watch(isEditing, (newValue, oldValue) => {
+      if (newValue && !oldValue) {
+        editingName.value = props.item.name
+        // Use double nextTick to ensure Vue has completed all updates
+        nextTick(() => {
+          nextTick(() => {
+            if (nameEditRef.value) {
+              nameEditRef.value.focus()
+              // Small delay before selection to ensure focus is complete
+              setTimeout(() => {
+                const range = document.createRange()
+                range.selectNodeContents(nameEditRef.value)
+                const selection = window.getSelection()
+                selection.removeAllRanges()
+                selection.addRange(range)
+              }, 10)
+            }
+          })
+        })
+      }
+    })
 
     // Base classes for row containers
     const rowBaseClasses = computed(() =>
@@ -378,20 +423,125 @@ export default {
       emit('drag-leave', { event: e, folderId: props.item.id })
     }
 
-    const handleContextMenu = (e) => {
-      if (props.item.type === 'video' && (props.item.status === 'processing' || props.item.status === 'queued') && props.item.jobId) {
-        // Show native context menu for cancelling encoding
-        const action = props.item.status === 'processing' ? 'processing' : 'queued encoding'
-        if (confirm(`Cancel ${action} for this video?`)) {
-          emit('cancel-encoding', props.item.jobId)
+    // Remove the menu action handler from here - it should only be in the parent
+
+    const handleContextMenu = async (e) => {
+      let menuTemplate = []
+
+      if (props.item.type === 'video') {
+        menuTemplate = [
+          {
+            label: 'Share',
+            submenu: [
+              {
+                label: 'Copy Web Link',
+                action: 'share:copyWebLink',
+                data: { fileId: props.item.id, fileName: props.item.name }
+              },
+              {
+                label: 'Copy iFrame Embed',
+                action: 'share:copyIframeEmbed',
+                data: { fileId: props.item.id, fileName: props.item.name }
+              }
+            ]
+          },
+          { type: 'separator' },
+          {
+            label: 'Rename',
+            action: 'file:rename',
+            data: { itemId: props.item.id, itemName: props.item.name, itemType: props.item.type }
+          },
+          {
+            label: 'Delete',
+            action: 'file:delete',
+            data: { itemId: props.item.id, itemName: props.item.name, itemType: props.item.type }
+          }
+        ]
+
+        // Add cancel option if video is encoding
+        if ((props.item.status === 'processing' || props.item.status === 'queued') && props.item.jobId) {
+          menuTemplate.unshift({
+            label: `Cancel ${props.item.status === 'processing' ? 'Encoding' : 'Queued Job'}`,
+            action: 'video:cancelJob',
+            data: { jobId: props.item.jobId }
+          })
+          menuTemplate.splice(1, 0, { type: 'separator' })
         }
+      } else if (props.item.type === 'folder') {
+        // Check if folder is empty
+        const folderItems = props.getFolderItems(props.item.id)
+        const isEmpty = folderItems.length === 0
+
+        menuTemplate = [
+          {
+            label: 'Rename',
+            action: 'folder:rename',
+            data: { itemId: props.item.id, itemName: props.item.name, itemType: props.item.type }
+          },
+          {
+            label: 'Delete',
+            action: 'folder:delete',
+            data: { itemId: props.item.id, itemName: props.item.name, itemType: props.item.type },
+            enabled: isEmpty // Disable if folder is not empty
+          }
+        ]
+      }
+
+      if (menuTemplate.length > 0) {
+        await window.api.menu.showContext(menuTemplate, {
+          x: e.clientX,
+          y: e.clientY
+        })
       }
     }
+
+    // Remove handleMenuAction - it's causing all items to respond
 
     const handleVideoClick = () => {
       if (props.item.type === 'video') {
         uiStore.selectVideo(props.item)
       }
+    }
+
+    // Remove menu action handler registration - it should only be in parent
+
+    // startEditing removed - parent handles this via editingItemId prop
+
+    const handleNameClick = (e) => {
+      if (isEditing.value) {
+        e.stopPropagation()
+      }
+      // When not editing, let the click bubble up to the parent div
+    }
+
+    const handleNameBlur = () => {
+      if (!isEditing.value) return
+
+      const newName = nameEditRef.value.textContent.trim()
+      if (newName && newName !== props.item.name) {
+        // Emit rename event - parent will update the item
+        emit('rename', {
+          itemId: props.item.id,
+          oldName: props.item.name,
+          newName: newName,
+          itemType: props.item.type
+        })
+        editingName.value = newName
+      } else {
+        // Revert to original name if empty or unchanged
+        nameEditRef.value.textContent = props.item.name
+        editingName.value = props.item.name
+      }
+
+      emit('set-editing-item', null)
+    }
+
+    const cancelEdit = () => {
+      if (nameEditRef.value) {
+        nameEditRef.value.textContent = props.item.name
+      }
+      editingName.value = props.item.name
+      emit('set-editing-item', null)
     }
 
 
@@ -412,7 +562,13 @@ export default {
       handleContextMenu,
       handleVideoClick,
       COLUMN_WIDTHS,
-      INDENT_SIZE
+      INDENT_SIZE,
+      isEditing,
+      editingName,
+      nameEditRef,
+      handleNameClick,
+      handleNameBlur,
+      cancelEdit
     }
   }
 }

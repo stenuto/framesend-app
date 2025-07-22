@@ -52,9 +52,20 @@ export async function registerHandlers() {
   
   // List all registered IPC handlers
   console.log('\n=== Registered IPC handlers ===');
-  const handlers = ipcMain._events || {};
-  Object.keys(handlers).forEach(channel => {
-    if (channel.startsWith('video:') || channel.startsWith('window:') || channel.startsWith('file:') || channel.startsWith('dialog:') || channel.startsWith('app:') || channel.startsWith('settings:')) {
+  // Get all handle and on events
+  const handleEvents = ipcMain._invokeHandlers || new Map();
+  const onEvents = ipcMain._events || {};
+  
+  // Log handle events
+  console.log('Handle events:');
+  for (const [channel] of handleEvents) {
+    console.log(`- ${channel}`);
+  }
+  
+  // Log on events
+  console.log('\nOn events:');
+  Object.keys(onEvents).forEach(channel => {
+    if (!channel.startsWith('__')) { // Skip internal events
       console.log(`- ${channel}`);
     }
   });

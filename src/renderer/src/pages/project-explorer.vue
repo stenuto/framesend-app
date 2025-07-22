@@ -35,16 +35,18 @@
 
       <!-- Table Body with drop zone -->
       <div class="flex-1 overflow-y-auto h-full" @drop.prevent="handleDropOnRoot($event)"
-        @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent>
+        @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
+        @contextmenu.prevent="handleContextMenu">
         <div class="min-h-full pt-1.5">
           <!-- Root Items using recursive component -->
           <FileSystemItem v-for="(item, index) in rootItems" :key="item.id" :item="item" :depth="0"
             :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
             :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
             :get-ancestor-ids="getAncestorIds" :is-last-child="index === rootItems.length - 1"
+            :editing-item-id="editingItemId" @set-editing-item="editingItemId = $event"
             @toggle-folder="toggleFolder" @drag-start="handleDragStartWrapper" @drag-end="handleDragEnd"
             @drop="handleDropWrapper" @drag-over="handleDragOverWrapper" @drag-leave="handleDragLeaveWrapper"
-            @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" />
+            @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" @rename="handleRename" />
         </div>
       </div>
     </div>
@@ -95,6 +97,10 @@ export default {
     const dragOverFolder = ref(null)
     const lastExpandedFolder = ref(null)
     const searchQuery = ref('')
+    const viewMode = ref('list') // 'list' or 'gallery'
+    const editingItemId = ref(null) // Track which item is being edited
+    
+    let unsubscribeMenu = null
     
     // Watch for route param changes to sync project selection
     watch(() => currentParams.value.projectId, (projectId) => {
@@ -453,6 +459,7 @@ export default {
       unsubscribeComplete?.()
       unsubscribeError?.()
       unsubscribeCancelled?.()
+      unsubscribeMenu?.()
     })
 
     // Wrapper methods for recursive component events
@@ -522,6 +529,146 @@ export default {
     const goToSettings = () => {
       router.navigateTo('settings')
     }
+    
+    const handleContextMenu = async (e) => {
+      // Check if clicked on empty space (not on an item)
+      if (e.target.closest('[draggable="true"]')) {
+        return // Let the item handle its own context menu
+      }
+      
+      const menuTemplate = [
+        {
+          label: 'New Folder',
+          action: 'explorer:newFolder'
+        },
+        { type: 'separator' },
+        {
+          label: 'View',
+          submenu: [
+            {
+              label: 'as List',
+              type: 'radio',
+              checked: viewMode.value === 'list',
+              action: 'explorer:viewList'
+            },
+            {
+              label: 'as Gallery',
+              type: 'radio',
+              checked: viewMode.value === 'gallery',
+              action: 'explorer:viewGallery'
+            }
+          ]
+        }
+      ]
+      
+      await window.api.menu.showContext(menuTemplate, {
+        x: e.clientX,
+        y: e.clientY
+      })
+    }
+    
+    const handleMenuAction = (action, data) => {
+      // Handle menu actions centrally
+      switch (action) {
+        case 'explorer:newFolder':
+          createNewFolder()
+          break
+          
+        case 'explorer:viewList':
+          viewMode.value = 'list'
+          break
+          
+        case 'explorer:viewGallery':
+          viewMode.value = 'gallery'
+          break
+          
+        case 'file:rename':
+        case 'folder:rename':
+          // Set the specific item to be edited
+          editingItemId.value = data.itemId
+          break
+          
+        case 'file:delete':
+          // Optimistically delete video
+          handleDelete(data.itemId, data.itemName, data.itemType)
+          break
+          
+        case 'folder:delete':
+          // Delete empty folder
+          handleDelete(data.itemId, data.itemName, data.itemType)
+          break
+          
+        case 'video:cancelJob':
+          handleCancelEncoding(data.jobId)
+          break
+          
+        case 'share:copyWebLink':
+          navigator.clipboard.writeText(`https://app.framesend.com/files/${data.fileId}`)
+          break
+          
+        case 'share:copyIframeEmbed':
+          const embedCode = `<iframe src="https://app.framesend.com/embed/${data.fileId}\" width="640" height="360" frameborder="0" allowfullscreen></iframe>`
+          navigator.clipboard.writeText(embedCode)
+          break
+      }
+    }
+    
+    const createNewFolder = () => {
+      const folderName = prompt('Enter folder name:')
+      if (!folderName) return
+      
+      const newFolder = {
+        id: `folder_${Date.now()}`,
+        type: 'folder',
+        name: folderName,
+        parentId: null,
+        projectId: selectedProject.value?.id,
+        orderIndex: fileSystem.value.filter(i => i.parentId === null).length
+      }
+      
+      fileSystem.value.push(newFolder)
+    }
+    
+    const handleRename = ({ itemId, oldName, newName, itemType }) => {
+      const item = fileSystem.value.find(i => i.id === itemId)
+      if (item) {
+        item.name = newName
+        console.log(`Renamed ${itemType} from "${oldName}" to "${newName}"`)
+        // Clear editing state
+        editingItemId.value = null
+        // TODO: Persist to database/API later
+      }
+    }
+    
+    const handleDelete = (itemId, itemName, itemType) => {
+      // Confirm deletion
+      const confirmMessage = itemType === 'folder' 
+        ? `Delete folder "${itemName}"?` 
+        : `Delete video "${itemName}"?`
+        
+      if (confirm(confirmMessage)) {
+        // Find the item index
+        const index = fileSystem.value.findIndex(i => i.id === itemId)
+        if (index !== -1) {
+          // If it's a video that's encoding, cancel the job first
+          const item = fileSystem.value[index]
+          if (item.type === 'video' && item.jobId && (item.status === 'processing' || item.status === 'queued')) {
+            handleCancelEncoding(item.jobId)
+          }
+          
+          // Optimistically remove from UI
+          fileSystem.value.splice(index, 1)
+          console.log(`Deleted ${itemType}: "${itemName}"`)
+          
+          // TODO: Persist deletion to database/API
+        }
+      }
+    }
+    
+    // Set up menu action listener
+    onMounted(() => {
+      unsubscribeMenu = window.api.menu.onAction(handleMenuAction)
+    })
 
     return {
       router,
@@ -556,7 +703,12 @@ export default {
       searchQuery,
       sidebarOpen,
       uiStore,
-      currentParams
+      currentParams,
+      handleContextMenu,
+      viewMode,
+      handleRename,
+      handleDelete,
+      editingItemId
     }
   }
 }

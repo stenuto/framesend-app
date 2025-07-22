@@ -13,14 +13,28 @@
       @click="handleAccountClick" />
 
     <!-- Project List -->
-    <div class="text-[11px] font-regular px-6 mt-6 text-current/60">
-      Projects
+    <div class="flex justify-between items-center group pl-5 pr-[19px] pt-2 mt-4">
+      <div class="text-[11px] font-regular text-current/60">
+        Projects
+      </div>
+      <Button class="group-hover:opacity-100 opacity-0 transition-opacity duration-50" icon-name="plus" size="sm"
+        variant="ghost" @click="createProject" :title="`New Project (${isMac ? '⌘' : 'Ctrl'}+N)`" />
     </div>
     <div class="flex-1 overflow-y-auto">
       <div class="p-3 space-y-0.5">
         <!-- Projects -->
-        <SidebarItem v-for="project in projects" :key="project.id" :name="project.name" icon-name="folder"
-          :highlighted="isProjectHighlighted(project.id)" @click="handleProjectClick(project.id)" />
+        <SidebarItem v-for="project in projects" :key="project.id" 
+          :name="project.name" 
+          icon-name="folder"
+          :highlighted="isProjectHighlighted(project.id)" 
+          :item-id="project.id"
+          :editing-item-id="editingProjectId"
+          :enable-context-menu="true"
+          :editable="true"
+          @click="handleProjectClick(project.id)"
+          @context-menu="handleProjectContextMenu($event, project)"
+          @rename="handleProjectRename"
+          @set-editing-item="editingProjectId = $event" />
       </div>
 
       <!-- Divider -->
@@ -39,7 +53,7 @@
 </template>
 
 <script>
-import { computed, defineComponent, watch } from 'vue'
+import { computed, defineComponent, watch, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
 import { useUIStore } from '@/stores/ui'
@@ -64,6 +78,10 @@ export default defineComponent({
     const { currentPage, canGoBack, canGoForward, currentParams } = storeToRefs(router)
     const { selectProject } = projectsStore
     const { toggleSidebar } = uiStore
+    
+    // State for editing projects
+    const editingProjectId = ref(null)
+    let unsubscribeMenu = null
 
     // Watch for route changes to update project selection
     watch([currentPage, currentParams], ([page, params]) => {
@@ -118,6 +136,131 @@ export default defineComponent({
     const isSettingsHighlighted = computed(() => {
       return currentPage.value === 'settings'
     })
+    
+    // Check if on Mac for keyboard shortcuts
+    const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+    
+    // Handle project context menu
+    const handleProjectContextMenu = async (e, project) => {
+      const menuTemplate = [
+        {
+          label: 'Rename',
+          action: 'project:rename',
+          data: { projectId: project.id, projectName: project.name }
+        },
+        { type: 'separator' },
+        {
+          label: 'Delete',
+          action: 'project:delete',
+          data: { projectId: project.id, projectName: project.name },
+          enabled: projects.value.length > 1 // Disable if only one project
+        }
+      ]
+      
+      await window.api.menu.showContext(menuTemplate, {
+        x: e.clientX,
+        y: e.clientY
+      })
+    }
+    
+    // Handle menu actions
+    const handleMenuAction = (action, data) => {
+      switch (action) {
+        case 'project:rename':
+          editingProjectId.value = data.projectId
+          break
+          
+        case 'project:delete':
+          if (confirm(`Delete project "${data.projectName}"?\n\nThis action cannot be undone.`)) {
+            const index = projects.value.findIndex(p => p.id === data.projectId)
+            if (index !== -1) {
+              projects.value.splice(index, 1)
+              
+              // If we deleted the selected project, select another one
+              if (selectedProjectId.value === data.projectId) {
+                const nextProject = projects.value[0]
+                if (nextProject) {
+                  selectProject(nextProject.id)
+                  router.navigateTo('project-explorer', { projectId: nextProject.id })
+                } else {
+                  // No projects left, navigate to settings
+                  goToSettings()
+                }
+              }
+              
+              console.log(`Project deleted: "${data.projectName}"`)
+              // TODO: API call to delete project
+              console.log('TODO: API call to delete project:', {
+                projectId: data.projectId
+              })
+            }
+          }
+          break
+      }
+    }
+    
+    // Handle project rename
+    const handleProjectRename = ({ itemId, oldName, newName }) => {
+      const project = projects.value.find(p => p.id === itemId)
+      if (project) {
+        project.name = newName
+        console.log(`Project renamed from "${oldName}" to "${newName}"`)
+        // TODO: API call to persist project rename
+        console.log('TODO: API call to persist project rename:', {
+          projectId: itemId,
+          newName: newName
+        })
+        editingProjectId.value = null
+      }
+    }
+    
+    // Create new project
+    const createProject = () => {
+      const newProject = {
+        id: `project_${Date.now()}`,
+        name: 'New Project',
+        createdAt: new Date(),
+        fileCount: 0
+      }
+      
+      // Add to projects array
+      projects.value.unshift(newProject)
+      
+      // Select the new project
+      selectProject(newProject.id)
+      router.navigateTo('project-explorer', { projectId: newProject.id })
+      
+      // Make it editable immediately
+      nextTick(() => {
+        editingProjectId.value = newProject.id
+      })
+      
+      console.log('New project created:', newProject)
+      // TODO: API call to create project
+      console.log('TODO: API call to create project in backend')
+    }
+    
+    // Keyboard shortcut handler
+    const handleKeydown = (e) => {
+      // Cmd/Ctrl + N for new project
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault()
+        createProject()
+      }
+    }
+    
+    // Set up menu action listener and keyboard shortcuts
+    onMounted(() => {
+      unsubscribeMenu = window.api.menu.onAction(handleMenuAction)
+      window.addEventListener('keydown', handleKeydown)
+    })
+    
+    onUnmounted(() => {
+      if (unsubscribeMenu) {
+        unsubscribeMenu()
+      }
+      window.removeEventListener('keydown', handleKeydown)
+    })
 
     return {
       projects,
@@ -132,7 +275,12 @@ export default defineComponent({
       canGoBack,
       canGoForward,
       router,
-      currentParams
+      currentParams,
+      editingProjectId,
+      handleProjectContextMenu,
+      handleProjectRename,
+      createProject,
+      isMac
     }
   }
 })

@@ -12,8 +12,8 @@
         <button v-for="item in navigationItems" :key="item.id" :class="[
           'group flex items-center gap-1.5 px-1.5 py-[2.5px] text-xs font-regular rounded-smooth transition-colors',
           currentSection === item.id
-            ? 'dark:bg-zinc-400/15 bg-zinc-500/15 dark:text-zinc-50 text-zinc-800'
-            : 'hover:dark:bg-zinc-400/15 hover:bg-zinc-500/15 hover:text-zinc-800 dark:hover:text-zinc-50'
+            ? 'dark:bg-zinc-400/10 bg-zinc-500/10 dark:text-zinc-50 text-zinc-800'
+            : 'hover:dark:bg-zinc-400/10 hover:bg-zinc-500/10 hover:text-zinc-800 dark:hover:text-zinc-50'
         ]" @click="navigateToSection(item.id)">
           <Icon v-if="item.icon" :name="item.icon" :class="[
             'size-3.5 flex-shrink-0',

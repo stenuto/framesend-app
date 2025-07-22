@@ -84,6 +84,16 @@ const api = {
   settings: {
     load: () => ipcRenderer.invoke('settings:load'),
     save: (settings) => ipcRenderer.invoke('settings:save', settings)
+  },
+  
+  // Context menu operations
+  menu: {
+    showContext: (template, options) => ipcRenderer.invoke('menu:show-context', template, options),
+    onAction: (callback) => {
+      const listener = (event, action, data) => callback(action, data)
+      ipcRenderer.on('menu:action', listener)
+      return () => ipcRenderer.removeListener('menu:action', listener)
+    }
   }
 }
 
