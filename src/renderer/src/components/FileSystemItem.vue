@@ -16,14 +16,15 @@
         @dragleave="handleDragLeave" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0">
-          <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-1.5">
+          <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-0.5">
             <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3 flex-shrink-0" stroke-width="2" />
             <div class="size-3 flex-shrink-0 relative dark:text-current/50 text-current/75">
               <Icon v-if="!isExpanded" name="folder" class="size-3" />
               <Icon v-else name="folder-open" class="size-3" />
             </div>
             <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
-              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef" class="truncate outline-none"
+              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef"
+              class="truncate outline-none selection:transparent px-1.5"
               :class="{ 'bg-zinc-100 dark:bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
@@ -61,11 +62,12 @@
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
           :class="{ 'opacity-60 dark:opacity-40': item.status === 'processing' || item.status === 'queued' }">
-          <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-1.5">
+          <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-0.5">
             <Icon name="video" class="size-3.5 text-blue-500 flex-shrink-0"
               :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
             <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
-              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef" class="truncate outline-none"
+              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef"
+              class="truncate outline-none selection:transparent px-1.5"
               :class="{ 'bg-zinc-100 dark:bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
@@ -473,6 +475,12 @@ export default {
         const isEmpty = folderItems.length === 0
 
         menuTemplate = [
+          {
+            label: 'New Folder',
+            action: 'folder:newFolder',
+            data: { parentId: props.item.id }
+          },
+          { type: 'separator' },
           {
             label: 'Rename',
             action: 'folder:rename',

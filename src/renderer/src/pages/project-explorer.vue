@@ -54,7 +54,7 @@
 </template>
 
 <script>
-import { ref, computed, onUnmounted, watch, onMounted } from 'vue'
+import { ref, computed, onUnmounted, watch, onMounted, nextTick } from 'vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
 import { useVideoEncodingStore } from '@/stores/videoEncoding'
@@ -108,6 +108,22 @@ export default {
         selectProject(projectId)
       }
     }, { immediate: true })
+    
+    // Watch for editing state changes to handle cancelled new folders
+    watch(editingItemId, (newValue, oldValue) => {
+      if (oldValue && !newValue) {
+        // Editing was cancelled, check if it was a new folder that needs to be deleted
+        const item = fileSystem.value.find(i => i.id === oldValue)
+        if (item && item.type === 'folder' && item.name.startsWith('New Folder')) {
+          // This is a new folder that wasn't renamed, delete it
+          const index = fileSystem.value.findIndex(i => i.id === oldValue)
+          if (index !== -1) {
+            fileSystem.value.splice(index, 1)
+            console.log('Deleted cancelled new folder')
+          }
+        }
+      }
+    })
     
     // Ensure we have a project selected
     onMounted(() => {
@@ -598,6 +614,11 @@ export default {
           handleDelete(data.itemId, data.itemName, data.itemType)
           break
           
+        case 'folder:newFolder':
+          // Create new folder inside the clicked folder
+          createNewFolder(data.parentId)
+          break
+          
         case 'video:cancelJob':
           handleCancelEncoding(data.jobId)
           break
@@ -613,30 +634,63 @@ export default {
       }
     }
     
-    const createNewFolder = () => {
-      const folderName = prompt('Enter folder name:')
-      if (!folderName) return
+    const createNewFolder = (parentId = null) => {
+      // Generate a unique name for the folder
+      let baseName = 'New Folder'
+      let counter = 1
+      let folderName = baseName
+      
+      // Check for existing folders with the same name in the same parent
+      const siblings = fileSystem.value.filter(i => i.parentId === parentId && i.type === 'folder')
+      const existingNames = siblings.map(f => f.name)
+      
+      while (existingNames.includes(folderName)) {
+        folderName = `${baseName} ${counter}`
+        counter++
+      }
       
       const newFolder = {
         id: `folder_${Date.now()}`,
         type: 'folder',
         name: folderName,
-        parentId: null,
+        parentId: parentId,
         projectId: selectedProject.value?.id,
-        orderIndex: fileSystem.value.filter(i => i.parentId === null).length
+        orderIndex: fileSystem.value.filter(i => i.parentId === parentId).length
       }
       
       fileSystem.value.push(newFolder)
+      
+      // If creating inside a folder, expand the parent folder
+      if (parentId && !expandedFolders.value.has(parentId)) {
+        expandedFolders.value.add(parentId)
+      }
+      
+      // Make the new folder editable immediately
+      nextTick(() => {
+        editingItemId.value = newFolder.id
+      })
+      
+      return newFolder
     }
     
     const handleRename = ({ itemId, oldName, newName, itemType }) => {
       const item = fileSystem.value.find(i => i.id === itemId)
       if (item) {
-        item.name = newName
-        console.log(`Renamed ${itemType} from "${oldName}" to "${newName}"`)
+        // If the new name is empty and it's a new folder, delete it
+        if (!newName.trim() && oldName.startsWith('New Folder')) {
+          const index = fileSystem.value.findIndex(i => i.id === itemId)
+          if (index !== -1) {
+            fileSystem.value.splice(index, 1)
+            console.log(`Deleted empty new folder`)
+          }
+        } else if (newName.trim()) {
+          // Only update if the new name is not empty
+          item.name = newName.trim()
+          console.log(`Renamed ${itemType} from "${oldName}" to "${newName}"`)
+          // TODO: Persist to database/API later
+        }
         // Clear editing state
         editingItemId.value = null
-        // TODO: Persist to database/API later
       }
     }
     
