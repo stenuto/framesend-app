@@ -59,6 +59,7 @@ import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
 import { useVideoEncodingStore } from '@/stores/videoEncoding'
 import { useUIStore } from '@/stores/ui'
+import { useVideoMetadataStore } from '@/stores/videoMetadata'
 import { storeToRefs } from 'pinia'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
@@ -79,6 +80,7 @@ export default {
     const router = useRouterStore()
     const videoEncodingStore = useVideoEncodingStore()
     const uiStore = useUIStore()
+    const metadataStore = useVideoMetadataStore()
     const { selectedProject } = storeToRefs(projectsStore)
     const { sidebarOpen } = storeToRefs(uiStore)
     const { currentParams } = storeToRefs(router)
@@ -131,6 +133,18 @@ export default {
         selectProject(currentParams.value.projectId)
       }
     })
+    
+    // Watch for metadata changes and sync with file system
+    watch(() => metadataStore.metadata, () => {
+      // Update file system items with metadata changes
+      metadataStore.metadata.forEach((meta, jobId) => {
+        // Find the corresponding video in file system by jobId
+        const item = fileSystem.value.find(i => i.jobId === jobId)
+        if (item && item.name !== meta.name) {
+          item.name = meta.name
+        }
+      })
+    }, { deep: true })
 
     // Helper function to recursively filter items
     const filterItems = (items, query) => {
@@ -387,6 +401,13 @@ export default {
           // Queue the video for encoding with the path
           const job = await videoEncodingStore.queueVideo(filePath)
 
+          // Initialize metadata for this video
+          metadataStore.initializeMetadata(job.id, {
+            name: file.name,
+            projectId: selectedProject.value?.id,
+            filePath: filePath
+          })
+
           // Add to file system with job ID
           const newVideo = {
             id: `fs_${job.id}`,
@@ -516,6 +537,13 @@ export default {
           try {
             // Queue the video for encoding
             const job = await videoEncodingStore.queueVideo(file.path)
+
+            // Initialize metadata for this video
+            metadataStore.initializeMetadata(job.id, {
+              name: file.name,
+              projectId: selectedProject.value?.id,
+              filePath: file.path
+            })
 
             // Add to file system with job ID
             const newVideo = {
@@ -686,6 +714,12 @@ export default {
         } else if (newName.trim()) {
           // Only update if the new name is not empty
           item.name = newName.trim()
+          
+          // If it's a video with a jobId, update metadata
+          if (itemType === 'video' && item.jobId) {
+            metadataStore.updateVideoName(item.jobId, newName.trim())
+          }
+          
           console.log(`Renamed ${itemType} from "${oldName}" to "${newName}"`)
           // TODO: Persist to database/API later
         }
@@ -708,6 +742,11 @@ export default {
           const item = fileSystem.value[index]
           if (item.type === 'video' && item.jobId && (item.status === 'processing' || item.status === 'queued')) {
             handleCancelEncoding(item.jobId)
+          }
+          
+          // Remove metadata if it's a video
+          if (item.type === 'video' && item.jobId) {
+            metadataStore.removeMetadata(item.jobId)
           }
           
           // Optimistically remove from UI

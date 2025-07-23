@@ -193,6 +193,46 @@ const result = await window.api.window.minimize()
 - FFmpeg commands are built programmatically (no shell injection)
 - Temporary files are cleaned up after processing
 
+## Future API Integration
+
+### Video Upload & Metadata Flow
+
+When the web server is implemented, the video upload and encoding flow will work as follows:
+
+1. **Video Creation** - When a user uploads a video:
+   ```javascript
+   // POST /api/videos
+   const response = await api.post('/videos', {
+     projectId: currentProject.id,
+     name: file.name,
+     size: file.size,
+     duration: metadata.duration,
+     resolution: metadata.resolution
+   })
+   
+   const video = response.data // { id, name, status, createdAt, etc. }
+   ```
+
+2. **Metadata Updates** - Users can edit video metadata during upload/encoding:
+   ```javascript
+   // PATCH /api/videos/:id
+   await api.patch(`/videos/${video.id}`, {
+     name: newName,
+     description: description,
+     tags: selectedTags
+   })
+   ```
+
+3. **Real-time Sync** - Names and metadata will be reactive across all UI components:
+   - File Explorer shows the latest name
+   - Queue reflects name changes immediately
+   - WebSocket or SSE updates for real-time sync
+
+4. **Current Mock Implementation**:
+   - Videos use `fs_${jobId}` as temporary IDs
+   - Names are stored in file system state and synced via shared store
+   - Queue watches for name changes in file system items
+
 # Important Reminders
 
 - Do what has been asked; nothing more, nothing less
