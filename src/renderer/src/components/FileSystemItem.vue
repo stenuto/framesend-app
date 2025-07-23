@@ -55,8 +55,8 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center pr-3 py-1 relative cursor-pointer" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']"
-        :draggable="true" @click="handleVideoClick" @dragstart="handleDragStart" @dragend="handleDragEnd"
+      <div class="flex items-center pr-3 py-1 relative" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']" :draggable="true"
+        @click="handleVideoClick" @dragstart="handleDragStart" @dragend="handleDragEnd"
         @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
@@ -88,7 +88,7 @@
           </div>
           <!-- PROCESSING -->
           <div v-else-if="item.status === 'processing'" class="inline-flex items-center gap-1.5">
-            <svg class="size-5 -rotate-90" viewBox="0 0 24 24">
+            <svg class="size-4 -rotate-90" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
                 class="text-current/15" />
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
@@ -96,19 +96,19 @@
                 :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
                 class="dark:text-blue-500 text-blue-500 duration-500" />
             </svg>
-            <span class="text-xs font-medium">
+            <span class="text-xs">
               {{ Math.round(item.progress || 0) }}%
             </span>
           </div>
           <!-- QUEUED -->
           <div v-if="item.status === 'queued'"
-            class="size-5 rounded-full dark:bg-amber-800/20 bg-amber-100 flex items-center justify-center">
-            <Icon name="clock-fading" class="size-3.5 dark:text-amber-400 text-amber-500" :stroke-width="2" />
+            class="rounded-smooth px-1.5 text-[11px] dark:bg-zinc-500/30 group-hover:opacity-100 opacity-30 text-zinc-500 dark:text-zinc-200/80 bg-zinc-100 flex items-center justify-center">
+            Queued
           </div>
           <!-- FAILED -->
           <div v-if="item.status === 'failed'"
-            class="size-5 rounded-full dark:bg-rose-800/20 bg-rose-100 flex items-center justify-center">
-            <Icon name="x" class="size-3.5 dark:text-rose-400 text-rose-500" :stroke-width="2" />
+            class="rounded-smooth px-1.5 text-[11px] dark:bg-red-900/40 group-hover:opacity-100 opacity-30 text-red-500 dark:text-red-200/80 bg-red-100 flex items-center justify-center">
+            Failed
           </div>
         </div>
       </div>

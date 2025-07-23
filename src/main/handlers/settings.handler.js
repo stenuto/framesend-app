@@ -56,7 +56,9 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
       const settings = JSON.parse(content)
       
       // Merge with defaults to ensure all properties exist
+      // But preserve any additional properties from the saved settings
       return {
+        ...settings,  // Include all saved properties
         general: {
           ...defaultSettings.general,
           ...settings.general

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch, toRaw } from 'vue'
+import { ref, watch, toRaw, computed } from 'vue'
 
 export const useSettingsStore = defineStore('settings', () => {
   // State - all settings in one object
@@ -25,6 +25,9 @@ export const useSettingsStore = defineStore('settings', () => {
         },
         quality: 5
       }
+    },
+    projects: {
+      order: [] // Array of project IDs in custom order
     }
   })
   
@@ -36,7 +39,16 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const loaded = await window.api.settings.load()
       if (loaded) {
-        settings.value = loaded
+        // Merge loaded settings with defaults to ensure all properties exist
+        settings.value = {
+          ...settings.value,
+          ...loaded,
+          // Ensure projects object exists with loaded values
+          projects: {
+            order: loaded.projects?.order || [],
+            ...loaded.projects
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load settings:', error)
@@ -76,6 +88,18 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
   
+  function updateProjectOrder(projectIds) {
+    // Ensure projects object exists
+    if (!settings.value.projects) {
+      settings.value.projects = {}
+    }
+    settings.value.projects.order = projectIds
+  }
+  
+  function getProjectOrder() {
+    return settings.value.projects?.order || []
+  }
+  
   
   // Watch for settings changes and save
   watch(settings, () => {
@@ -95,8 +119,11 @@ export const useSettingsStore = defineStore('settings', () => {
     loadSettings,
     saveSettings,
     updateAppearance,
+    updateProjectOrder,
+    getProjectOrder,
     // Getters
     appearance: () => settings.value.general.appearance,
-    encodingSettings: () => settings.value.encoding
+    encodingSettings: () => settings.value.encoding,
+    projectOrder: computed(() => settings.value.projects?.order || [])
   }
 })

@@ -1,10 +1,13 @@
 <template>
   <div :class="[
-    'group flex items-center gap-2 px-2.5 py-1.5 rounded-smooth-lg cursor-pointer',
+    'group flex items-center gap-2 px-2.5 py-1.5 rounded-smooth-lg transition-all duration-150',
     highlighted
       ? 'dark:bg-zinc-600/20 bg-zinc-500/20 dark:text-zinc-50 text-zinc-800'
-      : 'hover:dark:bg-zinc-600/10 hover:bg-zinc-500/10'
-  ]" @click="handleClick" @contextmenu.prevent="handleContextMenu">
+      : 'hover:dark:bg-zinc-600/10 hover:bg-zinc-500/10',
+    isDragging ? 'opacity-50' : ''
+  ]" :draggable="props.draggable" @click="handleClick" @contextmenu.prevent="handleContextMenu"
+    @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover.prevent="handleDragOver" @drop.prevent="handleDrop"
+    @dragleave="handleDragLeave">
     <!-- Icon -->
     <Icon v-if="iconName" :name="iconName" :class="[
       'size-[13px] flex-shrink-0',
@@ -15,8 +18,9 @@
     <!-- Content -->
     <div class="flex-1 min-w-0 flex items-center justify-between">
       <!-- Name -->
-      <span :contenteditable="isEditing && props.editable" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
-        @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef" :class="[
+      <span :contenteditable="isEditing && props.editable" @blur="handleNameBlur"
+        @keydown.enter.prevent="handleNameBlur" @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef"
+        :class="[
           'text-[13px] font-regular truncate outline-none',
           highlighted ? 'text-current' : 'group-hover:text-current',
           isEditing && props.editable ? 'bg-zinc-100 dark:bg-zinc-800 rounded' : ''
@@ -68,13 +72,21 @@ const props = defineProps({
   editable: {
     type: Boolean,
     default: false
+  },
+  draggable: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['click', 'context-menu', 'rename', 'set-editing-item'])
+const emit = defineEmits(['click', 'context-menu', 'rename', 'set-editing-item', 'drag-start', 'drag-end', 'drag-over', 'drop', 'drag-leave'])
 
 const editingName = ref(props.name)
 const nameEditRef = ref(null)
+const isDragging = ref(false)
+const isDragOver = ref(false)
+
+// Remove this - we don't want to highlight items on drag over
 
 // Compute if this item is being edited
 const isEditing = computed(() => props.editable && props.editingItemId === props.itemId)
@@ -148,11 +160,65 @@ const handleNameBlur = () => {
 
 const cancelEdit = () => {
   if (!props.editable) return
-  
+
   if (nameEditRef.value) {
     nameEditRef.value.textContent = props.name
   }
   editingName.value = props.name
   emit('set-editing-item', null)
+}
+
+// Drag and drop handlers
+const handleDragStart = (e) => {
+  if (!props.draggable) return
+
+  isDragging.value = true
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('text/plain', JSON.stringify({
+    itemId: props.itemId,
+    name: props.name
+  }))
+
+  emit('drag-start', { event: e, itemId: props.itemId })
+}
+
+const handleDragEnd = (e) => {
+  isDragging.value = false
+  isDragOver.value = false
+  emit('drag-end', { event: e, itemId: props.itemId })
+}
+
+const handleDragOver = (e) => {
+  if (!props.draggable) return
+
+  e.preventDefault()
+  e.dataTransfer.dropEffect = 'move'
+  isDragOver.value = true
+  emit('drag-over', { event: e, itemId: props.itemId })
+}
+
+const handleDrop = (e) => {
+  if (!props.draggable) return
+
+  e.preventDefault()
+  isDragOver.value = false
+
+  const data = e.dataTransfer.getData('text/plain')
+  if (data) {
+    try {
+      const draggedItem = JSON.parse(data)
+      emit('drop', { event: e, draggedItemId: draggedItem.itemId, targetItemId: props.itemId })
+    } catch (err) {
+      console.error('Invalid drag data:', err)
+    }
+  }
+}
+
+const handleDragLeave = (e) => {
+  // Only clear if leaving the element entirely
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    isDragOver.value = false
+    emit('drag-leave', { event: e, itemId: props.itemId })
+  }
 }
 </script>
