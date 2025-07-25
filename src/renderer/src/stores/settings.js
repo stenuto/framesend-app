@@ -24,6 +24,14 @@ export const useSettingsStore = defineStore('settings', () => {
           '2160p_hq': true
         },
         quality: 5
+      },
+      hardwareAcceleration: {
+        enabled: true
+      },
+      streamingPreset: 'balanced',
+      audioEnhancement: {
+        enabled: true,
+        level: 3
       }
     },
     projects: {
@@ -39,11 +47,41 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const loaded = await window.api.settings.load()
       if (loaded) {
-        // Merge loaded settings with defaults to ensure all properties exist
+        // Deep merge loaded settings with defaults to ensure all properties exist
         settings.value = {
-          ...settings.value,
-          ...loaded,
-          // Ensure projects object exists with loaded values
+          general: {
+            ...settings.value.general,
+            ...loaded.general
+          },
+          encoding: {
+            ...settings.value.encoding,
+            ...loaded.encoding,
+            // Ensure nested encoding objects are properly merged
+            h264: {
+              ...settings.value.encoding.h264,
+              ...loaded.encoding?.h264,
+              rungs: {
+                ...settings.value.encoding.h264.rungs,
+                ...loaded.encoding?.h264?.rungs
+              }
+            },
+            av1: {
+              ...settings.value.encoding.av1,
+              ...loaded.encoding?.av1,
+              rungs: {
+                ...settings.value.encoding.av1.rungs,
+                ...loaded.encoding?.av1?.rungs
+              }
+            },
+            hardwareAcceleration: {
+              ...settings.value.encoding.hardwareAcceleration,
+              ...loaded.encoding?.hardwareAcceleration
+            },
+            audioEnhancement: {
+              ...settings.value.encoding.audioEnhancement,
+              ...loaded.encoding?.audioEnhancement
+            }
+          },
           projects: {
             order: loaded.projects?.order || [],
             ...loaded.projects

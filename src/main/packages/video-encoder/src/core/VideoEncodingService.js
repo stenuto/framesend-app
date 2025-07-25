@@ -43,7 +43,8 @@ export class VideoEncodingService extends EventEmitter {
     this.encodingSettings = null;
     // Put settings file in the app data directory root
     const appDataDir = path.dirname(this.config.outputDir);
-    this.settingsPath = path.join(appDataDir, 'encoding-settings.json');
+    // Use the main settings.json file instead of encoding-settings.json
+    this.settingsPath = path.join(appDataDir, 'settings.json');
 
     // Setup required directories
     this._setupDirectories();
@@ -130,7 +131,11 @@ export class VideoEncodingService extends EventEmitter {
       outputDir: jobOutputDir,
       tempDir: path.join(this.config.tempDir, jobId),
       binaries: this.binaries,
-      encodingSettings: this.encodingSettings,
+      // Merge file-based settings with options-based settings
+      encodingSettings: {
+        ...this.encodingSettings,
+        ...options.encodingSettings
+      },
       ...options,
     });
 

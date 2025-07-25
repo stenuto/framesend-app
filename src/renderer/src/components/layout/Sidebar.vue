@@ -21,9 +21,9 @@
         variant="ghost" @click="createProject" :title="`New Project (${isMac ? '⌘' : 'Ctrl'}+N)`" />
     </div>
     <div class="flex-1 overflow-y-auto" :class="{ 'dragging-active': !!draggedProjectId }">
-      <div class="p-3 space-y-0.5 relative">
+      <div class="px-3 pb-3 space-y-0.5 relative">
         <!-- Drop zone at the start -->
-        <div class="drop-zone h-4 -mb-2 relative" @dragover.prevent="handleDropZoneDragOver($event, 0)"
+        <div class="drop-zone h-3 -mb-2 relative" @dragover.prevent="handleDropZoneDragOver($event, 0)"
           @drop.prevent="handleDropZoneDrop($event, 0)" @dragleave="handleDropZoneDragLeave">
           <div v-if="dropZoneIndex === 0"
             class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-blue-500 rounded-full animate-pulse" />
@@ -54,7 +54,9 @@
 
       <!-- Additional Items -->
       <div class="p-3 space-y-0.5">
-        <SidebarItem name="Queue" icon-name="list" :highlighted="isQueueHighlighted" @click="goToQueue" />
+        <SidebarItem name="Analytics" icon-name="chart-no-axes-column" :highlighted="isQueueHighlighted"
+          @click="goToQueue" />
+        <!-- <SidebarItem name="Queue" icon-name="list" :highlighted="isQueueHighlighted" @click="goToQueue" /> -->
         <SidebarItem name="Settings" icon-name="settings" :highlighted="isSettingsHighlighted" @click="goToSettings" />
 
       </div>

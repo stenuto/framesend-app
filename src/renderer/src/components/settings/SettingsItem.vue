@@ -1,5 +1,5 @@
 <template>
-  <div class="flex gap-5">
+  <div class="flex gap-5 border-b border-black/10 dark:border-zinc-700/50 pb-8">
     <div class="w-1/3">
       <div>
         <h5 class="text-medium text-[13px]">

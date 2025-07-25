@@ -53,6 +53,33 @@ export class FluentFFmpegWrapper extends EventEmitter {
         .audioFrequency(options.sampleRate)
         .output(outputPath);
       
+      // Apply audio enhancement if enabled
+      if (options.encodingSettings?.audioEnhancement?.enabled) {
+        const level = options.encodingSettings.audioEnhancement.level || 3;
+        
+        // Audio filters based on enhancement level
+        const audioFilters = [];
+        
+        // Level 1-2: Basic normalization
+        if (level >= 1) {
+          audioFilters.push('loudnorm=I=-16:TP=-1.5:LRA=11');
+        }
+        
+        // Level 3-4: Add compression
+        if (level >= 3) {
+          audioFilters.push('acompressor=threshold=-20dB:ratio=4:attack=5:release=50');
+        }
+        
+        // Level 5: Add equalizer for clarity
+        if (level >= 5) {
+          audioFilters.push('equalizer=f=3000:t=h:width=200:g=3');
+        }
+        
+        if (audioFilters.length > 0) {
+          command.audioFilters(audioFilters.join(','));
+        }
+      }
+      
       // Add metadata to identify our processes
       command.outputOptions('-metadata', `comment=framesend-job-${this.jobId}`);
       
@@ -103,8 +130,23 @@ export class FluentFFmpegWrapper extends EventEmitter {
     return new Promise((resolve, reject) => {
       const command = ffmpeg(inputPath);
       
-      // Video codec
-      command.videoCodec(options.codec || 'libx264');
+      // Apply hardware acceleration if enabled
+      if (options.encodingSettings?.hardwareAcceleration?.enabled) {
+        // Use VideoToolbox on macOS for hardware acceleration
+        if (process.platform === 'darwin') {
+          command.inputOptions('-hwaccel', 'videotoolbox');
+        }
+        // Use NVENC on systems with NVIDIA GPUs (if available)
+        else if (options.codec === 'libx264' || !options.codec) {
+          // Try to use h264_nvenc if available, fallback to libx264
+          command.videoCodec('h264_nvenc');
+          command.outputOptions('-preset', 'p4'); // NVENC preset
+          command.outputOptions('-tune', 'hq');
+        }
+      } else {
+        // Software encoding
+        command.videoCodec(options.codec || 'libx264');
+      }
       
       // Video filters
       if (options.videoFilters) {
@@ -113,12 +155,50 @@ export class FluentFFmpegWrapper extends EventEmitter {
       
       // H.264 options
       if (options.codec === 'libx264' || !options.codec) {
-        command
-          .outputOptions('-preset', options.preset || 'medium')
-          .outputOptions('-crf', String(options.crf || 23))
-          .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p')
-          .outputOptions('-profile:v', options.profile || 'main')
-          .outputOptions('-level', options.level || '4.0');
+        // If not using hardware acceleration, apply standard settings
+        if (!options.encodingSettings?.hardwareAcceleration?.enabled) {
+          command
+            .outputOptions('-preset', options.preset || 'medium')
+            .outputOptions('-crf', String(options.crf || 23))
+            .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p')
+            .outputOptions('-profile:v', options.profile || 'main')
+            .outputOptions('-level', options.level || '4.0');
+        } else if (process.platform !== 'darwin') {
+          // NVENC specific settings (non-macOS hardware acceleration)
+          command
+            .outputOptions('-rc', 'vbr')
+            .outputOptions('-cq', String(options.crf || 23))
+            .outputOptions('-profile:v', options.profile || 'main')
+            .outputOptions('-level', options.level || '4.0');
+        } else {
+          // VideoToolbox settings for macOS
+          command
+            .videoCodec('h264_videotoolbox')
+            .outputOptions('-profile:v', options.profile || 'main')
+            .outputOptions('-level', options.level || '4.0');
+          if (options.videoBitrate) {
+            command.videoBitrate(options.videoBitrate);
+          }
+        }
+        
+        // Apply streaming optimization preset
+        const streamingPreset = options.encodingSettings?.streamingPreset || 'balanced';
+        if (streamingPreset === 'fast-start') {
+          // Optimize for quick start and low latency
+          command.outputOptions('-movflags', '+faststart');
+          command.outputOptions('-preset', 'faster');
+          if (!options.encodingSettings?.hardwareAcceleration?.enabled) {
+            command.outputOptions('-tune', 'zerolatency');
+          }
+        } else if (streamingPreset === 'bandwidth-optimized') {
+          // Optimize for lower bandwidth
+          command.outputOptions('-movflags', '+faststart');
+          if (!options.encodingSettings?.hardwareAcceleration?.enabled) {
+            command.outputOptions('-tune', 'film');
+            command.outputOptions('-x264-params', 'aq-mode=3:aq-strength=1.0');
+          }
+        }
+        // 'balanced' uses default settings
         
         if (options.videoBitrate) {
           command.videoBitrate(options.videoBitrate);
@@ -129,7 +209,7 @@ export class FluentFFmpegWrapper extends EventEmitter {
         if (options.bufsize) {
           command.outputOptions('-bufsize', options.bufsize);
         }
-        if (options['x264-params']) {
+        if (options['x264-params'] && !options.encodingSettings?.hardwareAcceleration?.enabled) {
           command.outputOptions('-x264-params', options['x264-params']);
         }
       }
@@ -161,6 +241,38 @@ export class FluentFFmpegWrapper extends EventEmitter {
       
       // Audio
       command.audioCodec('aac').audioBitrate('128k');
+      
+      // Apply audio enhancement if enabled
+      if (options.encodingSettings?.audioEnhancement?.enabled) {
+        const level = options.encodingSettings.audioEnhancement.level || 3;
+        
+        // Audio filters based on enhancement level
+        const audioFilters = [];
+        
+        // Level 1-2: Basic normalization
+        if (level >= 1) {
+          audioFilters.push('loudnorm=I=-16:TP=-1.5:LRA=11');
+        }
+        
+        // Level 3-4: Add compression
+        if (level >= 3) {
+          audioFilters.push('acompressor=threshold=-20dB:ratio=4:attack=5:release=50');
+        }
+        
+        // Level 5: Add equalizer for clarity
+        if (level >= 5) {
+          audioFilters.push('equalizer=f=3000:t=h:width=200:g=3');
+        }
+        
+        if (audioFilters.length > 0) {
+          command.audioFilters(audioFilters.join(','));
+        }
+        
+        // Increase bitrate for higher quality levels
+        if (level >= 4) {
+          command.audioBitrate('192k');
+        }
+      }
       
       // HLS options
       if (options.hls_time) {

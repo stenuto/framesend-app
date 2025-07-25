@@ -238,7 +238,11 @@ export class VideoJob extends EventEmitter {
     
     // Add AV1 renditions based on settings
     if (this.encodingSettings.av1.enabled) {
+      console.log(`[VideoJob ${this.id}] AV1 is enabled in settings`);
+      console.log(`[VideoJob ${this.id}] AV1 settings:`, JSON.stringify(this.encodingSettings.av1));
+      
       const enabledAV1Ladder = filterLadderBySettings(AV1_LADDER, this.encodingSettings.av1);
+      console.log(`[VideoJob ${this.id}] Enabled AV1 ladder:`, enabledAV1Ladder);
       
       const av1Renditions = enabledAV1Ladder
         .map(rung => {
@@ -271,7 +275,14 @@ export class VideoJob extends EventEmitter {
           };
         });
         
+      console.log(`[VideoJob ${this.id}] Created ${av1Renditions.length} AV1 renditions`);
+      av1Renditions.forEach(r => {
+        console.log(`[VideoJob ${this.id}] AV1 rendition: ${r.name} at ${r.width}x${r.height}, CRF: ${r.crf}`);
+      });
+      
       this.renditions.push(...av1Renditions);
+    } else {
+      console.log(`[VideoJob ${this.id}] AV1 is disabled in settings`);
     }
     
     // Create output directories for each rendition
@@ -296,11 +307,17 @@ export class VideoJob extends EventEmitter {
     try {
       // Extract default AAC audio (128k)
       const aacPath = path.join(this.outputDir, 'audio', 'default.m4a');
-      await this.ffmpeg.extractAudio(this.inputPath, aacPath, AUDIO_PARAMS.default);
+      await this.ffmpeg.extractAudio(this.inputPath, aacPath, {
+        ...AUDIO_PARAMS.default,
+        encodingSettings: this.encodingSettings
+      });
       
       // Also extract upgraded audio (192k) for high-quality renditions
       const upgradedPath = path.join(this.outputDir, 'audio', 'upgraded.m4a');
-      await this.ffmpeg.extractAudio(this.inputPath, upgradedPath, AUDIO_PARAMS.upgraded);
+      await this.ffmpeg.extractAudio(this.inputPath, upgradedPath, {
+        ...AUDIO_PARAMS.upgraded,
+        encodingSettings: this.encodingSettings
+      });
       
       this.metadata.audio.files = {
         default: 'audio/default.m4a',
@@ -329,6 +346,8 @@ export class VideoJob extends EventEmitter {
         if (this.cancelled) throw new Error('Job cancelled');
         
         try {
+          console.log(`[VideoJob ${this.id}] Starting encoding for ${rendition.name} with codec: ${rendition.codec}`);
+          
           // Prepare encoding options based on codec
           const encodingOptions = rendition.codec === 'libsvtav1' 
             ? this._getAV1Options(rendition)
@@ -388,6 +407,7 @@ export class VideoJob extends EventEmitter {
       level: rendition.level,
       ...HLS_PARAMS,
       hlsSegmentFilename: path.join(rendition.outputPath, 'segment_%04d.m4s'),
+      encodingSettings: this.encodingSettings
     };
   }
 
@@ -415,6 +435,7 @@ export class VideoJob extends EventEmitter {
       'svtav1-params': svtav1Params.length > 0 ? svtav1Params.join(':') : undefined,
       ...HLS_PARAMS,
       hlsSegmentFilename: path.join(rendition.outputPath, 'segment_%04d.m4s'),
+      encodingSettings: this.encodingSettings
     };
   }
 

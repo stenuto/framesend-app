@@ -203,8 +203,27 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
     try {
       const service = await getEncodingService();
       
-      // Queue the video
-      const job = await service.queueVideo(filePath, options);
+      // Load encoding settings from user preferences
+      const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+      let encodingSettings = {};
+      
+      try {
+        if (fs.existsSync(settingsPath)) {
+          const settingsData = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+          encodingSettings = settingsData.encoding || {};
+        }
+      } catch (error) {
+        console.error('Failed to load encoding settings:', error);
+      }
+      
+      // Merge user settings with provided options
+      const mergedOptions = {
+        ...options,
+        encodingSettings
+      };
+      
+      // Queue the video with settings
+      const job = await service.queueVideo(filePath, mergedOptions);
       
       // Set up event forwarding for this job
       const startHandler = (data) => {

@@ -12,12 +12,16 @@ export async function loadEncodingSettings(settingsPath) {
     if (await fs.pathExists(settingsPath)) {
       console.log('[Settings] Loading encoding settings from:', settingsPath);
       const settings = await fs.readJson(settingsPath);
-      return settings;
+      
+      // Extract encoding settings from the main settings object
+      const encodingSettings = settings.encoding || DEFAULT_ENCODING_SETTINGS;
+      console.log('[Settings] Loaded encoding settings:', JSON.stringify(encodingSettings));
+      
+      return encodingSettings;
     }
     
-    // If no user settings, create default settings file
-    console.log('[Settings] No user settings found, creating default settings');
-    await saveEncodingSettings(settingsPath, DEFAULT_ENCODING_SETTINGS);
+    // If no user settings, return defaults (don't create file since main app manages it)
+    console.log('[Settings] No user settings found, using defaults');
     return DEFAULT_ENCODING_SETTINGS;
     
   } catch (error) {

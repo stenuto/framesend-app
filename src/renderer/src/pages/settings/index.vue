@@ -1,10 +1,12 @@
 <template>
-  <div class="flex flex-col h-full bg-white dark:bg-zinc-900 px-5">
+  <div class="flex flex-col h-full bg-white dark:bg-zinc-900 pl-5">
     <!-- Settings Header with Tabs -->
     <div class="shrink-0">
       <!-- Title -->
       <div class="py-5">
-        <h1 class="font-semibold text-lg">Settings</h1>
+        <h1 class="font-semibold text-lg">
+          Settings
+        </h1>
       </div>
 
       <!-- Horizontal Tab Navigation -->
@@ -29,8 +31,8 @@
     </div>
 
     <!-- Content Area -->
-    <div class="flex-1 overflow-y-auto bg-white dark:bg-zinc-900 pt-5">
-      <component :is="currentComponent" v-if="currentComponent" />
+    <div class="flex-1 overflow-y-auto bg-white dark:bg-zinc-900 pt-5 pr-5">
+      <component :is="currentComponent" v-if="currentComponent" class="max-w-3xl" />
     </div>
   </div>
 </template>
@@ -40,6 +42,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouterStore } from '@/stores/router'
 import GeneralSettings from './general.vue'
 import EncodingSettings from './encoding.vue'
+import CaptionsSettings from './captions.vue'
 import AccountSettings from './account.vue'
 import BillingSettings from './billing.vue'
 import Icon from '@components/base/Icon.vue'
@@ -49,6 +52,7 @@ export default {
   components: {
     GeneralSettings,
     EncodingSettings,
+    CaptionsSettings,
     AccountSettings,
     BillingSettings,
     Icon
@@ -62,7 +66,8 @@ export default {
 
     const navigationItems = [
       { id: 'general', label: 'General', icon: 'settings' },
-      { id: 'encoding', label: 'Encoding', icon: 'video' },
+      { id: 'encoding', label: 'Encoding', icon: 'tv-minimal-play' },
+      { id: 'captions', label: 'Captions', icon: 'message-square-quote' },
       { id: 'account', label: 'Account', icon: 'user' },
       { id: 'billing', label: 'Billing', icon: 'credit-card' }
     ]
@@ -71,6 +76,7 @@ export default {
       const componentMap = {
         general: 'GeneralSettings',
         encoding: 'EncodingSettings',
+        captions: 'CaptionsSettings',
         account: 'AccountSettings',
         billing: 'BillingSettings'
       }
