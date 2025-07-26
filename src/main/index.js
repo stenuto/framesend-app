@@ -1,10 +1,13 @@
-import { app, shell, BrowserWindow, screen } from 'electron'
+import { app, shell, BrowserWindow, screen, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import fs from 'fs'
 import path from 'path'
 import { registerHandlers } from './handlers/index.js'
+
+// Force dark mode for native menus and dialogs
+nativeTheme.themeSource = 'dark'
 
 // Get the path for storing window state
 const getWindowStatePath = () => {

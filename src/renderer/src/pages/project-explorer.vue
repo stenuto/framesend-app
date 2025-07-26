@@ -12,7 +12,12 @@
           <h3 class="text-sm font-medium flex-1 truncate">
             {{ currentFolderName }}
           </h3>
-          <Button icon-name="chevron-down" size="sm" variant="ghost" class="text-zinc-400 -ml-1"
+          <!-- Only show dropdown if we're inside a folder (not at root) -->
+          <Button v-if="currentFolderId" 
+            icon-name="chevron-down" 
+            size="sm" 
+            variant="ghost" 
+            class="text-zinc-400 -ml-1"
             @click="showBreadcrumbMenu" />
         </div>
         <!-- Project name for list view -->
@@ -79,14 +84,17 @@
                 'ring-2 ring-blue-500 bg-blue-500/10': dragOverFolder === item.id
               }" @dblclick="navigateToFolder(item.id)">
               <!-- Thumbnail Preview Area -->
-              <FolderThumbnailPreview :items="getFolderItems(item.id)" />
+              <FolderThumbnailPreview :items="getVideosInFolder(item.id)" />
               <!-- Info -->
               <div class="p-3">
-                <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
-                <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
-                  @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
-                  :data-item-id="item.id"
-                  class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
+                <div class="flex items-center gap-1.5">
+                  <Icon name="folder" class="size-3.5 text-zinc-500 flex-shrink-0" :stroke-width="2" />
+                  <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
+                  <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
+                    @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
+                    :data-item-id="item.id"
+                    class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
+                </div>
                 <div class="flex items-center justify-between mt-1">
                   <span class="text-xs text-zinc-500">{{ getFolderVideoCount(item.id) }} items</span>
                   <span class="text-xs text-zinc-500">{{ getFolderSize(item.id) }}</span>
@@ -100,7 +108,7 @@
               @click="handleVideoClick(item)">
               <!-- Thumbnail -->
               <div class="aspect-video bg-zinc-900 relative overflow-hidden">
-                <img src="https://placehold.co/640x360" alt="Video thumbnail" class="w-full h-full object-cover" />
+                <UnsplashImage :seed="item.id" :alt="`${item.name} thumbnail`" />
                 <!-- Status overlay -->
                 <div v-if="item.status === 'processing'"
                   class="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -132,11 +140,14 @@
               </div>
               <!-- Info -->
               <div class="p-3">
-                <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
-                <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
-                  @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
-                  :data-item-id="item.id"
-                  class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
+                <div class="flex items-center gap-1.5">
+                  <Icon name="video" class="size-3.5 text-blue-600 flex-shrink-0" :stroke-width="2" />
+                  <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
+                  <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
+                    @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
+                    :data-item-id="item.id"
+                    class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
+                </div>
                 <div class="flex items-center justify-between mt-1">
                   <span class="text-xs text-zinc-500">{{ item.duration || '0:00' }}</span>
                   <span class="text-xs text-zinc-500">{{ item.size || '-' }}</span>
@@ -162,6 +173,7 @@ import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
 import FileSystemItem from '@components/FileSystemItem.vue'
 import FolderThumbnailPreview from '@components/FolderThumbnailPreview.vue'
+import UnsplashImage from '@components/UnsplashImage.vue'
 
 export default {
   name: 'ProjectExplorerPage',
@@ -169,7 +181,8 @@ export default {
     Icon,
     Button,
     FileSystemItem,
-    FolderThumbnailPreview
+    FolderThumbnailPreview,
+    UnsplashImage
   },
   meta: {
     title: 'Project Explorer'
