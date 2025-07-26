@@ -15,26 +15,26 @@
         <div class="space-y-3">
           <label class="flex items-center">
             <input v-model="settings.h264.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
             <span class="ml-2 text-xs">Enable H.264 encoding</span>
           </label>
 
           <div v-if="settings.h264.enabled" class="ml-5 space-y-3">
             <div class="space-y-2">
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Quality setting:</p>
+              <p class="text-xs text-zinc-400">Quality setting:</p>
               <input type="range" min="1" max="5" v-model.number="settings.h264.quality" class="w-full h-1 accent-blue-500" />
-              <div class="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-500">
+              <div class="flex justify-between text-[10px] text-zinc-500">
                 <span>Fastest</span>
                 <span>Best Quality</span>
               </div>
             </div>
 
             <div class="space-y-2">
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Resolution rungs:</p>
+              <p class="text-xs text-zinc-400">Resolution rungs:</p>
               <div class="space-y-1.5">
                 <label v-for="rung in h264Rungs" :key="rung" class="flex items-center">
                   <input v-model="settings.h264.rungs[rung]" type="checkbox"
-                    class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500">
+                    class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded accent-blue-500">
                   <span class="ml-2 text-xs">{{ rung }}</span>
                 </label>
               </div>
@@ -48,16 +48,16 @@
         <div class="space-y-3">
           <label class="flex items-center">
             <input v-model="settings.av1.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500">
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded accent-blue-500">
             <span class="ml-2 text-xs">Enable AV1 4K HQ encoding</span>
           </label>
 
           <div v-if="settings.av1.enabled" class="ml-5 space-y-3">
             <div class="space-y-2">
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Quality setting:</p>
+              <p class="text-xs text-zinc-400">Quality setting:</p>
               <input type="range" min="1" max="5" v-model.number="settings.av1.quality"
                 class="w-full h-1 accent-blue-500" />
-              <div class="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-500">
+              <div class="flex justify-between text-[10px] text-zinc-500">
                 <span>Fastest</span>
                 <span>Best Quality</span>
               </div>
@@ -71,7 +71,7 @@
         <div class="space-y-3">
           <label class="flex items-center">
             <input v-model="settings.hardwareAcceleration.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
             <span class="ml-2 text-xs">Use GPU acceleration when available</span>
           </label>
           <p v-if="settings.hardwareAcceleration.enabled" class="ml-5 text-[10px] text-zinc-500">
@@ -86,21 +86,21 @@
           <div class="space-y-1.5">
             <label class="flex items-center">
               <input v-model="settings.streamingPreset" type="radio" value="fast-start"
-                class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 accent-blue-500">
+                class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 accent-blue-500">
               <span class="ml-2 text-xs">Fast Start</span>
             </label>
             <p class="ml-5 text-[10px] text-zinc-500">Quick playback start, ideal for short videos</p>
 
             <label class="flex items-center mt-2">
               <input v-model="settings.streamingPreset" type="radio" value="balanced"
-                class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 accent-blue-500">
+                class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 accent-blue-500">
               <span class="ml-2 text-xs">Balanced</span>
             </label>
             <p class="ml-5 text-[10px] text-zinc-500">Good mix of startup time and quality</p>
 
             <label class="flex items-center mt-2">
               <input v-model="settings.streamingPreset" type="radio" value="best-quality"
-                class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 accent-blue-500">
+                class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 accent-blue-500">
               <span class="ml-2 text-xs">Best Quality</span>
             </label>
             <p class="ml-5 text-[10px] text-zinc-500">Maximum quality for longer videos</p>
@@ -113,15 +113,15 @@
         <div class="space-y-3">
           <label class="flex items-center">
             <input v-model="settings.audioEnhancement.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
             <span class="ml-2 text-xs">Optimize audio levels</span>
           </label>
 
           <div v-if="settings.audioEnhancement.enabled" class="ml-5 space-y-2">
             <div class="space-y-2">
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Audio processing:</p>
+              <p class="text-xs text-zinc-400">Audio processing:</p>
               <input type="range" min="1" max="5" v-model="settings.audioEnhancement.level" class="w-full h-1 accent-blue-500" />
-              <div class="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-500">
+              <div class="flex justify-between text-[10px] text-zinc-500">
                 <span>Preserve dynamics</span>
                 <span>Consistent volume</span>
               </div>

@@ -11,46 +11,30 @@
     </div>
 
     <div v-else class="space-y-8 pt-8">
-      <SettingsItem title="Appearance" description="Select the appearance of the app.">
-        <Select v-model="appearance" class="w-40" :options="appearanceOptions" placeholder="Select appearance" />
+      <!-- Appearance setting removed - dark mode only -->
+      <SettingsItem title="Language" description="Select the app language.">
+        <p class="text-xs text-zinc-400">English (Default)</p>
       </SettingsItem>
     </div>
   </div>
 </template>
 
 <script>
-import { computed } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
-import Select from '@/components/base/Select.vue'
 import SettingsItem from '@/components/settings/SettingsItem.vue'
 
 export default {
   name: 'GeneralSettings',
   components: {
-    Select,
     SettingsItem
   },
   setup() {
     const settingsStore = useSettingsStore()
     const { isLoading } = storeToRefs(settingsStore)
 
-    // Computed property for v-model binding
-    const appearance = computed({
-      get: () => settingsStore.settings.general.appearance,
-      set: (value) => settingsStore.updateAppearance(value)
-    })
-
-    const appearanceOptions = [
-      { label: 'System', value: 'system' },
-      { label: 'Light', value: 'light' },
-      { label: 'Dark', value: 'dark' }
-    ]
-
     return {
-      loading: isLoading,
-      appearance,
-      appearanceOptions
+      loading: isLoading
     }
   }
 }

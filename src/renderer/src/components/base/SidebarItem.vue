@@ -2,8 +2,8 @@
   <div :class="[
     'group flex items-center gap-2 px-2.5 py-1.5 rounded-smooth-lg transition-all duration-150',
     highlighted
-      ? 'dark:bg-zinc-600/20 bg-zinc-500/20 dark:text-zinc-50 text-zinc-800'
-      : 'hover:dark:bg-zinc-600/10 hover:bg-zinc-500/10',
+      ? 'bg-zinc-600/20 text-zinc-50'
+      : 'hover:bg-zinc-600/10',
     isDragging ? 'opacity-50' : ''
   ]" :draggable="props.draggable" @click="handleClick" @contextmenu.prevent="handleContextMenu"
     @dragstart="handleDragStart" @dragend="handleDragEnd" @dragover.prevent="handleDragOver" @drop.prevent="handleDrop"
@@ -12,7 +12,7 @@
     <Icon v-if="iconName" :name="iconName" :class="[
       'size-[13px] flex-shrink-0',
       iconClass,
-      highlighted ? '' : 'text-zinc-500 dark:text-zinc-400'
+      highlighted ? '' : 'text-zinc-400'
     ]" />
 
     <!-- Content -->
@@ -23,7 +23,7 @@
         :class="[
           'text-[13px] font-regular truncate outline-none',
           highlighted ? 'text-current' : 'group-hover:text-current',
-          isEditing && props.editable ? 'bg-zinc-100 dark:bg-zinc-800 rounded' : ''
+          isEditing && props.editable ? 'bg-zinc-800 rounded' : ''
         ]">{{ editingName }}</span>
 
       <!-- Right side content slot -->

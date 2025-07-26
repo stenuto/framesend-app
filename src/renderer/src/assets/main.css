@@ -16,7 +16,8 @@
 }
 
 /* Make body transparent for window transparency */
-html, body {
+html,
+body {
   background-color: transparent;
 }
 

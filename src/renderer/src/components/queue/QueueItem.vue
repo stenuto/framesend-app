@@ -1,13 +1,13 @@
 <template>
-  <div class="group relative" :class="{ 'bg-blue-500/10 dark:bg-blue-500/10': isSelected }">
-    <div class="flex items-center py-3 px-4 dark:hover:bg-white/3 hover:bg-black/3 transition-colors cursor-pointer"
+  <div class="group relative" :class="{ 'bg-blue-500/10': isSelected }">
+    <div class="flex items-center py-3 px-4 hover:bg-white/3 transition-colors cursor-pointer"
       @click="handleClick">
       <!-- Status Icon -->
       <div class="w-10 flex-shrink-0">
         <!-- Ready -->
         <div v-if="job.status === 'ready'"
-          class="size-8 rounded-full dark:bg-emerald-800/15 bg-emerald-100 flex items-center justify-center">
-          <Icon name="check" class="size-4 dark:text-emerald-500 text-emerald-600" />
+          class="size-8 rounded-full bg-emerald-800/15 flex items-center justify-center">
+          <Icon name="check" class="size-4 text-emerald-500" />
         </div>
         
         <!-- Processing -->
@@ -15,11 +15,11 @@
           class="size-8 relative flex items-center justify-center">
           <svg class="size-8 -rotate-90" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none"
-              class="dark:text-white/10 text-black/10" />
+              class="text-white/10" />
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" fill="none"
               :stroke-dasharray="`${2 * Math.PI * 10}`"
               :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (job.progress || 0) / 100)}`"
-              class="dark:text-blue-500 text-blue-600 transition-all duration-500" 
+              class="text-blue-500 transition-all duration-500" 
               stroke-linecap="round" />
           </svg>
           <span class="absolute text-[10px] font-medium">
@@ -29,14 +29,14 @@
         
         <!-- Queued -->
         <div v-else-if="job.status === 'queued'"
-          class="size-8 rounded-full dark:bg-zinc-700/30 bg-zinc-100 flex items-center justify-center">
-          <Icon name="clock" class="size-4 dark:text-zinc-400 text-zinc-500" />
+          class="size-8 rounded-full bg-zinc-700/30 flex items-center justify-center">
+          <Icon name="clock" class="size-4 text-zinc-400" />
         </div>
         
         <!-- Failed -->
         <div v-else-if="job.status === 'failed'"
-          class="size-8 rounded-full dark:bg-red-900/20 bg-red-100 flex items-center justify-center">
-          <Icon name="alert-circle" class="size-4 dark:text-red-400 text-red-600" />
+          class="size-8 rounded-full bg-red-900/20 flex items-center justify-center">
+          <Icon name="alert-circle" class="size-4 text-red-400" />
         </div>
       </div>
 
@@ -44,7 +44,7 @@
       <div class="flex-1 min-w-0 px-4">
         <div class="flex items-baseline gap-3">
           <h3 class="text-sm font-medium truncate">{{ videoName }}</h3>
-          <span v-if="job.file.size" class="text-xs dark:text-current/50 text-current/60">
+          <span v-if="job.file.size" class="text-xs text-current/50">
             {{ formatFileSize(job.file.size) }}
           </span>
         </div>
@@ -53,7 +53,7 @@
         <div class="mt-1">
           <!-- Processing details -->
           <div v-if="job.status === 'processing' && job.currentStage" 
-            class="text-xs dark:text-current/50 text-current/60">
+            class="text-xs text-current/50">
             {{ getStageDescription(job.currentStage) }}
             <span v-if="job.details?.currentRendition" class="ml-1">
               • {{ job.details.currentRendition }}
@@ -62,30 +62,30 @@
           
           <!-- Queued position -->
           <div v-else-if="job.status === 'queued' && queuePosition > 0" 
-            class="text-xs dark:text-current/50 text-current/60">
+            class="text-xs text-current/50">
             Position {{ queuePosition }} in queue
           </div>
           
           <!-- Error message -->
           <div v-else-if="job.status === 'failed' && job.error" 
-            class="text-xs text-red-500 dark:text-red-400">
+            class="text-xs text-red-400">
             {{ job.error }}
           </div>
           
           <!-- Completion time -->
           <div v-else-if="job.status === 'ready' && job.completedAt" 
-            class="text-xs dark:text-current/50 text-current/60">
+            class="text-xs text-current/50">
             Completed {{ formatTimeAgo(job.completedAt) }}
           </div>
         </div>
       </div>
 
       <!-- Duration/Resolution -->
-      <div class="w-32 text-sm dark:text-current/60 text-current/70 text-right">
+      <div class="w-32 text-sm text-current/60 text-right">
         <div v-if="job.validation?.metadata">
           {{ formatDuration(job.validation.metadata.duration) }}
         </div>
-        <div v-if="job.validation?.metadata?.streams?.[0]" class="text-xs dark:text-current/40 text-current/50">
+        <div v-if="job.validation?.metadata?.streams?.[0]" class="text-xs text-current/40">
           {{ job.validation.metadata.streams[0].width }}×{{ job.validation.metadata.streams[0].height }}
         </div>
       </div>
@@ -96,7 +96,7 @@
         <button
           v-if="job.status === 'processing' || job.status === 'queued'"
           @click="$emit('cancel', job.id)"
-          class="p-1.5 rounded-smooth dark:hover:bg-white/10 hover:bg-black/10 transition-colors"
+          class="p-1.5 rounded-smooth hover:bg-white/10 transition-colors"
           :title="job.status === 'processing' ? 'Cancel encoding' : 'Remove from queue'">
           <Icon name="x" class="size-4" />
         </button>
@@ -105,7 +105,7 @@
         <button
           v-else
           @click="$emit('remove', job.id)"
-          class="p-1.5 rounded-smooth dark:hover:bg-white/10 hover:bg-black/10 opacity-0 group-hover:opacity-100 transition-all"
+          class="p-1.5 rounded-smooth hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all"
           title="Remove from list">
           <Icon name="trash" class="size-4" />
         </button>

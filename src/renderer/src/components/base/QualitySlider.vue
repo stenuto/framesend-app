@@ -1,11 +1,11 @@
 <template>
   <div class="space-y-2">
     <div class="flex items-center justify-between text-xs">
-      <span class="text-zinc-500 dark:text-zinc-400">{{ leftLabel }}</span>
-      <span class="text-zinc-600 dark:text-zinc-300 font-medium">
+      <span class="text-zinc-400">{{ leftLabel }}</span>
+      <span class="text-zinc-300 font-medium">
         Quality: {{ modelValue }}
       </span>
-      <span class="text-zinc-500 dark:text-zinc-400">{{ rightLabel }}</span>
+      <span class="text-zinc-400">{{ rightLabel }}</span>
     </div>
     <div class="relative">
       <input
@@ -15,14 +15,14 @@
         min="1"
         max="5"
         step="1"
-        class="w-full h-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg appearance-none cursor-pointer slider"
+        class="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer slider"
       />
       <div class="flex justify-between mt-1">
         <span 
           v-for="n in 5" 
           :key="n"
-          class="text-xs text-zinc-400 dark:text-zinc-500"
-          :class="{ 'text-cyan-600 dark:text-cyan-400': n === modelValue }"
+          class="text-xs text-zinc-500"
+          :class="{ 'text-cyan-400': n === modelValue }"
         >
           {{ n }}
         </span>
@@ -68,7 +68,7 @@ export default {
   appearance: none;
   width: 16px;
   height: 16px;
-  background: #06b6d4; /* cyan-500 */
+  background: #22d3ee; /* cyan-400 */
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -76,13 +76,13 @@ export default {
 
 .slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  background: #0891b2; /* cyan-600 */
+  background: #06b6d4; /* cyan-500 */
 }
 
 .slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  background: #06b6d4; /* cyan-500 */
+  background: #22d3ee; /* cyan-400 */
   border-radius: 50%;
   cursor: pointer;
   border: none;
@@ -91,23 +91,23 @@ export default {
 
 .slider::-moz-range-thumb:hover {
   transform: scale(1.2);
-  background: #0891b2; /* cyan-600 */
-}
-
-/* Dark mode adjustments */
-.dark .slider::-webkit-slider-thumb {
-  background: #22d3ee; /* cyan-400 */
-}
-
-.dark .slider::-webkit-slider-thumb:hover {
   background: #06b6d4; /* cyan-500 */
 }
 
-.dark .slider::-moz-range-thumb {
+/* Slider styles */
+.slider::-webkit-slider-thumb {
   background: #22d3ee; /* cyan-400 */
 }
 
-.dark .slider::-moz-range-thumb:hover {
+.slider::-webkit-slider-thumb:hover {
+  background: #06b6d4; /* cyan-500 */
+}
+
+.slider::-moz-range-thumb {
+  background: #22d3ee; /* cyan-400 */
+}
+
+.slider::-moz-range-thumb:hover {
   background: #06b6d4; /* cyan-500 */
 }
 </style>

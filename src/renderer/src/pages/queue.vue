@@ -1,11 +1,11 @@
 <template>
-  <div class="h-full flex flex-col dark:bg-zinc-900 bg-zinc-50">
+  <div class="h-full flex flex-col bg-zinc-900">
     <!-- Header -->
-    <header class="flex-shrink-0 border-b dark:border-white/10 border-zinc-200 dark:bg-zinc-900/50 bg-white/50 backdrop-blur-xl">
+    <header class="flex-shrink-0 border-b border-white/10 bg-zinc-900/50 backdrop-blur-xl">
       <div class="flex items-center justify-between px-6 py-4">
         <div>
           <h1 class="text-xl font-semibold">Encoding Queue</h1>
-          <p class="text-sm dark:text-current/60 text-current/70 mt-0.5">
+          <p class="text-sm text-current/60 mt-0.5">
             {{ stats.active }} active, {{ stats.pending }} pending, {{ stats.completed }} completed
           </p>
         </div>
@@ -16,7 +16,7 @@
           <button
             v-if="completedJobs.length > 0"
             @click="handleClearCompleted"
-            class="px-3 py-1.5 text-sm dark:text-current/60 hover:dark:text-current text-current/70 hover:text-current transition-colors">
+            class="px-3 py-1.5 text-sm text-current/60 hover:text-current transition-colors">
             Clear completed
           </button>
           
@@ -26,8 +26,8 @@
             @click="toggleQueuePause"
             class="flex items-center gap-2 px-4 py-1.5 text-sm font-medium rounded-smooth transition-colors"
             :class="queueStatus.isPaused 
-              ? 'dark:bg-amber-500/20 dark:text-amber-400 bg-amber-100 text-amber-700 dark:hover:bg-amber-500/30 hover:bg-amber-200' 
-              : 'dark:bg-white/10 dark:hover:bg-white/15 bg-zinc-100 hover:bg-zinc-200'">
+              ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30' 
+              : 'bg-white/10 hover:bg-white/15'">
             <Icon :name="queueStatus.isPaused ? 'play' : 'pause'" class="size-4" />
             {{ queueStatus.isPaused ? 'Resume' : 'Pause' }} Queue
           </button>
@@ -40,11 +40,11 @@
       <!-- Empty state -->
       <div v-if="allJobs.length === 0" 
         class="flex flex-col items-center justify-center h-full px-6 py-12">
-        <div class="size-16 rounded-full dark:bg-white/5 bg-black/5 flex items-center justify-center mb-4">
-          <Icon name="list" class="size-8 dark:text-current/30 text-current/40" />
+        <div class="size-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+          <Icon name="list" class="size-8 text-current/30" />
         </div>
         <h2 class="text-lg font-medium mb-2">No encoding jobs</h2>
-        <p class="text-sm dark:text-current/60 text-current/70 text-center max-w-sm">
+        <p class="text-sm text-current/60 text-center max-w-sm">
           Videos you encode will appear here. Drop files or use the upload page to get started.
         </p>
       </div>
@@ -53,10 +53,10 @@
       <div v-else class="py-4">
         <!-- Active/Processing -->
         <div v-if="activeJobs.length > 0" class="mb-6">
-          <h2 class="px-6 text-xs font-medium dark:text-current/50 text-current/60 uppercase tracking-wider mb-2">
+          <h2 class="px-6 text-xs font-medium text-current/50 uppercase tracking-wider mb-2">
             Processing
           </h2>
-          <div class="dark:bg-zinc-900/50 bg-white border-y dark:border-white/5 border-zinc-200">
+          <div class="bg-zinc-900/50 border-y border-white/5">
             <QueueItem
               v-for="job in activeJobs"
               :key="job.id"
@@ -69,10 +69,10 @@
 
         <!-- Queued -->
         <div v-if="queuedJobs.length > 0" class="mb-6">
-          <h2 class="px-6 text-xs font-medium dark:text-current/50 text-current/60 uppercase tracking-wider mb-2">
+          <h2 class="px-6 text-xs font-medium text-current/50 uppercase tracking-wider mb-2">
             Queued
           </h2>
-          <div class="dark:bg-zinc-900/50 bg-white border-y dark:border-white/5 border-zinc-200">
+          <div class="bg-zinc-900/50 border-y border-white/5">
             <QueueItem
               v-for="(job, index) in queuedJobs"
               :key="job.id"
@@ -86,10 +86,10 @@
 
         <!-- Failed -->
         <div v-if="failedJobs.length > 0" class="mb-6">
-          <h2 class="px-6 text-xs font-medium dark:text-current/50 text-current/60 uppercase tracking-wider mb-2">
+          <h2 class="px-6 text-xs font-medium text-current/50 uppercase tracking-wider mb-2">
             Failed
           </h2>
-          <div class="dark:bg-zinc-900/50 bg-white border-y dark:border-white/5 border-zinc-200">
+          <div class="bg-zinc-900/50 border-y border-white/5">
             <QueueItem
               v-for="job in failedJobs"
               :key="job.id"
@@ -101,10 +101,10 @@
 
         <!-- Completed -->
         <div v-if="completedJobs.length > 0" class="mb-6">
-          <h2 class="px-6 text-xs font-medium dark:text-current/50 text-current/60 uppercase tracking-wider mb-2">
+          <h2 class="px-6 text-xs font-medium text-current/50 uppercase tracking-wider mb-2">
             Completed
           </h2>
-          <div class="dark:bg-zinc-900/50 bg-white border-y dark:border-white/5 border-zinc-200">
+          <div class="bg-zinc-900/50 border-y border-white/5">
             <QueueItem
               v-for="job in completedJobs"
               :key="job.id"
@@ -118,8 +118,8 @@
 
     <!-- Footer stats -->
     <footer v-if="allJobs.length > 0" 
-      class="flex-shrink-0 border-t dark:border-white/10 border-zinc-200 px-6 py-3">
-      <div class="flex items-center justify-between text-xs dark:text-current/60 text-current/70">
+      class="flex-shrink-0 border-t border-white/10 px-6 py-3">
+      <div class="flex items-center justify-between text-xs text-current/60">
         <div>
           Total: {{ allJobs.length }} {{ allJobs.length === 1 ? 'job' : 'jobs' }}
         </div>

@@ -1,9 +1,9 @@
 <template>
   <div class="text-[13px]">
     <!-- Folder Row -->
-    <div v-if="item.type === 'folder'" class="group dark:hover:bg-white/4 hover:bg-black/5 relative" :class="{
+    <div v-if="item.type === 'folder'" class="group hover:bg-white/4 relative" :class="{
       'bg-blue-400/10': dragOverFolder === item.id,
-      'dark:bg-white/2 bg-black/3': isInLastExpandedFolder,
+      'bg-white/2': isInLastExpandedFolder,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -18,37 +18,37 @@
         <div class="flex-1 flex items-center gap-2 min-w-0">
           <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-0.5">
             <Icon :name="isExpanded ? 'chevron-down' : 'chevron-right'" class="size-3 flex-shrink-0" stroke-width="2" />
-            <div class="size-3 flex-shrink-0 relative dark:text-current/50 text-current/75">
+            <div class="size-3 flex-shrink-0 relative text-current/50">
               <Icon v-if="!isExpanded" name="folder" class="size-3" />
               <Icon v-else name="folder-open" class="size-3" />
             </div>
             <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
               @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef"
               class="truncate outline-none selection:transparent px-1.5"
-              :class="{ 'bg-zinc-100 dark:bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
+              :class="{ 'bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
 
         <!-- Files column -->
-        <div class="w-24 dark:text-current/60 text-current/80">
+        <div class="w-24 text-current/60">
           {{ totalFileCount }}
         </div>
 
         <!-- Size column -->
-        <div class="w-28 dark:text-current/60 text-current/80">
+        <div class="w-28 text-current/60">
           {{ folderSize }}
         </div>
 
         <!-- Status column -->
-        <div class="w-24 dark:text-current/60 text-current/80">
+        <div class="w-24 text-current/60">
 
         </div>
       </div>
     </div>
 
     <!-- Video Row -->
-    <div v-else-if="item.type === 'video'" class="group dark:hover:bg-white/4 hover:bg-black/4 relative" :class="{
-      'dark:bg-white/2 bg-black/3': isInLastExpandedFolder,
+    <div v-else-if="item.type === 'video'" class="group hover:bg-white/4 relative" :class="{
+      'bg-white/2': isInLastExpandedFolder,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -61,32 +61,32 @@
         @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
-          :class="{ 'opacity-60 dark:opacity-40': item.status === 'processing' || item.status === 'queued' }">
+          :class="{ 'opacity-40': item.status === 'processing' || item.status === 'queued' }">
           <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-0.5">
             <Icon name="video" class="size-3.5 text-blue-600 flex-shrink-0"
               :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
             <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
               @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef"
               class="truncate outline-none selection:transparent px-1.5"
-              :class="{ 'bg-zinc-100 dark:bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
+              :class="{ 'bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
 
         <!-- Files column (empty for videos) -->
-        <div class="w-24 dark:text-current/60 text-current/80" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="w-24 text-current/60" :class="{ 'opacity-50': item.status === 'processing' }">
           -
         </div>
 
         <!-- Size column -->
-        <div class="w-28 dark:text-current/60 text-current/80" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="w-28 text-current/60" :class="{ 'opacity-50': item.status === 'processing' }">
           {{ item.size || '-' }}
         </div>
 
         <!-- Status column -->
         <div class="w-24 flex items-center">
           <div v-if="item.status === 'ready'"
-            class="size-5 rounded-full dark:bg-emerald-800/20 bg-emerald-100 flex items-center justify-center">
-            <Icon name="check" class="size-3.5 dark:text-emerald-600 text-emerald-500" />
+            class="size-5 rounded-full bg-emerald-800/20 flex items-center justify-center">
+            <Icon name="check" class="size-3.5 text-emerald-600" />
           </div>
           <!-- PROCESSING -->
           <div v-else-if="item.status === 'processing'" class="inline-flex items-center gap-1.5">
@@ -96,7 +96,7 @@
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
                 :stroke-dasharray="`${2 * Math.PI * 10}`"
                 :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
-                class="dark:text-blue-500 text-blue-500 duration-500" />
+                class="text-blue-500 duration-500" />
             </svg>
             <span class="text-xs">
               {{ Math.round(item.progress || 0) }}%
@@ -104,12 +104,12 @@
           </div>
           <!-- QUEUED -->
           <div v-if="item.status === 'queued'"
-            class="rounded-smooth px-1.5 text-[11px] dark:bg-zinc-500/30 group-hover:opacity-100 opacity-30 text-zinc-500 dark:text-zinc-200/80 bg-zinc-100 flex items-center justify-center">
+            class="rounded-smooth px-1.5 text-[11px] bg-zinc-500/30 group-hover:opacity-100 opacity-30 text-zinc-200/80 flex items-center justify-center">
             Queued
           </div>
           <!-- FAILED -->
           <div v-if="item.status === 'failed'"
-            class="rounded-smooth px-1.5 text-[11px] dark:bg-red-900/40 group-hover:opacity-100 opacity-30 text-red-500 dark:text-red-200/80 bg-red-100 flex items-center justify-center">
+            class="rounded-smooth px-1.5 text-[11px] bg-red-900/40 group-hover:opacity-100 opacity-30 text-red-200/80 flex items-center justify-center">
             Failed
           </div>
         </div>
@@ -285,7 +285,7 @@ export default {
 
     // Base classes for row containers
     const rowBaseClasses = computed(() =>
-      'group dark:hover:bg-white/4 hover:bg-black/6 relative'
+      'group hover:bg-white/4 relative'
     )
 
     // Check if this item should be highlighted
@@ -306,7 +306,7 @@ export default {
       const config = {
         // Visual style
         borderStyle: 'border-l -ml-[.5px]',           // 'border-l' for solid, 'border-l-2' for thicker, 'border-l border-dashed' for dashed
-        borderColor: 'dark:border-white/8 border-black/8', // Color and opacity
+        borderColor: 'border-white/8', // Color and opacity
 
         // Positioning
         indentSize: INDENT_SIZE,           // rem - how much to indent per level

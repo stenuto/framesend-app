@@ -17,16 +17,16 @@
             <input 
               v-model="settings.autoGenerate" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500"
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500"
             >
             <span class="ml-2 text-xs">Enable automatic caption generation</span>
           </label>
 
           <div v-if="settings.autoGenerate" class="ml-5 space-y-3">
             <div class="space-y-2">
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Default language:</p>
+              <p class="text-xs text-zinc-400">Default language:</p>
               <select v-model="settings.defaultLanguage" 
-                class="text-xs px-2 py-1 dark:bg-zinc-800 bg-zinc-100 border dark:border-zinc-700 border-zinc-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                class="text-xs px-2 py-1 bg-zinc-800 border border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="en">English</option>
                 <option value="es">Spanish</option>
                 <option value="fr">French</option>
@@ -48,7 +48,7 @@
         <div class="space-y-2">
           <input type="range" min="1" max="3" v-model="settings.accuracy" 
             class="w-full h-1 accent-blue-500" />
-          <div class="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-500">
+          <div class="flex justify-between text-[10px] text-zinc-500">
             <span>Fast</span>
             <span>Balanced</span>
             <span>Accurate</span>
@@ -63,7 +63,7 @@
             <input 
               v-model="settings.formats.srt" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500"
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded accent-blue-500"
             >
             <span class="ml-2 text-xs">SRT (SubRip)</span>
           </label>
@@ -71,7 +71,7 @@
             <input 
               v-model="settings.formats.vtt" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500"
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded accent-blue-500"
             >
             <span class="ml-2 text-xs">WebVTT</span>
           </label>
@@ -79,7 +79,7 @@
             <input 
               v-model="settings.formats.ass" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500"
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded accent-blue-500"
             >
             <span class="ml-2 text-xs">ASS/SSA (Advanced SubStation)</span>
           </label>
@@ -93,16 +93,16 @@
             <input 
               v-model="settings.burnIn.enabled" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500"
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500"
             >
             <span class="ml-2 text-xs">Create version with burned-in captions</span>
           </label>
 
           <div v-if="settings.burnIn.enabled" class="ml-5 space-y-2">
             <div class="space-y-2">
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Font size:</p>
+              <p class="text-xs text-zinc-400">Font size:</p>
               <select v-model="settings.burnIn.fontSize" 
-                class="text-xs px-2 py-1 dark:bg-zinc-800 bg-zinc-100 border dark:border-zinc-700 border-zinc-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                class="text-xs px-2 py-1 bg-zinc-800 border border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="small">Small</option>
                 <option value="medium">Medium</option>
                 <option value="large">Large</option>
@@ -110,9 +110,9 @@
             </div>
             
             <div class="space-y-2">
-              <p class="text-xs text-zinc-600 dark:text-zinc-400">Position:</p>
+              <p class="text-xs text-zinc-400">Position:</p>
               <select v-model="settings.burnIn.position" 
-                class="text-xs px-2 py-1 dark:bg-zinc-800 bg-zinc-100 border dark:border-zinc-700 border-zinc-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                class="text-xs px-2 py-1 bg-zinc-800 border border-zinc-700 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="bottom">Bottom</option>
                 <option value="top">Top</option>
                 <option value="center">Center</option>

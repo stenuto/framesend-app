@@ -1,13 +1,22 @@
 <template>
-  <div class="flex flex-col h-full border-l border-black/10 dark:border-zinc-800">
+  <div class="flex flex-col h-full border-l border-zinc-800">
     <!-- Project Header with Back Button -->
-    <div class="h-12 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900 pr-3"
+    <div class="h-12 flex items-center justify-between shrink-0 drag bg-zinc-900 pr-3"
       :class="[!sidebarOpen ? 'pl-20' : 'pl-4']">
       <div class="flex items-center gap-2">
         <!-- Show sidebar button when hidden -->
         <Button v-if="!sidebarOpen" icon-name="panel-left-open" size="sm" variant="ghost" class="text-zinc-500"
           @click="uiStore.toggleSidebar" />
-        <h3 class="text-sm font-medium">
+        <!-- Breadcrumb navigation for gallery view -->
+        <div v-if="viewMode === 'gallery'" class="flex items-center gap-1">
+          <h3 class="text-sm font-medium">
+            {{ currentFolderName }}
+          </h3>
+          <Button icon-name="chevron-down" size="sm" variant="ghost" class="text-zinc-400 -ml-1"
+            @click="showBreadcrumbMenu" />
+        </div>
+        <!-- Project name for list view -->
+        <h3 v-else class="text-sm font-medium">
           {{ selectedProject?.name }}
         </h3>
       </div>
@@ -15,17 +24,17 @@
         <div class="relative">
           <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
           <input v-model="searchQuery" type="text" placeholder="Search"
-            class="w-50 pl-7 pr-3 py-1 dark:bg-zinc-800/50 bg-black/6 bg-white ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-black/12 dark:ring-zinc-700/50 dark:focus:ring-zinc-600 dark:placeholder-zinc-500 placeholder-zinc-500" />
+            class="w-50 pl-7 pr-3 py-1 bg-zinc-800/50 ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-zinc-700/50 focus:ring-zinc-600 placeholder-zinc-500" />
         </div>
       </div>
 
     </div>
 
-    <!-- File Explorer Table -->
-    <div class="flex-1 flex flex-col overflow-hidden bg-white dark:bg-zinc-900">
-      <!-- Table Header -->
-      <div class="border-y dark:border-zinc-800 border-black/10 z-10 shrink-0">
-        <div class="flex px-3 py-1 text-[11px] dark:text-zinc-500 text-zinc-500">
+    <!-- File Explorer Table / Gallery -->
+    <div class="flex-1 flex flex-col overflow-hidden bg-zinc-900">
+      <!-- Table Header (List View Only) -->
+      <div v-if="viewMode === 'list'" class="border-y border-zinc-800 z-10 shrink-0">
+        <div class="flex px-3 py-1 text-[11px] text-zinc-500">
           <div class="flex-1">Name</div>
           <div class="w-24">Files</div>
           <div class="w-28">Size</div>
@@ -33,8 +42,8 @@
         </div>
       </div>
 
-      <!-- Table Body with drop zone -->
-      <div class="flex-1 overflow-y-auto h-full" @drop.prevent="handleDropOnRoot($event)"
+      <!-- List View -->
+      <div v-if="viewMode === 'list'" class="flex-1 overflow-y-auto h-full" @drop.prevent="handleDropOnRoot($event)"
         @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
         @contextmenu.prevent="handleContextMenu">
         <div class="min-h-full pt-1.5">
@@ -47,6 +56,102 @@
             @toggle-folder="toggleFolder" @drag-start="handleDragStartWrapper" @drag-end="handleDragEnd"
             @drop="handleDropWrapper" @drag-over="handleDragOverWrapper" @drag-leave="handleDragLeaveWrapper"
             @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" @rename="handleRename" />
+        </div>
+      </div>
+
+      <!-- Gallery View -->
+      <div v-else class="flex-1 overflow-y-auto h-full p-4" @drop.prevent="handleDropOnRoot($event)"
+        @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
+        @contextmenu.prevent="handleContextMenu">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+          <div v-for="item in rootItems" :key="item.id" 
+            class="group relative"
+            :draggable="true"
+            @dragstart="handleDragStart($event, item)"
+            @dragend="handleDragEnd"
+            @drop="item.type === 'folder' ? handleDrop($event, item.id) : null"
+            @dragover.prevent="item.type === 'folder' ? handleDragOver($event, item.id) : null"
+            @dragleave="item.type === 'folder' ? handleDragLeave($event, item.id) : null"
+            @dblclick="item.type === 'folder' ? navigateToFolder(item.id) : null"
+            @contextmenu.prevent="handleItemContextMenu($event, item)">
+            
+            <!-- Folder Item -->
+            <div v-if="item.type === 'folder'" 
+              class="flex flex-col items-center p-4 rounded-lg cursor-pointer transition-colors"
+              :class="{
+                'bg-zinc-800 hover:bg-zinc-700': true,
+                'ring-2 ring-blue-500 bg-blue-500/10': dragOverFolder === item.id
+              }">
+              <Icon name="folder" class="size-16 text-zinc-400 mb-2" :stroke-width="1.5" />
+              <span v-if="editingItemId !== item.id" 
+                class="text-sm text-center truncate w-full px-2">{{ item.name }}</span>
+              <input v-else
+                :value="item.name"
+                @blur="handleGalleryRename($event, item)"
+                @keydown.enter="handleGalleryRename($event, item)"
+                @keydown.esc="editingItemId = null"
+                ref="galleryEditInput"
+                class="text-sm text-center w-full px-2 bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                :class="{ 'ring-2 ring-blue-500': editingItemId === item.id }" />
+              <span class="text-xs text-zinc-500 mt-1">{{ getFolderVideoCount(item.id) }} items</span>
+            </div>
+
+            <!-- Video Item -->
+            <div v-else-if="item.type === 'video'"
+              class="flex flex-col rounded-lg overflow-hidden bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
+              @click="handleVideoClick(item)">
+              <!-- Thumbnail -->
+              <div class="aspect-video bg-zinc-900 relative overflow-hidden">
+                <img src="https://placehold.co/640x360" alt="Video thumbnail" 
+                  class="w-full h-full object-cover" />
+                <!-- Status overlay -->
+                <div v-if="item.status === 'processing'" 
+                  class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <div class="flex flex-col items-center">
+                    <svg class="size-8 -rotate-90" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                        class="text-white/20" />
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                        :stroke-dasharray="`${2 * Math.PI * 10}`"
+                        :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
+                        class="text-blue-500" />
+                    </svg>
+                    <span class="text-white text-sm mt-2">{{ Math.round(item.progress || 0) }}%</span>
+                  </div>
+                </div>
+                <div v-else-if="item.status === 'queued'"
+                  class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <span class="text-white text-sm">Queued</span>
+                </div>
+                <div v-else-if="item.status === 'failed'"
+                  class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <span class="text-red-400 text-sm">Failed</span>
+                </div>
+                <div v-else-if="item.status === 'ready'"
+                  class="absolute top-2 right-2">
+                  <div class="size-6 rounded-full bg-emerald-600/90 flex items-center justify-center">
+                    <Icon name="check" class="size-4 text-white" />
+                  </div>
+                </div>
+              </div>
+              <!-- Info -->
+              <div class="p-3">
+                <h4 v-if="editingItemId !== item.id" 
+                  class="text-sm font-medium truncate">{{ item.name }}</h4>
+                <input v-else
+                  :value="item.name"
+                  @blur="handleGalleryRename($event, item)"
+                  @keydown.enter="handleGalleryRename($event, item)"
+                  @keydown.esc="editingItemId = null"
+                  ref="galleryEditInput"
+                  class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
+                <div class="flex items-center justify-between mt-1">
+                  <span class="text-xs text-zinc-500">{{ item.duration || '0:00' }}</span>
+                  <span class="text-xs text-zinc-500">{{ item.size || '-' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -101,15 +206,58 @@ export default {
     const searchQuery = ref('')
     const viewMode = ref('list') // 'list' or 'gallery'
     const editingItemId = ref(null) // Track which item is being edited
+    const currentFolderId = ref(null) // Track current folder for gallery view
+    const navigationPath = ref([]) // Breadcrumb path for gallery view
+    const galleryEditInput = ref(null)
     
     let unsubscribeMenu = null
     
-    // Watch for route param changes to sync project selection
-    watch(() => currentParams.value.projectId, (projectId) => {
-      if (projectId && selectedProject.value?.id !== projectId) {
-        selectProject(projectId)
+    // Watch for route param changes to sync project selection and folder navigation
+    watch(() => currentParams.value, (newParams, oldParams) => {
+      // Handle project change
+      if (newParams.projectId && (!selectedProject.value || selectedProject.value.id !== newParams.projectId)) {
+        selectProject(newParams.projectId)
       }
-    }, { immediate: true })
+      
+      // Handle folder navigation in gallery view
+      if (viewMode.value === 'gallery') {
+        // If folderId changed, update current folder
+        if (newParams.folderId !== oldParams?.folderId) {
+          currentFolderId.value = newParams.folderId || null
+          navigationPath.value = buildNavigationPath(newParams.folderId || null)
+        }
+        
+        // If switching projects, ensure we're at the right folder
+        if (newParams.projectId !== oldParams?.projectId) {
+          if (!newParams.folderId) {
+            currentFolderId.value = null
+            navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
+          }
+        }
+      }
+    }, { immediate: true, deep: true })
+    
+    // Watch for selected project changes to reset gallery view
+    watch(() => selectedProject.value, (newProject, oldProject) => {
+      if (newProject && (!oldProject || newProject.id !== oldProject.id)) {
+        if (viewMode.value === 'gallery') {
+          // Reset to root folder when switching projects
+          currentFolderId.value = null
+          navigationPath.value = [{ id: null, name: newProject.name || 'Project' }]
+        }
+      }
+    }, { deep: true })
+    
+    // Watch for view mode changes to persist preference
+    watch(viewMode, (newMode) => {
+      // Save view mode preference (you could persist this to local storage)
+      localStorage.setItem('fileExplorerViewMode', newMode)
+      
+      // Initialize navigation path when switching to gallery
+      if (newMode === 'gallery' && navigationPath.value.length === 0) {
+        navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
+      }
+    })
     
     // Watch for editing state changes to handle cancelled new folders
     watch(editingItemId, (newValue, oldValue) => {
@@ -131,6 +279,23 @@ export default {
     onMounted(() => {
       if (!selectedProject.value && currentParams.value.projectId) {
         selectProject(currentParams.value.projectId)
+      }
+      
+      // Load saved view mode preference
+      const savedViewMode = localStorage.getItem('fileExplorerViewMode')
+      if (savedViewMode && ['list', 'gallery'].includes(savedViewMode)) {
+        viewMode.value = savedViewMode
+        if (savedViewMode === 'gallery') {
+          // Check for folderId in route params
+          const folderId = currentParams.value.folderId
+          if (folderId) {
+            currentFolderId.value = folderId
+            navigationPath.value = buildNavigationPath(folderId)
+          } else {
+            currentFolderId.value = null
+            navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
+          }
+        }
       }
     })
     
@@ -175,9 +340,103 @@ export default {
     }
 
     const rootItems = computed(() => {
-      const allRootItems = getProjectFileSystem(selectedProject.value?.id)
-      return filterItems(allRootItems, searchQuery.value)
+      if (viewMode.value === 'gallery') {
+        // In gallery view, show items from current folder
+        const items = fileSystem.value
+          .filter(item => item.parentId === currentFolderId.value && item.projectId === selectedProject.value?.id)
+          .sort((a, b) => {
+            // Folders first, then by name
+            if (a.type === 'folder' && b.type !== 'folder') return -1
+            if (a.type !== 'folder' && b.type === 'folder') return 1
+            return a.name.localeCompare(b.name)
+          })
+        return filterItems(items, searchQuery.value)
+      } else {
+        // In list view, show hierarchical structure
+        const allRootItems = getProjectFileSystem(selectedProject.value?.id)
+        return filterItems(allRootItems, searchQuery.value)
+      }
     })
+
+    // Computed property for current folder name in gallery view
+    const currentFolderName = computed(() => {
+      if (!currentFolderId.value) {
+        return selectedProject.value?.name || 'Project'
+      }
+      const folder = fileSystem.value.find(item => item.id === currentFolderId.value)
+      return folder?.name || 'Folder'
+    })
+
+    // Build navigation path for breadcrumb
+    const buildNavigationPath = (folderId) => {
+      const path = []
+      let current = folderId
+      
+      while (current) {
+        const folder = fileSystem.value.find(item => item.id === current)
+        if (folder) {
+          path.unshift({ id: folder.id, name: folder.name })
+          current = folder.parentId
+        } else {
+          break
+        }
+      }
+      
+      // Add project root
+      path.unshift({ id: null, name: selectedProject.value?.name || 'Project' })
+      
+      return path
+    }
+
+    // Navigate to a folder in gallery view
+    const navigateToFolder = (folderId) => {
+      if (viewMode.value !== 'gallery') return
+      
+      // Update router with folder navigation
+      const params = {
+        projectId: selectedProject.value?.id,
+        folderId: folderId
+      }
+      
+      router.navigateTo('project-explorer', params)
+    }
+
+    // Show breadcrumb dropdown menu
+    const showBreadcrumbMenu = async (e) => {
+      const menuItems = []
+      
+      // Current folder with checkmark
+      menuItems.push({
+        label: currentFolderName.value,
+        type: 'normal',
+        checked: true,
+        enabled: false
+      })
+      
+      // Add separator if there are parent folders
+      if (navigationPath.value.length > 1) {
+        menuItems.push({ type: 'separator' })
+      }
+      
+      // Add parent folders (skip the current one which is last in path)
+      for (let i = navigationPath.value.length - 2; i >= 0; i--) {
+        const pathItem = navigationPath.value[i]
+        menuItems.push({
+          label: pathItem.name,
+          action: 'breadcrumb:navigate',
+          data: { folderId: pathItem.id }
+        })
+      }
+      
+      // Get the button element properly
+      const button = e.currentTarget || e.target
+      const rect = button.getBoundingClientRect()
+      
+      await window.api.menu.showContext(menuItems, {
+        x: Math.round(rect.left),
+        y: Math.round(rect.bottom)
+      })
+    }
 
     const getFolderItems = (folderId) => {
       let items = fileSystem.value
@@ -337,9 +596,12 @@ export default {
       e.preventDefault()
       e.stopPropagation()
 
+      // Determine target folder based on view mode
+      const targetFolderId = viewMode.value === 'gallery' ? currentFolderId.value : null
+
       // Check if this is an external file drop
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        await handleExternalFileDrop(e.dataTransfer.files, null)
+        await handleExternalFileDrop(e.dataTransfer.files, targetFolderId)
         return
       }
 
@@ -349,18 +611,18 @@ export default {
         return
       }
 
-      // Don't move if already at root
-      if (draggedItem.value.parentId === null) {
-        console.log('Item already at root')
+      // Don't move if already in target location
+      if (draggedItem.value.parentId === targetFolderId) {
+        console.log('Item already in target location')
         draggedItem.value = null
         return
       }
 
-      // Use the store method to move the item to root (parentId = null)
-      const success = moveFileSystemItem(draggedItem.value.id, null)
+      // Use the store method to move the item
+      const success = moveFileSystemItem(draggedItem.value.id, targetFolderId)
 
       if (success) {
-        console.log(`Moved ${draggedItem.value.name} to root`)
+        console.log(`Moved ${draggedItem.value.name} to ${targetFolderId ? 'folder' : 'root'}`)
       }
 
       draggedItem.value = null
@@ -574,6 +836,91 @@ export default {
       router.navigateTo('settings')
     }
     
+    const handleVideoClick = (item) => {
+      if (item.type === 'video') {
+        uiStore.selectVideo(item)
+      }
+    }
+    
+    const handleItemContextMenu = async (e, item) => {
+      let menuTemplate = []
+      
+      if (item.type === 'video') {
+        menuTemplate = [
+          {
+            label: 'Share',
+            submenu: [
+              {
+                label: 'Copy Web Link',
+                action: 'share:copyWebLink',
+                data: { fileId: item.id, fileName: item.name }
+              },
+              {
+                label: 'Copy iFrame Embed',
+                action: 'share:copyIframeEmbed',
+                data: { fileId: item.id, fileName: item.name }
+              }
+            ]
+          },
+          { type: 'separator' },
+          {
+            label: 'Rename',
+            action: 'file:rename',
+            data: { itemId: item.id, itemName: item.name, itemType: item.type }
+          },
+          {
+            label: 'Delete',
+            action: 'file:delete',
+            data: { itemId: item.id, itemName: item.name, itemType: item.type }
+          }
+        ]
+        
+        // Add cancel option if video is encoding
+        if ((item.status === 'processing' || item.status === 'queued') && item.jobId) {
+          menuTemplate.unshift({
+            label: `Cancel ${item.status === 'processing' ? 'Encoding' : 'Queued Job'}`,
+            action: 'video:cancelJob',
+            data: { jobId: item.jobId }
+          })
+          menuTemplate.splice(1, 0, { type: 'separator' })
+        }
+      } else if (item.type === 'folder') {
+        const folderItems = getFolderItems(item.id)
+        const isEmpty = folderItems.length === 0
+        
+        menuTemplate = [
+          {
+            label: 'Open',
+            action: 'folder:open',
+            data: { folderId: item.id }
+          },
+          { type: 'separator' },
+          {
+            label: 'New Folder',
+            action: 'folder:newFolder',
+            data: { parentId: item.id }
+          },
+          { type: 'separator' },
+          {
+            label: 'Rename',
+            action: 'folder:rename',
+            data: { itemId: item.id, itemName: item.name, itemType: item.type }
+          },
+          {
+            label: 'Delete',
+            action: 'folder:delete',
+            data: { itemId: item.id, itemName: item.name, itemType: item.type },
+            enabled: isEmpty
+          }
+        ]
+      }
+      
+      await window.api.menu.showContext(menuTemplate, {
+        x: e.clientX,
+        y: e.clientY
+      })
+    }
+    
     const handleContextMenu = async (e) => {
       // Check if clicked on empty space (not on an item)
       if (e.target.closest('[draggable="true"]')) {
@@ -620,10 +967,31 @@ export default {
           
         case 'explorer:viewList':
           viewMode.value = 'list'
+          currentFolderId.value = null
+          navigationPath.value = []
           break
           
         case 'explorer:viewGallery':
           viewMode.value = 'gallery'
+          // Check if we have a folderId in current params
+          const folderId = currentParams.value.folderId
+          if (folderId) {
+            currentFolderId.value = folderId
+            navigationPath.value = buildNavigationPath(folderId)
+          } else {
+            currentFolderId.value = null
+            navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
+          }
+          break
+          
+        case 'breadcrumb:navigate':
+          navigateToFolder(data.folderId)
+          break
+          
+        case 'folder:open':
+          if (viewMode.value === 'gallery') {
+            navigateToFolder(data.folderId)
+          }
           break
           
         case 'file:rename':
@@ -663,6 +1031,11 @@ export default {
     }
     
     const createNewFolder = (parentId = null) => {
+      // In gallery view, create in current folder if no parentId specified
+      if (viewMode.value === 'gallery' && parentId === null) {
+        parentId = currentFolderId.value
+      }
+      
       // Generate a unique name for the folder
       let baseName = 'New Folder'
       let counter = 1
@@ -688,8 +1061,8 @@ export default {
       
       fileSystem.value.push(newFolder)
       
-      // If creating inside a folder, expand the parent folder
-      if (parentId && !expandedFolders.value.has(parentId)) {
+      // If creating inside a folder in list view, expand the parent folder
+      if (viewMode.value === 'list' && parentId && !expandedFolders.value.has(parentId)) {
         expandedFolders.value.add(parentId)
       }
       
@@ -727,6 +1100,40 @@ export default {
         editingItemId.value = null
       }
     }
+    
+    const handleGalleryRename = (event, item) => {
+      const newName = event.target.value.trim()
+      if (newName && newName !== item.name) {
+        handleRename({
+          itemId: item.id,
+          oldName: item.name,
+          newName: newName,
+          itemType: item.type
+        })
+      }
+      editingItemId.value = null
+    }
+    
+    // Watch for editing state to focus input in gallery view
+    watch(editingItemId, async (newId) => {
+      if (newId && viewMode.value === 'gallery') {
+        await nextTick()
+        // Try multiple times to ensure the element is rendered
+        let attempts = 0
+        const tryFocus = () => {
+          const inputs = document.querySelectorAll('input[ref="galleryEditInput"]')
+          const input = Array.from(inputs).find(el => el.offsetParent !== null)
+          if (input) {
+            input.focus()
+            input.select()
+          } else if (attempts < 5) {
+            attempts++
+            setTimeout(tryFocus, 50)
+          }
+        }
+        tryFocus()
+      }
+    })
     
     const handleDelete = (itemId, itemName, itemType) => {
       // Confirm deletion
@@ -801,7 +1208,16 @@ export default {
       viewMode,
       handleRename,
       handleDelete,
-      editingItemId
+      editingItemId,
+      currentFolderId,
+      navigationPath,
+      currentFolderName,
+      navigateToFolder,
+      showBreadcrumbMenu,
+      handleVideoClick,
+      handleItemContextMenu,
+      handleGalleryRename,
+      galleryEditInput
     }
   }
 }

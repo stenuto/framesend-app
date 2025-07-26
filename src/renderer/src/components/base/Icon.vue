@@ -26,7 +26,11 @@ const iconMappings = {
   'upload': 'Upload',
   'settings': 'Settings',
   'x': 'X',
-  'chevron-down': 'ChevronDown'
+  'chevron-down': 'ChevronDown',
+  'chevron-right': 'ChevronRight',
+  'folder-open': 'FolderOpen',
+  'check': 'Check',
+  'panel-left-open': 'PanelLeftOpen'
 }
 
 const props = defineProps({

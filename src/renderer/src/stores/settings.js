@@ -5,7 +5,7 @@ export const useSettingsStore = defineStore('settings', () => {
   // State - all settings in one object
   const settings = ref({
     general: {
-      appearance: 'system' // 'system', 'light', 'dark'
+      // Removed appearance - dark mode only
     },
     encoding: {
       h264: {
@@ -92,8 +92,7 @@ export const useSettingsStore = defineStore('settings', () => {
       console.error('Failed to load settings:', error)
     } finally {
       isLoading.value = false
-      // Apply theme after loading
-      applyTheme()
+      // Theme application removed - dark mode only
     }
   }
   
@@ -107,24 +106,9 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
   
-  function updateAppearance(appearance) {
-    settings.value.general.appearance = appearance
-    applyTheme()
-  }
+  // Appearance update removed - dark mode only
   
-  function applyTheme() {
-    const body = document.body
-    const appearance = settings.value.general.appearance
-    
-    if (appearance === 'dark') {
-      body.classList.add('dark')
-    } else if (appearance === 'light') {
-      body.classList.remove('dark')
-    } else {
-      // system - let Tailwind handle it (default behavior)
-      body.classList.remove('dark')
-    }
-  }
+  // Theme application removed - dark mode only
   
   function updateProjectOrder(projectIds) {
     // Ensure projects object exists
@@ -156,11 +140,9 @@ export const useSettingsStore = defineStore('settings', () => {
     // Actions
     loadSettings,
     saveSettings,
-    updateAppearance,
     updateProjectOrder,
     getProjectOrder,
     // Getters
-    appearance: () => settings.value.general.appearance,
     encodingSettings: () => settings.value.encoding,
     projectOrder: computed(() => settings.value.projects?.order || [])
   }

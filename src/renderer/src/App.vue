@@ -19,7 +19,7 @@ import MainLayout from './components/layout/MainLayout.vue'
 
 const router = useRouterStore()
 const projectsStore = useProjectsStore()
-const settingsStore = useSettingsStore() // Initialize settings store to load and apply theme
+const settingsStore = useSettingsStore() // Initialize settings store
 const { currentComponent } = storeToRefs(router)
 
 // Initialize routes on mount

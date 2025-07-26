@@ -4,17 +4,17 @@
     <!-- Drag and Drop Area (Top Half) -->
     <div class="flex-1">
       <div :class="[
-        'h-full border-2 border-zinc-300 dark:border-zinc-700 border-dashed rounded-smooth-md transition-colors',
+        'h-full border-2 border-zinc-700 border-dashed rounded-smooth-md transition-colors',
         'flex flex-col items-center justify-center',
-        isDragging ? 'border-cyan-500 bg-cyan-500/10' : 'dark:border-zinc-700 border-zinc-300 bg-zinc-100 dark:bg-zinc-900/50'
+        isDragging ? 'border-cyan-500 bg-cyan-500/10' : 'border-zinc-700 bg-zinc-900/50'
       ]" @drop="handleDrop" @dragover.prevent @dragenter.prevent @dragleave="isDragging = false"
         @dragenter="isDragging = true">
-        <Icon name="upload" class="size-6 text-zinc-500 dark:text-zinc-400 mb-4" />
+        <Icon name="upload" class="size-6 text-zinc-400 mb-4" />
 
-        <p class="text-zinc-500 dark:text-zinc-300 text-sm mb-2">
+        <p class="text-zinc-300 text-sm mb-2">
           {{ isDragging ? 'Drop files here' : 'Drag and drop files here' }}
         </p>
-        <p class="text-zinc-500 dark:text-zinc-300 text-sm mb-4">
+        <p class="text-zinc-300 text-sm mb-4">
           or
         </p>
 
@@ -28,7 +28,7 @@
     <div v-if="queue.length > 0" class=" border-t border-zinc-700">
       <div class="h-full flex flex-col">
         <!-- Queue Header -->
-        <div class="px-6 py-3 border-b border-zinc-300 dark:border-zinc-700 flex items-center justify-between">
+        <div class="px-6 py-3 border-b border-zinc-700 flex items-center justify-between">
           <h2 class="text-sm font-medium text-zinc-300">
             Upload Queue ({{ queue.length }} {{ queue.length === 1 ? 'file' : 'files' }})
             <span v-if="activeJobs.length > 0" class="ml-2 text-xs text-cyan-500">
@@ -43,20 +43,20 @@
         <!-- Queue List -->
         <div class="overflow-y-auto">
           <div v-if="queue.length === 0" class="h-full flex items-center justify-center">
-            <p class="text-zinc-500 dark:text-zinc-400">
+            <p class="text-zinc-400">
               No files in queue
             </p>
           </div>
 
           <div v-else class="p-4 space-y-2">
             <div v-for="file in queue" :key="file.id"
-              class="bg-zinc-100 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-700 rounded-lg p-4">
+              class="bg-zinc-900/50 border border-zinc-700 rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex-1 min-w-0 flex items-end">
-                  <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100 truncate">
+                  <p class="text-sm font-medium text-zinc-100 truncate">
                     {{ file.name }}
                   </p>
-                  <div class="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-500">
+                  <div class="flex items-center gap-2 text-xs text-zinc-500">
                     <span>{{ formatFileSize(file.size) }}</span>
                   </div>
                 </div>
@@ -65,11 +65,11 @@
 
               <!-- Progress Bar -->
               <div v-if="file.status === 'encoding' || file.status === 'queued'" class="mt-2">
-                <div class="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-500 mb-1">
+                <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
                   <span>{{ Math.round(file.progress) }}%</span>
                   <span class="capitalize">{{ file.status }}</span>
                 </div>
-                <div class="h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                <div class="h-1 bg-zinc-700 rounded-full overflow-hidden">
                   <div class="h-full bg-cyan-500 transition-all duration-300" :style="{ width: `${file.progress}%` }" />
                 </div>
               </div>
@@ -78,15 +78,15 @@
               <div v-else class="mt-2 flex items-center justify-between text-xs">
                 <span :class="[
                   'capitalize',
-                  file.status === 'completed' ? 'text-green-600 dark:text-green-500' :
-                    file.status === 'error' || file.status === 'invalid' ? 'text-red-600 dark:text-red-500' :
-                      file.validation?.isValid ? 'text-green-600 dark:text-green-500' :
-                        'text-zinc-600 dark:text-zinc-500'
+                  file.status === 'completed' ? 'text-green-500' :
+                    file.status === 'error' || file.status === 'invalid' ? 'text-red-500' :
+                      file.validation?.isValid ? 'text-green-500' :
+                        'text-zinc-500'
                 ]">
                   {{ file.validation?.isValid && file.status === 'pending' ? 'Ready to encode' : file.status }}
                   <span v-if="file.error" class="normal-case ml-1">({{ file.error }})</span>
                   <span v-if="file.warnings && file.warnings.length > 0"
-                    class="normal-case ml-1 text-yellow-600 dark:text-yellow-500">({{
+                    class="normal-case ml-1 text-yellow-500">({{
                       file.warnings.join(', ') }})</span>
                 </span>
               </div>

@@ -8,20 +8,16 @@
         'w-full px-2 py-1 pr-8 rounded-smooth-md border appearance-none cursor-pointer text-[13px]',
         'transition-colors duration-150',
         'focus:outline-none focus:ring-2',
-        // Light mode styles
-        'bg-white border-zinc-200',
-        'hover:border-zinc-300',
-        'focus:border-zinc-300 focus:ring-zinc-200/50',
-        // Dark mode styles
-        'dark:bg-zinc-800/50 dark:border-zinc-700/50',
-        'dark:hover:border-zinc-700',
-        'dark:focus:border-zinc-600 dark:focus:ring-zinc-600/50',
+        // Styles
+        'bg-zinc-800/50 border-zinc-700/50',
+        'hover:border-zinc-700',
+        'focus:border-zinc-600 focus:ring-zinc-600/50',
         // Text colors
-        'text-zinc-900 dark:text-zinc-100',
+        'text-zinc-100',
         // Disabled styles
-        disabled && 'opacity-50 cursor-not-allowed hover:border-zinc-200 dark:hover:border-zinc-700',
+        disabled && 'opacity-50 cursor-not-allowed hover:border-zinc-700',
         // Error styles
-        error && 'border-red-500 dark:border-red-500 focus:ring-red-500/50 dark:focus:ring-red-500/50'
+        error && 'border-red-500 focus:ring-red-500/50'
       ]" @change="handleChange">
         <option v-if="placeholder" value="" disabled :selected="!modelValue">
           {{ placeholder }}
@@ -35,11 +31,11 @@
       <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
         <Icon name="chevron-down" :class="[
           'size-4',
-          'text-zinc-500 dark:text-zinc-400'
+          'text-zinc-400'
         ]" />
       </div>
     </div>
-    <p v-if="error" class="mt-1 text-xs text-red-500 dark:text-red-400">
+    <p v-if="error" class="mt-1 text-xs text-red-400">
       {{ error }}
     </p>
   </div>

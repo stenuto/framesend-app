@@ -12,16 +12,16 @@
     <div v-else class="space-y-8 pt-8">
       <SettingsItem title="Email" description="Your account email address.">
         <input type="email" v-model="email" 
-          class="w-full text-xs px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-smooth-md border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          class="w-full text-xs px-3 py-2 bg-zinc-800 rounded-smooth-md border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500" />
       </SettingsItem>
       
       <SettingsItem title="Display Name" description="Your name as it appears in the app.">
         <input type="text" v-model="displayName" 
-          class="w-full text-xs px-3 py-2 bg-zinc-100 dark:bg-zinc-800 rounded-smooth-md border border-zinc-300 dark:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          class="w-full text-xs px-3 py-2 bg-zinc-800 rounded-smooth-md border border-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500" />
       </SettingsItem>
 
       <SettingsItem title="Password" description="Change your account password.">
-        <button class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+        <button class="text-xs text-blue-400 hover:text-blue-300">
           Change password
         </button>
       </SettingsItem>
@@ -30,7 +30,7 @@
         <div class="space-y-3">
           <label class="flex items-center">
             <input v-model="twoFactorEnabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
+              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
             <span class="ml-2 text-xs">Enable two-factor authentication</span>
           </label>
           <p v-if="twoFactorEnabled" class="text-[10px] text-zinc-500 ml-5">
@@ -41,10 +41,10 @@
 
       <SettingsItem title="Account Actions" description="Manage your account status.">
         <div class="space-y-2">
-          <button class="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300">
+          <button class="text-xs text-zinc-400 hover:text-zinc-300">
             Export account data
           </button>
-          <button class="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
+          <button class="text-xs text-red-400 hover:text-red-300">
             Delete account
           </button>
         </div>

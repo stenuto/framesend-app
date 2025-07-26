@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex items-center gap-[9px] mx-3 p-2 rounded-smooth-lg hover:dark:bg-zinc-600/20 hover:bg-zinc-500/20 cursor-pointer"
+    class="flex items-center gap-[9px] mx-3 p-2 rounded-smooth-lg hover:bg-zinc-600/20 cursor-pointer"
     @click="$emit('click')">
     <!-- Avatar -->
     <component :is="avatarComponent" v-bind="avatarProps" :class="[type === 'team' ? 'size-8' : 'size-8']" />

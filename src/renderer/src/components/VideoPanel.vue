@@ -1,6 +1,6 @@
 <template>
   <div v-if="selectedVideo"
-    class="relative shrink-0 h-full dark:bg-zinc-900 bg-white border-l dark:border-white/10 border-zinc-200"
+    class="relative shrink-0 h-full bg-zinc-900 border-l border-white/10"
     :style="{ width: `${width}px` }">
     <!-- Resize handle -->
     <div class="absolute left-0 top-0 w-1 h-full cursor-col-resize hover:bg-blue-500/50 group"
@@ -9,20 +9,20 @@
     </div>
 
 
-    <div class="h-12 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900 px-3">
+    <div class="h-12 flex items-center justify-between shrink-0 drag bg-zinc-900 px-3">
       <div class=" flex items-center justify-between w-full">
         <h3 class="text-sm font-medium">{{ selectedVideo.name || 'Video Title' }}</h3>
         <Button icon-name="x" size="sm" variant="ghost" class="text-zinc-500" @click="closePanel" />
       </div>
     </div>
     <!-- Panel content -->
-    <div class="h-full overflow-auto p-2.5 border-t border-black/10 dark:border-zinc-700/50">
+    <div class="h-full overflow-auto p-2.5 border-t border-zinc-700/50">
       <!-- Playable Video (only if ready) -->
       <VideoPlayer v-if="selectedVideo.status === 'ready'" :src="videoSrc" />
 
       <!-- Processing Status -->
       <div v-else-if="selectedVideo.status === 'processing' || selectedVideo.status === 'queued'"
-        class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
+        class="aspect-video bg-zinc-800 rounded-lg flex items-center justify-center">
         <div class="text-center">
           <div v-if="selectedVideo.status === 'processing'" class="mb-4">
             <svg class="size-12 -rotate-90 mx-auto" viewBox="0 0 24 24">
@@ -47,10 +47,10 @@
 
       <!-- Failed Status -->
       <div v-else-if="selectedVideo.status === 'failed'"
-        class="aspect-video bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+        class="aspect-video bg-red-900/20 rounded-lg flex items-center justify-center">
         <div class="text-center">
           <Icon name="alert-circle" class="size-12 text-red-500 mb-4 mx-auto" />
-          <p class="text-sm text-red-600 dark:text-red-400">Encoding failed</p>
+          <p class="text-sm text-red-400">Encoding failed</p>
         </div>
       </div>
 
@@ -78,6 +78,7 @@ import VideoPlayer from './VideoPlayer.vue'
 import Icon from '@/components/base/Icon.vue'
 import Button from '@/components/base/Button.vue'
 import { defineProps, defineEmits, computed } from 'vue'
+import { useUIStore } from '@/stores/ui'
 
 const props = defineProps({
   selectedVideo: {
@@ -91,6 +92,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['start-resize'])
+
+const uiStore = useUIStore()
+
+function closePanel() {
+  uiStore.clearSelectedVideo()
+}
 
 // Hardcoded for now - will be dynamic based on video ID later
 const videoSrc = computed(() => {
