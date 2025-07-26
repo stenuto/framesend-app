@@ -1,6 +1,5 @@
 <template>
-  <div v-if="selectedVideo"
-    class="relative shrink-0 h-full bg-zinc-900 border-l border-white/10"
+  <div v-if="selectedVideo" class="relative shrink-0 h-full bg-zinc-900 border-l border-white/10"
     :style="{ width: `${width}px` }">
     <!-- Resize handle -->
     <div class="absolute left-0 top-0 w-1 h-full cursor-col-resize hover:bg-blue-500/50 group"
@@ -11,7 +10,7 @@
 
     <div class="h-12 flex items-center justify-between shrink-0 drag bg-zinc-900 px-3">
       <div class=" flex items-center justify-between w-full">
-        <h3 class="text-sm font-medium">{{ selectedVideo.name || 'Video Title' }}</h3>
+        <h3 class="text-sm font-medium flex-1 truncate">{{ selectedVideo.name || 'Video Title' }}</h3>
         <Button icon-name="x" size="sm" variant="ghost" class="text-zinc-500" @click="closePanel" />
       </div>
     </div>
