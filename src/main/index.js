@@ -50,7 +50,7 @@ const ensureVisibleOnSomeDisplay = (windowState) => {
 function createWindow() {
   // Fixed window size
   const windowWidth = 480
-  const windowHeight = 700
+  const windowHeight = 300
 
   let windowOptions = {
     width: windowWidth,

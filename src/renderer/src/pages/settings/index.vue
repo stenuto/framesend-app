@@ -44,6 +44,7 @@ import GeneralSettings from './general.vue'
 import EncodingSettings from './encoding.vue'
 import CaptionsSettings from './captions.vue'
 import AccountSettings from './account.vue'
+import TeamSettings from './team.vue'
 import BillingSettings from './billing.vue'
 import Icon from '@components/base/Icon.vue'
 
@@ -54,6 +55,7 @@ export default {
     EncodingSettings,
     CaptionsSettings,
     AccountSettings,
+    TeamSettings,
     BillingSettings,
     Icon
   },
@@ -69,6 +71,7 @@ export default {
       { id: 'encoding', label: 'Encoding', icon: 'tv-minimal-play' },
       { id: 'captions', label: 'Captions', icon: 'message-square-quote' },
       { id: 'account', label: 'Account', icon: 'user' },
+      { id: 'team', label: 'Team', icon: 'users-round' },
       { id: 'billing', label: 'Billing', icon: 'credit-card' }
     ]
 
@@ -78,6 +81,7 @@ export default {
         encoding: 'EncodingSettings',
         captions: 'CaptionsSettings',
         account: 'AccountSettings',
+        team: 'TeamSettings',
         billing: 'BillingSettings'
       }
       return componentMap[currentSection.value]

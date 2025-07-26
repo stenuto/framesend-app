@@ -1,13 +1,15 @@
 <template>
-  <div class="">
-    <h2 class="text-[15px] font-semibold">Caption Settings</h2>
-    <p class="text-[13px] text-current/50 mb-4">Configure automatic caption generation and subtitle options.</p>
+  <div>
+    <div class="">
+      <h2 class="text-base font-semibold">Caption Settings</h2>
+      <p class="text-[13px] text-current/50">Configure automatic caption generation and subtitle options.</p>
+    </div>
       
     <div v-if="loading" class="flex items-center justify-center py-12">
       <p class="text-xs text-zinc-500">Loading settings...</p>
     </div>
 
-    <div v-else class="space-y-6">
+    <div v-else class="space-y-8 pt-8">
       <!-- Auto-Generate Captions -->
       <SettingsItem title="Auto-Generate Captions" description="Automatically generate captions for uploaded videos.">
         <div class="space-y-3">
@@ -15,7 +17,7 @@
             <input 
               v-model="settings.autoGenerate" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1"
+              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500"
             >
             <span class="ml-2 text-xs">Enable automatic caption generation</span>
           </label>
@@ -45,7 +47,7 @@
       <SettingsItem title="Caption Accuracy" description="Balance between speed and accuracy of caption generation.">
         <div class="space-y-2">
           <input type="range" min="1" max="3" v-model="settings.accuracy" 
-            class="w-full h-1" />
+            class="w-full h-1 accent-blue-500" />
           <div class="flex justify-between text-[10px] text-zinc-500 dark:text-zinc-500">
             <span>Fast</span>
             <span>Balanced</span>
@@ -61,7 +63,7 @@
             <input 
               v-model="settings.formats.srt" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded"
+              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500"
             >
             <span class="ml-2 text-xs">SRT (SubRip)</span>
           </label>
@@ -69,7 +71,7 @@
             <input 
               v-model="settings.formats.vtt" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded"
+              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500"
             >
             <span class="ml-2 text-xs">WebVTT</span>
           </label>
@@ -77,7 +79,7 @@
             <input 
               v-model="settings.formats.ass" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded"
+              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded accent-blue-500"
             >
             <span class="ml-2 text-xs">ASS/SSA (Advanced SubStation)</span>
           </label>
@@ -91,7 +93,7 @@
             <input 
               v-model="settings.burnIn.enabled" 
               type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1"
+              class="w-3 h-3 text-blue-500 bg-zinc-100 dark:bg-zinc-800 border-zinc-300 dark:border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500"
             >
             <span class="ml-2 text-xs">Create version with burned-in captions</span>
           </label>

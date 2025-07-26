@@ -8,13 +8,20 @@
       <div class="absolute left-0 top-0 w-4 h-full -translate-x-2"></div>
     </div>
 
+
+    <div class="h-12 flex items-center justify-between shrink-0 drag bg-white/40 dark:bg-zinc-900 px-3">
+      <div class=" flex items-center justify-between w-full">
+        <h3 class="text-sm font-medium">{{ selectedVideo.name || 'Video Title' }}</h3>
+        <Button icon-name="x" size="sm" variant="ghost" class="text-zinc-500" @click="closePanel" />
+      </div>
+    </div>
     <!-- Panel content -->
-    <div class="h-full overflow-auto p-2.5">
+    <div class="h-full overflow-auto p-2.5 border-t border-black/10 dark:border-zinc-700/50">
       <!-- Playable Video (only if ready) -->
       <VideoPlayer v-if="selectedVideo.status === 'ready'" :src="videoSrc" />
-      
+
       <!-- Processing Status -->
-      <div v-else-if="selectedVideo.status === 'processing' || selectedVideo.status === 'queued'" 
+      <div v-else-if="selectedVideo.status === 'processing' || selectedVideo.status === 'queued'"
         class="aspect-video bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
         <div class="text-center">
           <div v-if="selectedVideo.status === 'processing'" class="mb-4">
@@ -37,7 +44,7 @@
           </p>
         </div>
       </div>
-      
+
       <!-- Failed Status -->
       <div v-else-if="selectedVideo.status === 'failed'"
         class="aspect-video bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
@@ -54,7 +61,8 @@
           <span v-if="selectedVideo.duration">{{ formatDuration(selectedVideo.duration) }}</span>
           <span v-if="selectedVideo.size">{{ selectedVideo.size }}</span>
           <span v-if="selectedVideo.validation?.metadata?.streams?.[0]">
-            {{ selectedVideo.validation.metadata.streams[0].width }}×{{ selectedVideo.validation.metadata.streams[0].height }}
+            {{ selectedVideo.validation.metadata.streams[0].width }}×{{
+              selectedVideo.validation.metadata.streams[0].height }}
           </span>
         </div>
       </div>
@@ -68,6 +76,7 @@
 <script setup>
 import VideoPlayer from './VideoPlayer.vue'
 import Icon from '@/components/base/Icon.vue'
+import Button from '@/components/base/Button.vue'
 import { defineProps, defineEmits, computed } from 'vue'
 
 const props = defineProps({
@@ -108,12 +117,12 @@ function getStageDescription(stage) {
 
 function formatDuration(duration) {
   if (typeof duration === 'string') return duration
-  
+
   const seconds = Math.floor(duration)
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
   const s = Math.floor(seconds % 60)
-  
+
   if (h > 0) {
     return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
   }
