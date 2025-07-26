@@ -78,10 +78,8 @@
                 'bg-zinc-800 hover:bg-zinc-700': true,
                 'ring-2 ring-blue-500 bg-blue-500/10': dragOverFolder === item.id
               }" @dblclick="navigateToFolder(item.id)">
-              <!-- Icon Area -->
-              <div class="aspect-video bg-zinc-900/50 relative overflow-hidden flex items-center justify-center">
-                <Icon name="folder" class="size-20 text-zinc-600" :stroke-width="1.5" />
-              </div>
+              <!-- Thumbnail Preview Area -->
+              <FolderThumbnailPreview :items="getFolderItems(item.id)" />
               <!-- Info -->
               <div class="p-3">
                 <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
@@ -163,13 +161,15 @@ import { storeToRefs } from 'pinia'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
 import FileSystemItem from '@components/FileSystemItem.vue'
+import FolderThumbnailPreview from '@components/FolderThumbnailPreview.vue'
 
 export default {
   name: 'ProjectExplorerPage',
   components: {
     Icon,
     Button,
-    FileSystemItem
+    FileSystemItem,
+    FolderThumbnailPreview
   },
   meta: {
     title: 'Project Explorer'

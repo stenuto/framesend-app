@@ -391,9 +391,13 @@ export const useProjectsStore = defineStore('projects', () => {
   }
 
   const getVideosInFolder = (folderId) => {
-    return fileSystem.value
+    console.log('getVideosInFolder called with:', folderId)
+    console.log('fileSystem videos:', fileSystem.value.filter(item => item.type === 'video'))
+    const videos = fileSystem.value
       .filter(item => item.type === 'video' && item.parentId === folderId)
       .sort((a, b) => a.orderIndex - b.orderIndex)
+    console.log('Found videos for folder', folderId, ':', videos)
+    return videos
   }
 
   const getFolderVideoCount = (folderId) => {
