@@ -19,7 +19,8 @@ const api = {
     readFile: (path) => ipcRenderer.invoke('file:read', path),
     writeFile: (path, data) => ipcRenderer.invoke('file:write', path, data),
     saveTemp: (name, buffer) => ipcRenderer.invoke('file:saveTemp', { name, buffer }),
-    cleanTemp: (path) => ipcRenderer.invoke('file:cleanTemp', path)
+    cleanTemp: (path) => ipcRenderer.invoke('file:cleanTemp', path),
+    readImage: (path) => ipcRenderer.invoke('file:readImage', path)
   },
   
   // Dialog operations
@@ -77,6 +78,11 @@ const api = {
       const listener = (event, data) => callback(data);
       ipcRenderer.on('encoding:cancelled', listener);
       return () => ipcRenderer.removeListener('encoding:cancelled', listener);
+    },
+    onThumbnail: (callback) => {
+      const listener = (event, data) => callback(data);
+      ipcRenderer.on('encoding:thumbnail', listener);
+      return () => ipcRenderer.removeListener('encoding:thumbnail', listener);
     }
   },
   

@@ -1,40 +1,40 @@
 <template>
-  <div class="flex flex-col h-full bg-zinc-900 pl-5">
-    <!-- Settings Header with Tabs -->
-    <div class="shrink-0">
-      <!-- Title -->
-      <div class="py-5">
-        <h1 class="font-semibold text-lg">
-          Settings
-        </h1>
-      </div>
-
-      <!-- Horizontal Tab Navigation -->
-      <nav class="flex gap-1.5 border-b border-zinc-700/50 pb-2.5">
-        <button v-for="item in navigationItems" :key="item.id" :class="[
-          'group flex items-center gap-1.5 px-1.5 py-[2.5px] text-xs font-regular rounded-smooth transition-colors',
-          currentSection === item.id
-            ? 'bg-zinc-400/10 text-zinc-50'
-            : 'hover:bg-zinc-400/10 hover:text-zinc-50'
-        ]" @click="navigateToSection(item.id)">
-          <Icon v-if="item.icon" :name="item.icon" :class="[
-            'size-3.5 flex-shrink-0',
-            currentSection === item.id ? '' : 'text-zinc-400'
-          ]" />
-          <span :class="[
-            currentSection === item.id ? 'text-current' : 'group-hover:text-current'
-          ]">
-            {{ item.label }}
-          </span>
-        </button>
-      </nav>
+<div class="flex flex-col h-full pl-5">
+  <!-- Settings Header with Tabs -->
+  <div class="shrink-0">
+    <!-- Title -->
+    <div class="py-5">
+      <h1 class="font-semibold text-lg">
+        Settings
+      </h1>
     </div>
 
-    <!-- Content Area -->
-    <div class="flex-1 overflow-y-auto bg-zinc-900 pt-5 pr-5">
-      <component :is="currentComponent" v-if="currentComponent" class="max-w-3xl" />
-    </div>
+    <!-- Horizontal Tab Navigation -->
+    <nav class="flex gap-2 border-b border-zinc-700/50 pb-2.5">
+      <button v-for="item in navigationItems" :key="item.id" :class="[
+        'group flex items-center gap-1.5 px-1.5 py-[2.5px] text-xs font-regular rounded-smooth transition-colors',
+        currentSection === item.id
+          ? 'bg-zinc-400/10 text-zinc-50'
+          : 'hover:bg-zinc-400/10 hover:text-zinc-50'
+      ]" @click="navigateToSection(item.id)">
+        <Icon v-if="item.icon" :name="item.icon" :class="[
+          'size-3.5 flex-shrink-0',
+          currentSection === item.id ? '' : 'text-zinc-400'
+        ]" />
+        <span :class="[
+          currentSection === item.id ? 'text-current' : 'group-hover:text-current'
+        ]">
+          {{ item.label }}
+        </span>
+      </button>
+    </nav>
   </div>
+
+  <!-- Content Area -->
+  <div class="flex-1 overflow-y-auto pt-5 pr-5">
+    <component :is="currentComponent" v-if="currentComponent" class="max-w-3xl" />
+  </div>
+</div>
 </template>
 
 <script>

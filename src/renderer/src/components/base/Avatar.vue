@@ -1,15 +1,15 @@
 <template>
-  <div :class="[
-    'relative inline-flex items-center justify-center overflow-hidden',
-    src ? '' : backgroundColor,
-    sizeClasses[size],
-    className
-  ]">
-    <img v-if="src" :src="src" :alt="alt" class="h-full w-full object-cover">
-    <span v-else :class="['font-medium text-white', textSizeClasses[size]]">
-      {{ initials }}
-    </span>
-  </div>
+<div :class="[
+  'relative inline-flex items-center justify-center overflow-hidden',
+  src ? '' : backgroundColor,
+  sizeClasses[size],
+  className
+]">
+  <img v-if="src" :src="src" :alt="alt" class="h-full w-full object-cover">
+  <span v-else :class="['font-regular text-white', textSizeClasses[size]]">
+    {{ initials }}
+  </span>
+</div>
 </template>
 
 <script setup>
@@ -69,15 +69,15 @@ const backgroundColor = computed(() => {
     'bg-pink-500',
     'bg-rose-500'
   ]
-  
+
   // Generate a consistent color based on the name
   if (!props.name) return colors[0]
-  
+
   let hash = 0
   for (let i = 0; i < props.name.length; i++) {
     hash = props.name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  
+
   const index = Math.abs(hash) % colors.length
   return colors[index]
 })
@@ -90,8 +90,8 @@ const sizeClasses = {
 }
 
 const textSizeClasses = {
-  sm: 'text-xs',
-  default: 'text-sm',
-  lg: 'text-base'
+  sm: 'text-[13px]',
+  default: 'text-[15px]',
+  lg: 'text-lg'
 }
 </script>

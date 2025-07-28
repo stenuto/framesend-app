@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, screen, nativeTheme } from 'electron'
+import { app, shell, BrowserWindow, screen, nativeTheme, protocol } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -74,7 +74,9 @@ function createWindow() {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      webSecurity: false, // Allow loading local files
+      allowRunningInsecureContent: true
     }
   }
 

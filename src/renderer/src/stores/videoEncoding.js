@@ -50,15 +50,21 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     cleanupListeners();
     
     // Start listener
+    console.log('[VideoStore] Setting up start listener, onStart available:', !!window.api.video.onStart);
     if (window.api.video.onStart) {
       eventCleanups.value.start = window.api.video.onStart((data) => {
-        console.log('[VideoStore] Received start event for job:', data.jobId);
+        console.log('[VideoStore] Received start event for job:', data.jobId, data);
         const job = jobs.value.get(data.jobId);
         if (job) {
           job.status = 'processing'; // Changed from 'encoding' to 'processing'
           job.startedAt = new Date();
+          console.log('[VideoStore] Updated job status to processing');
+        } else {
+          console.warn('[VideoStore] Could not find job for start event:', data.jobId);
         }
       });
+    } else {
+      console.warn('[VideoStore] No onStart listener available!');
     }
 
     // Progress listener
@@ -144,6 +150,25 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
           job.status = 'failed';
           job.error = 'Cancelled by user';
           job.cancelledAt = new Date();
+        }
+      });
+    }
+    
+    // Thumbnail listener
+    if (window.api.video.onThumbnail) {
+      eventCleanups.value.thumbnail = window.api.video.onThumbnail((data) => {
+        console.log(`[VideoStore] Received thumbnail for job ${data.jobId}:`, data);
+        const job = jobs.value.get(data.jobId);
+        if (job) {
+          job.thumbnailPath = data.thumbnailPath;
+          job.thumbnailIsTemporary = data.isTemporary;
+          
+          // Emit an event or update dependent stores
+          // This allows the UI to immediately show the thumbnail
+          console.log(`[VideoStore] Updated job ${data.jobId} with thumbnail path: ${data.thumbnailPath}`);
+          console.log(`[${job.file.name}] Early thumbnail generated`);
+        } else {
+          console.warn(`[VideoStore] Could not find job ${data.jobId} in store`);
         }
       });
     }

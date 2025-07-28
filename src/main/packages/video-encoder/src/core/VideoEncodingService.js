@@ -157,6 +157,11 @@ export class VideoEncodingService extends EventEmitter {
       this.emit('job:error', { jobId, error });
     });
 
+    job.on('thumbnail:ready', (thumbnailData) => {
+      console.log(`[VideoEncodingService] Thumbnail ready for job ${jobId}:`, thumbnailData);
+      this.emit('job:thumbnail', { jobId, ...thumbnailData });
+    });
+
     // Add to queue
     const jobPromise = this.jobQueue.add(async () => {
       this.emit('job:start', { 

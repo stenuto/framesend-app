@@ -232,6 +232,8 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
             status: 'processing'
           });
           
+          console.log(`[startHandler] Job ${job.id} started encoding`);
+          
           event.sender.send('encoding:start', data);
         }
       };
@@ -255,9 +257,12 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           
           event.sender.send('encoding:complete', result);
           // Clean up listeners
+          service.off('job:start', startHandler);
           service.off('job:progress', progressHandler);
           service.off('job:complete', completeHandler);
           service.off('job:error', errorHandler);
+          service.off('job:cancelled', cancelledHandler);
+          service.off('job:thumbnail', thumbnailHandler);
         }
       };
       
@@ -281,6 +286,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           service.off('job:complete', completeHandler);
           service.off('job:error', errorHandler);
           service.off('job:cancelled', cancelledHandler);
+          service.off('job:thumbnail', thumbnailHandler);
         }
       };
       
@@ -299,6 +305,19 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           service.off('job:complete', completeHandler);
           service.off('job:error', errorHandler);
           service.off('job:cancelled', cancelledHandler);
+          service.off('job:thumbnail', thumbnailHandler);
+        }
+      };
+      
+      const thumbnailHandler = (data) => {
+        if (data.jobId === job.id) {
+          console.log(`[video:encode] Thumbnail ready for job ${job.id}:`, data.thumbnailPath);
+          event.sender.send('encoding:thumbnail', data);
+          // Also send a log message to renderer for debugging
+          event.sender.send('encoding:log', {
+            jobId: job.id,
+            message: `Thumbnail ready: ${data.thumbnailPath}`
+          });
         }
       };
       
@@ -308,6 +327,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       service.on('job:complete', completeHandler);
       service.on('job:error', errorHandler);
       service.on('job:cancelled', cancelledHandler);
+      service.on('job:thumbnail', thumbnailHandler);
       
       return {
         success: true,

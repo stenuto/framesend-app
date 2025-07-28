@@ -92,28 +92,31 @@ export class VideoJob extends EventEmitter {
       // Stage 1: Probe video metadata
       await this._probe();
       
-      // Stage 2: Plan encoding renditions
+      // Stage 2: Generate hero thumbnail immediately for UI feedback
+      await this._generateHeroThumbnail();
+      
+      // Stage 3: Plan encoding renditions
       await this._planRenditions();
       
-      // Stage 3: Extract audio
+      // Stage 4: Extract audio
       await this._extractAudio();
       
-      // Stage 4: Encode video streams
+      // Stage 5: Encode video streams
       await this._encodeStreams();
       
-      // Stage 5: Generate visual assets
-      await this._genAssets();
+      // Stage 6: Generate storyboard (separate from hero thumbnail)
+      await this._generateStoryboard();
       
-      // Stage 6: Generate captions (if whisper is available)
+      // Stage 7: Generate captions (if whisper is available)
       await this._genCaptions();
       
-      // Stage 7: Generate HLS manifests
+      // Stage 8: Generate HLS manifests
       await this._genManifest();
       
-      // Stage 8: Write metadata
+      // Stage 9: Write metadata
       await this._writeMetadata();
       
-      // Stage 9: Finalize
+      // Stage 10: Finalize
       await this._finalize();
       
       this.status = 'complete';
@@ -182,7 +185,67 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 2: Plan encoding renditions based on source
+   * Stage 2: Generate hero thumbnail immediately for UI feedback
+   */
+  async _generateHeroThumbnail() {
+    this.progressTracker.startStage('assets');
+    
+    try {
+      const aspectRatio = this.metadata.video.width / this.metadata.video.height;
+      
+      // Generate hero thumbnail maintaining aspect ratio
+      const heroPath = path.join(this.outputDir, 'thumbnails', 'hero_4k.jpg');
+      await extractThumbnails(
+        this.inputPath,
+        heroPath,
+        {
+          ...THUMBNAIL_PARAMS.hero,
+          ffmpegPath: this.binaries.ffmpeg,
+          duration: this.metadata.duration, // Pass duration for percentage-based seeking
+        }
+      );
+      
+      // Emit event for immediate UI update
+      this.emit('thumbnail:ready', {
+        jobId: this.id,
+        thumbnailPath: heroPath,
+        isTemporary: false
+      });
+      
+      // Store in metadata
+      this.metadata.thumbnails = {
+        hero: 'thumbnails/hero_4k.jpg',
+      };
+      
+      console.log(`[VideoJob ${this.id}] Hero thumbnail generated at 50% (${this.metadata.duration / 2}s) and saved to: ${heroPath}`);
+      
+      this.progressTracker.updateStage('assets', 0.5); // Hero thumbnail is 50% of assets stage
+      
+    } catch (error) {
+      console.error(`[VideoJob ${this.id}] Hero thumbnail generation failed:`, error);
+      // Continue with encoding even if thumbnail fails
+      this.progressTracker.updateStage('assets', 0.5);
+    }
+  }
+  
+  /**
+   * Format seconds to HH:MM:SS for ffmpeg
+   * @private
+   */
+  _formatTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    
+    return [
+      hours.toString().padStart(2, '0'),
+      minutes.toString().padStart(2, '0'),
+      secs.toString().padStart(2, '0'),
+    ].join(':');
+  }
+
+  /**
+   * Stage 3: Plan encoding renditions based on source
    */
   async _planRenditions() {
     this.progressTracker.startStage('plan');
@@ -274,7 +337,7 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 3: Extract audio tracks
+   * Stage 4: Extract audio tracks
    */
   async _extractAudio() {
     this.progressTracker.startStage('audio');
@@ -312,7 +375,7 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 4: Encode video streams in parallel
+   * Stage 5: Encode video streams in parallel
    */
   async _encodeStreams() {
     this.progressTracker.startStage('encode');
@@ -421,24 +484,13 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 5: Generate visual assets (thumbnails)
+   * Stage 6: Generate storyboard
    */
-  async _genAssets() {
-    this.progressTracker.startStage('assets');
+  async _generateStoryboard() {
+    // Continue assets stage from 50%
     
     try {
       const aspectRatio = this.metadata.video.width / this.metadata.video.height;
-      
-      // Generate hero thumbnail maintaining aspect ratio
-      const heroPath = path.join(this.outputDir, 'thumbnails', 'hero_4k.jpg');
-      await extractThumbnails(
-        this.inputPath,
-        heroPath,
-        {
-          ...THUMBNAIL_PARAMS.hero,
-          ffmpegPath: this.binaries.ffmpeg,
-        }
-      );
       
       // Calculate storyboard thumbnail dimensions maintaining aspect ratio
       const storyboardHeight = THUMBNAIL_PARAMS.storyboard.height;
@@ -467,6 +519,7 @@ export class VideoJob extends EventEmitter {
             }
           );
         } catch (error) {
+          console.error(`[VideoJob ${this.id}] Storyboard generation failed:`, error);
           // Continue without storyboard
         }
       }
@@ -479,32 +532,23 @@ export class VideoJob extends EventEmitter {
           { spaces: 2 }
         );
         
-        this.metadata.thumbnails = {
-          hero: 'thumbnails/hero_4k.jpg',
-          storyboard: {
-            image: 'thumbnails/storyboard.jpg',
-            data: 'thumbnails/storyboard.json',
-          },
-        };
-      } else {
-        // Only hero thumbnail
-        this.metadata.thumbnails = {
-          hero: 'thumbnails/hero_4k.jpg',
+        // Update metadata with storyboard
+        this.metadata.thumbnails.storyboard = {
+          image: 'thumbnails/storyboard.jpg',
+          data: 'thumbnails/storyboard.json',
         };
       }
       
       this.progressTracker.completeStage('assets');
       
     } catch (error) {
-      const enhancedError = new Error(`Asset generation failed: ${error.message}`);
-      enhancedError.stage = 'assets';
-      enhancedError.stack = error.stack;
-      throw enhancedError;
+      console.error(`[VideoJob ${this.id}] Storyboard generation error:`, error);
+      this.progressTracker.completeStage('assets');
     }
   }
 
   /**
-   * Stage 6: Generate captions using Whisper
+   * Stage 7: Generate captions using Whisper
    */
   async _genCaptions() {
     this.progressTracker.startStage('captions');
@@ -527,7 +571,7 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 7: Generate HLS master manifest
+   * Stage 8: Generate HLS master manifest
    */
   async _genManifest() {
     this.progressTracker.startStage('manifest');
@@ -551,7 +595,7 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 8: Write complete metadata file
+   * Stage 9: Write complete metadata file
    */
   async _writeMetadata() {
     this.progressTracker.startStage('metadata');
@@ -624,7 +668,7 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 9: Finalize and cleanup
+   * Stage 10: Finalize and cleanup
    */
   async _finalize() {
     this.progressTracker.startStage('finalize');

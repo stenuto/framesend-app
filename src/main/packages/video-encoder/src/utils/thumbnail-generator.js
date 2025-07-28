@@ -29,6 +29,12 @@ export async function extractThumbnails(inputPath, outputPath, options = {}) {
 async function extractSingleThumbnail(inputPath, outputPath, options) {
   const ffmpegPath = options.ffmpegPath || 'ffmpeg';
   
+  console.log('[extractSingleThumbnail] Starting thumbnail extraction:', {
+    inputPath,
+    outputPath,
+    options
+  });
+  
   // Calculate seek time
   let seekTime = '00:00:01'; // Default 1 second
   if (options.time) {
@@ -58,7 +64,15 @@ async function extractSingleThumbnail(inputPath, outputPath, options) {
   
   args.push('-y', outputPath);
   
-  await execa(ffmpegPath, args);
+  console.log('[extractSingleThumbnail] Running ffmpeg with args:', args);
+  
+  try {
+    await execa(ffmpegPath, args);
+    console.log('[extractSingleThumbnail] Thumbnail extracted successfully to:', outputPath);
+  } catch (error) {
+    console.error('[extractSingleThumbnail] FFmpeg error:', error);
+    throw error;
+  }
   
   // Apply additional processing if needed
   if (options.quality && options.quality < 100) {

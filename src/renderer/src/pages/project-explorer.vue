@@ -120,7 +120,9 @@
             @click="handleVideoClick(item)">
             <!-- Thumbnail -->
             <div class="aspect-video bg-zinc-900 relative overflow-hidden">
-              <PlaceholderImage :seed="item.id" :alt="`${item.name} thumbnail`" />
+              <img v-if="getThumbnailForItem(item)" :src="getThumbnailForItem(item)" :alt="`${item.name} thumbnail`"
+                class="w-full h-full object-cover" />
+              <PlaceholderImage v-else :seed="item.id" :alt="`${item.name} thumbnail`" />
               <!-- Status overlay -->
               <div v-if="item.status === 'processing'"
                 class="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -809,6 +811,25 @@ export default {
         item.error = 'Cancelled by user'
       }
     })
+    
+    const unsubscribeThumbnail = window.api.video.onThumbnail?.((data) => {
+      console.log('[ProjectExplorer] Received thumbnail event:', data)
+      const item = fileSystem.value.find(i => i.jobId === data.jobId)
+      if (item) {
+        // Update the item with thumbnail path
+        item.thumbnailPath = data.thumbnailPath
+        item.thumbnailIsTemporary = data.isTemporary
+        console.log(`[ProjectExplorer] Updated item ${item.name} with thumbnail: ${data.thumbnailPath}`)
+        
+        // Force reactivity update
+        const index = fileSystem.value.findIndex(i => i.jobId === data.jobId)
+        if (index !== -1) {
+          fileSystem.value[index] = { ...item }
+        }
+      } else {
+        console.warn(`[ProjectExplorer] Could not find item with jobId: ${data.jobId}`)
+      }
+    })
 
     // Clean up listeners on unmount
     onUnmounted(() => {
@@ -816,6 +837,7 @@ export default {
       unsubscribeComplete?.()
       unsubscribeError?.()
       unsubscribeCancelled?.()
+      unsubscribeThumbnail?.()
       unsubscribeMenu?.()
     })
 
@@ -1357,6 +1379,70 @@ export default {
         return `${bytes} B`
       }
     }
+    
+    // Store thumbnail data URLs
+    const thumbnailCache = ref(new Map())
+    
+    const getVideoThumbnail = (item) => {
+      // Check cache first
+      const cacheKey = item.id
+      if (thumbnailCache.value.has(cacheKey)) {
+        const cached = thumbnailCache.value.get(cacheKey)
+        console.log(`[getVideoThumbnail] Returning cached thumbnail for ${item.name}`)
+        return cached
+      }
+      
+      console.log(`[getVideoThumbnail] Checking thumbnail for ${item.name}, thumbnailPath: ${item.thumbnailPath}`)
+      
+      // Check if the item has a thumbnail path
+      if (item.thumbnailPath) {
+        console.log(`[getVideoThumbnail] Loading thumbnail from path: ${item.thumbnailPath}`)
+        // Load the thumbnail asynchronously
+        window.api.file.readImage(item.thumbnailPath).then(dataUrl => {
+          if (dataUrl) {
+            console.log(`[getVideoThumbnail] Loaded thumbnail data URL for ${item.name}`)
+            thumbnailCache.value.set(cacheKey, dataUrl)
+            // Force reactivity update
+            thumbnailCache.value = new Map(thumbnailCache.value)
+          } else {
+            console.error(`[getVideoThumbnail] Failed to load thumbnail for ${item.name}`)
+          }
+        }).catch(err => {
+          console.error(`[getVideoThumbnail] Error loading thumbnail for ${item.name}:`, err)
+        })
+        return null // Return null while loading
+      }
+      
+      // Check if the video has an associated job with a thumbnail
+      if (item.jobId) {
+        const job = videoEncodingStore.jobs.get(item.jobId)
+        console.log(`[getVideoThumbnail] Checking job ${item.jobId} for thumbnail, job exists: ${!!job}, thumbnailPath: ${job?.thumbnailPath}`)
+        if (job && job.thumbnailPath) {
+          console.log(`[getVideoThumbnail] Loading thumbnail from job path: ${job.thumbnailPath}`)
+          window.api.file.readImage(job.thumbnailPath).then(dataUrl => {
+            if (dataUrl) {
+              console.log(`[getVideoThumbnail] Loaded thumbnail data URL from job for ${item.name}`)
+              thumbnailCache.value.set(cacheKey, dataUrl)
+              // Force reactivity update
+              thumbnailCache.value = new Map(thumbnailCache.value)
+            }
+          }).catch(err => {
+            console.error(`[getVideoThumbnail] Error loading thumbnail from job for ${item.name}:`, err)
+          })
+          return null // Return null while loading
+        }
+      }
+      
+      console.log(`[getVideoThumbnail] No thumbnail found for ${item.name}`)
+      return null
+    }
+    
+    // Create a computed function that returns thumbnail
+    const getThumbnailForItem = (item) => {
+      // Trigger reactivity on thumbnailCache changes
+      thumbnailCache.value.size // Access size to trigger reactivity
+      return getVideoThumbnail(item)
+    }
 
     return {
       router,
@@ -1408,7 +1494,9 @@ export default {
       galleryEditInput,
       getFolderSize,
       emptyStateTitle,
-      emptyStateMessage
+      emptyStateMessage,
+      getVideoThumbnail,
+      getThumbnailForItem
     }
   }
 }

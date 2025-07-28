@@ -83,4 +83,29 @@ export default function registerFileTempHandlers(ipcMain) {
       };
     }
   });
+  
+  /**
+   * Read image file and convert to data URL
+   */
+  ipcMain.handle('file:readImage', async (event, filePath) => {
+    console.log('[file:readImage] Reading image from:', filePath);
+    try {
+      // Check if file exists
+      if (!await fs.pathExists(filePath)) {
+        console.error('[file:readImage] File does not exist:', filePath);
+        return null;
+      }
+      
+      const buffer = await fs.readFile(filePath);
+      console.log('[file:readImage] Read buffer of size:', buffer.length);
+      const base64 = buffer.toString('base64');
+      const mimeType = 'image/jpeg'; // Thumbnails are JPEGs
+      const dataUrl = `data:${mimeType};base64,${base64}`;
+      console.log('[file:readImage] Created data URL of length:', dataUrl.length);
+      return dataUrl;
+    } catch (error) {
+      console.error('[file:readImage] Failed to read image:', error);
+      return null;
+    }
+  });
 }
