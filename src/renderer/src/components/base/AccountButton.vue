@@ -63,16 +63,17 @@ export default {
   emits: ['click'],
   setup(props) {
     const avatarComponent = computed(() => {
-      return props.type === 'user' && props.initials ? 'Avatar' : 'img'
+      // Use Avatar component if no avatarUrl is provided or if we want to show initials
+      return !props.avatarUrl || props.initials ? 'Avatar' : 'img'
     })
 
     const avatarProps = computed(() => {
-      if (props.type === 'user' && props.initials) {
+      if (!props.avatarUrl || props.initials) {
         return {
           name: props.name,
-          initials: props.initials,
           size: 'sm',
-          className: 'rounded-smooth-md'
+          className: 'rounded-smooth-md',
+          src: props.avatarUrl || '' // Avatar component will show initials if src is empty
         }
       }
       return {

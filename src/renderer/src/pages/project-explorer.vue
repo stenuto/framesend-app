@@ -32,9 +32,9 @@
   </div>
 
   <!-- File Explorer Table / Gallery -->
-  <div class="flex-1 flex flex-col overflow-hidden bg-zinc-900">
+  <div class="flex-1 flex flex-col overflow-hidden">
     <!-- Table Header (List View Only) -->
-    <div v-if="viewMode === 'list'" class="border-y border-zinc-800 z-10 shrink-0">
+    <div v-if="viewMode === 'list'" class="border-b border-zinc-800 z-10 shrink-0">
       <div class="flex px-3 py-1 text-[11px] text-zinc-500">
         <div class="flex-1">Name</div>
         <div class="w-24">Files</div>
@@ -162,7 +162,7 @@
               </div>
               <div class="flex items-center justify-between mt-1">
                 <span class="text-xs text-zinc-500">{{ item.duration || '0:00' }}</span>
-                <span class="text-xs text-zinc-500">{{ item.size || '-' }}</span>
+                <span class="text-xs text-zinc-500">{{ item.size || '' }}</span>
               </div>
             </div>
           </div>
@@ -330,6 +330,19 @@ export default {
         }
       })
     }, { deep: true })
+
+    // Helper function to format bytes to human readable format
+    const formatBytes = (bytes, decimals = 1) => {
+      if (bytes === 0) return '0 B'
+
+      const k = 1024
+      const dm = decimals < 0 ? 0 : decimals
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+    }
 
     // Helper function to recursively filter items
     const filterItems = (items, query) => {
@@ -707,7 +720,9 @@ export default {
             parentId: parentId,
             projectId: selectedProject.value?.id,
             duration: job.validation.metadata?.duration || '0:00',
-            size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+            size: null, // Will be set when encoding starts
+            originalSize: file.size, // Keep original size for reference
+            encodedSize: 0, // Will be updated during encoding
             orderIndex: fileSystem.value.filter(i => i.parentId === parentId).length + index,
             status: 'queued',
             progress: 0,
@@ -728,7 +743,7 @@ export default {
             parentId: parentId,
             projectId: selectedProject.value?.id,
             duration: '0:00',
-            size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+            size: null, // Failed videos don't have encoded size,
             orderIndex: fileSystem.value.filter(i => i.parentId === parentId).length + index,
             status: 'failed',
             error: error.message
@@ -747,6 +762,13 @@ export default {
       if (item) {
         item.progress = Math.round(data.global * 100)
         item.status = 'processing'
+
+        // Update encoded size if available
+        if (data.encodedSize !== undefined && data.encodedSize > 0) {
+          item.encodedSize = data.encodedSize
+          item.size = formatBytes(data.encodedSize)
+          console.log(`[Renderer] Updated ${item.name} size to ${item.size}`)
+        }
       }
     })
 
@@ -755,6 +777,13 @@ export default {
       if (item) {
         item.status = 'ready'
         item.progress = 100
+
+        // Set final encoded size
+        if (data.metadata?.outputSize) {
+          item.encodedSize = data.metadata.outputSize
+          item.size = formatBytes(data.metadata.outputSize)
+        }
+
         if (data.metadata?.duration) {
           // Format duration from seconds to MM:SS
           const seconds = Math.floor(data.metadata.duration)
@@ -844,7 +873,9 @@ export default {
               parentId: null, // Add to root
               projectId: selectedProject.value?.id,
               duration: job.validation.metadata?.duration || '0:00',
-              size: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+              size: null, // Will be set when encoding starts
+              originalSize: file.size, // Keep original size for reference
+              encodedSize: 0, // Will be updated during encoding
               orderIndex: fileSystem.value.filter(i => i.parentId === null).length + index,
               status: 'queued',
               progress: 0,

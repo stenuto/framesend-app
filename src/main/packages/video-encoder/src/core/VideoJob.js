@@ -21,6 +21,7 @@ import { ProgressTracker } from '../utils/progress-tracker.js';
 import { FluentFFmpegWrapper } from '../utils/fluent-ffmpeg-wrapper.js';
 import { generateHLSManifest } from '../utils/hls-manifest.js';
 import { extractThumbnails } from '../utils/thumbnail-generator.js';
+import { getDirectorySize } from '../utils/directory-size.js';
 
 /**
  * Represents a single video encoding job
@@ -42,12 +43,17 @@ export class VideoJob extends EventEmitter {
     this.metadata = {};
     this.renditions = [];
     this.cancelled = false;
+    this.encodedSize = 0; // Track encoded size in bytes
+    this.lastSizeCheck = 0; // Last time we checked the size
     
     // Initialize progress tracker
     this.progressTracker = new ProgressTracker(PROGRESS_WEIGHTS);
-    this.progressTracker.on('update', (progress) => {
-      this.progress = progress;
-      this.emit('progress', progress);
+    this.progressTracker.on('update', async (progress) => {
+      // Update encoded size before emitting progress
+      await this._updateEncodedSize();
+      // Always emit progress with encoded size
+      this.progress = { ...progress, encodedSize: this.encodedSize };
+      this.emit('progress', this.progress);
     });
     
     // Initialize FFmpeg wrapper with job ID for tracking
@@ -333,13 +339,16 @@ export class VideoJob extends EventEmitter {
             this.inputPath,
             playlistPath,
             encodingOptions,
-            (progress) => {
+            async (progress) => {
               // Update progress for this specific rendition
               const renditionProgress = (completedRenditions + progress) / totalRenditions;
               
               // Set detailed rendition info
               this.progressTracker.currentRendition = rendition.name;
               this.progressTracker.renditionProgress = progress;
+              
+              // Update encoded size during encoding
+              await this._updateEncodedSize();
               
               this.progressTracker.updateStage('encode', renditionProgress);
             }
@@ -663,10 +672,11 @@ export class VideoJob extends EventEmitter {
    * Calculate total size of output files
    */
   async _calculateOutputSize() {
-    let totalSize = 0;
-    let fileCount = 0;
+    const totalSize = await getDirectorySize(this.outputDir);
     
-    const walkDir = async (dir) => {
+    // Count files
+    let fileCount = 0;
+    const countFiles = async (dir) => {
       const files = await fs.readdir(dir);
       
       for (const file of files) {
@@ -674,17 +684,40 @@ export class VideoJob extends EventEmitter {
         const stat = await fs.stat(filePath);
         
         if (stat.isDirectory()) {
-          await walkDir(filePath);
+          await countFiles(filePath);
         } else {
-          totalSize += stat.size;
           fileCount++;
         }
       }
     };
     
-    await walkDir(this.outputDir);
+    await countFiles(this.outputDir);
     
     return { totalSize, fileCount };
+  }
+  
+  /**
+   * Update the encoded size (throttled to avoid too frequent checks)
+   * @private
+   */
+  async _updateEncodedSize() {
+    // Only check size every 2 seconds to avoid performance impact
+    const now = Date.now();
+    if (now - this.lastSizeCheck < 2000) {
+      return;
+    }
+    
+    this.lastSizeCheck = now;
+    
+    try {
+      // Check if output directory exists
+      if (await fs.pathExists(this.outputDir)) {
+        this.encodedSize = await getDirectorySize(this.outputDir);
+      }
+    } catch (error) {
+      // Ignore errors during size calculation
+      console.warn('Failed to calculate encoded size:', error.message);
+    }
   }
 
   /**

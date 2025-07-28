@@ -1,5 +1,5 @@
 <template>
-<div class="app-container flex-col flex h-screen w-screen overflow-hidden select-none text-zinc-300/90 bg-zinc-900">
+<div class="app-container flex-col flex h-screen w-screen overflow-hidden select-none text-zinc-300/90 bg-zinc-850">
   <!-- Main Content -->
   <div class="flex-1 flex h-0 relative">
     <!-- Sidebar -->

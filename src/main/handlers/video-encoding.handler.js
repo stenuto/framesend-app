@@ -238,15 +238,18 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       
       const progressHandler = (progress) => {
         if (progress.jobId === job.id) {
+          // Log progress with encoded size for debugging
+          console.log(`[Encoding Progress] Job ${job.id}: ${Math.round(progress.global * 100)}%, Encoded Size: ${progress.encodedSize || 0} bytes`);
           event.sender.send('encoding:progress', progress);
         }
       };
       
       const completeHandler = (result) => {
         if (result.jobId === job.id) {
-          // Log API call for status update to ready
+          // Log API call for status update to ready with encoded size
           console.log(`📡 PUT /api/videos/${job.id}`, {
             status: 'ready',
+            encodedSize: result.metadata?.outputSize || 0,
             metadata: result.metadata
           });
           

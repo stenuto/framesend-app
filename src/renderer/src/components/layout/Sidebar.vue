@@ -1,5 +1,5 @@
 <template>
-<div class="flex h-full w-60 flex-col shrink-0 border-r border-zinc-800">
+<div class="flex h-full w-60 flex-col shrink-0 border-r border-white/6">
   <div class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5 text-zinc-400/75">
     <Button icon-name="arrow-left" size="sm" variant="ghost" :disabled="!canGoBack" @click="router.goBack()" />
     <Button icon-name="arrow-right" size="sm" variant="ghost" :disabled="!canGoForward" @click="router.goForward()" />
@@ -7,8 +7,8 @@
   </div>
 
   <!-- Account Button -->
-  <AccountButton type="team" name="Motioncrafter" subtitle="Pro plan"
-    :avatar-url="'data:image/jpeg;base64,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'"
+  <AccountButton type="team" :name="teamName" :subtitle="teamPlanDisplay"
+    :avatar-url="teamAvatar"
     @click="handleAccountClick" />
 
   <!-- Project List -->
@@ -60,7 +60,7 @@
     </div>
   </div>
 
-  <AccountButton type="user" name="Steve Tenuto" subtitle="Admin" avatar-url="https://pbs.twimg.com/profile_images/1800308863977291777/wawcQz6k_400x400.jpg" @click="handleAccountClick" class="mb-3" />
+  <AccountButton type="user" :name="currentUser?.name || 'User'" :subtitle="currentUser?.role || 'Member'" :avatar-url="currentUser?.avatar || ''" @click="handleAccountClick" class="mb-3" />
 </div>
 </template>
 
@@ -70,6 +70,7 @@ import { useProjectsStore } from '@/stores/projects'
 import { useRouterStore } from '@/stores/router'
 import { useUIStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
+import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { apiService } from '@/services/api'
 import Icon from '@components/base/Icon.vue'
@@ -89,12 +90,14 @@ export default defineComponent({
     const router = useRouterStore()
     const uiStore = useUIStore()
     const settingsStore = useSettingsStore()
+    const userStore = useUserStore()
     const { projects, selectedProjectId } = storeToRefs(projectsStore)
     const { currentPage, canGoBack, canGoForward, currentParams } = storeToRefs(router)
     const { selectProject } = projectsStore
     const { toggleSidebar } = uiStore
     const { updateProjectOrder } = settingsStore
     const { isLoading: settingsLoading, projectOrder } = storeToRefs(settingsStore)
+    const { currentUser } = storeToRefs(userStore)
 
     // State for editing projects
     const editingProjectId = ref(null)
@@ -195,6 +198,14 @@ export default defineComponent({
 
     // Check if on Mac for keyboard shortcuts
     const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+
+    // User and team computed properties
+    const teamName = computed(() => currentUser.value?.team?.name || 'Team')
+    const teamPlanDisplay = computed(() => {
+      const plan = currentUser.value?.team?.planDetails?.name || currentUser.value?.team?.plan
+      return plan ? `${plan} plan` : 'Free plan'
+    })
+    const teamAvatar = computed(() => currentUser.value?.team?.logo || '')
 
     // Computed property for ordered projects
     const orderedProjects = computed(() => {
@@ -571,7 +582,11 @@ export default defineComponent({
       dropZoneIndex,
       draggedProjectId,
       settingsLoading,
-      projectOrder
+      projectOrder,
+      currentUser,
+      teamName,
+      teamPlanDisplay,
+      teamAvatar
     }
   }
 })

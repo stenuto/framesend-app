@@ -187,7 +187,8 @@ Get all folders and videos in a project.
         "status": "ready", // queued | processing | ready | failed
         "progress": 100,
         "duration": 120, // seconds
-        "size": 52428800, // bytes
+        "originalSize": 52428800, // original file size in bytes
+        "encodedSize": 15728640, // encoded size in bytes (0 if not ready)
         "resolution": "1920x1080",
         "encodingJobId": "job_123",
         "createdAt": "2024-01-15T10:30:00.000Z",
@@ -304,7 +305,7 @@ Register a new video (typically after upload/encoding starts).
   "projectId": "proj_123",
   "orderIndex": 0,
   "encodingJobId": "job_123",
-  "size": 52428800, // bytes
+  "originalSize": 52428800, // original file size in bytes
   "duration": 120, // seconds
   "resolution": "1920x1080"
 }
@@ -323,7 +324,8 @@ Register a new video (typically after upload/encoding starts).
     "status": "queued",
     "progress": 0,
     "encodingJobId": "job_123",
-    "size": 52428800,
+    "originalSize": 52428800,
+    "encodedSize": 0, // will be updated during/after encoding
     "duration": 120,
     "resolution": "1920x1080",
     "createdAt": "2024-01-15T10:30:00.000Z",
@@ -350,7 +352,8 @@ Get video details including encoding status.
     "status": "ready",
     "progress": 100,
     "encodingJobId": "job_123",
-    "size": 52428800,
+    "originalSize": 52428800, // original file size in bytes
+    "encodedSize": 15728640, // encoded size (all HLS files, thumbnails, etc.)
     "duration": 120,
     "resolution": "1920x1080",
     "streamingUrl": "https://cdn.framesend.com/video_123/master.m3u8",
@@ -424,6 +427,7 @@ Update video encoding status (for server-side encoding updates).
 {
   "status": "processing", // queued | processing | ready | failed
   "progress": 45,
+  "encodedSize": 5242880, // optional, current encoded size in bytes
   "error": null // or error message if failed
 }
 ```
@@ -436,10 +440,13 @@ Update video encoding status (for server-side encoding updates).
     "id": "video_123",
     "status": "processing",
     "progress": 45,
+    "encodedSize": 5242880,
     "updatedAt": "2024-01-15T10:30:00.000Z"
   }
 }
 ```
+
+**Note**: When marking video as "ready", include the final `encodedSize` which represents the total size of all encoded files (HLS segments, thumbnails, storyboards, etc.). This is used for storage quota calculations.
 
 ---
 
