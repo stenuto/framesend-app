@@ -3,9 +3,7 @@ import { readFile, writeFile, mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 
 export default function registerSettingsHandlers(ipcMain, { app }) {
-  console.log('Registering settings handlers...')
   const settingsPath = join(app.getPath('userData'), 'settings.json')
-  console.log('Settings path:', settingsPath)
   
   // Ensure settings directory exists
   const ensureSettingsDir = async () => {
@@ -43,7 +41,6 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
   
   // Load all settings
   ipcMain.handle('settings:load', async () => {
-    console.log('settings:load called')
     try {
       await ensureSettingsDir()
       
@@ -76,17 +73,13 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
   
   // Save all settings
   ipcMain.handle('settings:save', async (event, settings) => {
-    console.log('settings:save called with:', settings)
     try {
       await ensureSettingsDir()
       await writeFile(settingsPath, JSON.stringify(settings, null, 2))
-      console.log('✅ Settings saved successfully to:', settingsPath)
       return { success: true }
     } catch (error) {
       console.error('Failed to save settings:', error)
       throw error
     }
   })
-  
-  console.log('Settings handlers registered successfully')
 }

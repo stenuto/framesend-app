@@ -80,49 +80,37 @@ export class VideoJob extends EventEmitter {
    */
   async encode() {
     try {
-      console.log(`[VideoJob ${this.id}] Starting encode...`);
       this.status = 'processing';
       this.startTime = Date.now();
 
       // Stage 1: Probe video metadata
-      console.log(`[VideoJob ${this.id}] Stage 1: Probing...`);
       await this._probe();
       
       // Stage 2: Plan encoding renditions
-      console.log(`[VideoJob ${this.id}] Stage 2: Planning renditions...`);
       await this._planRenditions();
-      console.log(`[VideoJob ${this.id}] Planned ${this.renditions.length} renditions`);
       
       // Stage 3: Extract audio
-      console.log(`[VideoJob ${this.id}] Stage 3: Extracting audio...`);
       await this._extractAudio();
       
       // Stage 4: Encode video streams
-      console.log(`[VideoJob ${this.id}] Stage 4: Encoding streams...`);
       await this._encodeStreams();
       
       // Stage 5: Generate visual assets
-      console.log(`[VideoJob ${this.id}] Stage 5: Generating assets...`);
       await this._genAssets();
       
       // Stage 6: Generate captions (if whisper is available)
-      console.log(`[VideoJob ${this.id}] Stage 6: Generating captions...`);
       await this._genCaptions();
       
       // Stage 7: Generate HLS manifests
-      console.log(`[VideoJob ${this.id}] Stage 7: Generating manifest...`);
       await this._genManifest();
       
       // Stage 8: Write metadata
-      console.log(`[VideoJob ${this.id}] Stage 8: Writing metadata...`);
       await this._writeMetadata();
       
       // Stage 9: Finalize
-      console.log(`[VideoJob ${this.id}] Stage 9: Finalizing...`);
       await this._finalize();
       
       this.status = 'complete';
-      console.log(`[VideoJob ${this.id}] Encode complete!`);
       this.emit('complete', {
         metadata: this.metadata,
         duration: Date.now() - this.startTime,
@@ -131,7 +119,7 @@ export class VideoJob extends EventEmitter {
       return this.metadata;
       
     } catch (error) {
-      console.error(`[VideoJob ${this.id}] Encode error:`, error);
+      console.error(`[VideoJob ${this.id}] Encode error:`, error.message);
       this.status = 'error';
       this.emit('error', error);
       throw error;
@@ -220,7 +208,6 @@ export class VideoJob extends EventEmitter {
             bufsize: `${Math.round(parseInt(baseConfig.bufsize) * bitrateMultiplier)}k`,
           };
           
-          console.log(`[Encoding] H.264 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp}, Quality: ${quality}, CRF: ${crf})`);
           
           return {
             ...rung,
@@ -238,11 +225,7 @@ export class VideoJob extends EventEmitter {
     
     // Add AV1 renditions based on settings
     if (this.encodingSettings.av1.enabled) {
-      console.log(`[VideoJob ${this.id}] AV1 is enabled in settings`);
-      console.log(`[VideoJob ${this.id}] AV1 settings:`, JSON.stringify(this.encodingSettings.av1));
-      
       const enabledAV1Ladder = filterLadderBySettings(AV1_LADDER, this.encodingSettings.av1);
-      console.log(`[VideoJob ${this.id}] Enabled AV1 ladder:`, enabledAV1Ladder);
       
       const av1Renditions = enabledAV1Ladder
         .map(rung => {
@@ -262,8 +245,6 @@ export class VideoJob extends EventEmitter {
             bufsize: `${Math.round(parseInt(baseConfig.bufsize) * bitrateMultiplier)}k`,
           };
           
-          console.log(`[Encoding] AV1 ${rung.name}: ${width}x${targetHeight} @ ${frameRate}fps = ${bitrateConfig.maxrate} (BPP: ${rung.targetBpp}, Quality: ${quality}, CRF: ${crf})`);
-          
           return {
             ...rung,
             ...AV1_CONFIG,
@@ -275,14 +256,7 @@ export class VideoJob extends EventEmitter {
           };
         });
         
-      console.log(`[VideoJob ${this.id}] Created ${av1Renditions.length} AV1 renditions`);
-      av1Renditions.forEach(r => {
-        console.log(`[VideoJob ${this.id}] AV1 rendition: ${r.name} at ${r.width}x${r.height}, CRF: ${r.crf}`);
-      });
-      
       this.renditions.push(...av1Renditions);
-    } else {
-      console.log(`[VideoJob ${this.id}] AV1 is disabled in settings`);
     }
     
     // Create output directories for each rendition
@@ -346,8 +320,6 @@ export class VideoJob extends EventEmitter {
         if (this.cancelled) throw new Error('Job cancelled');
         
         try {
-          console.log(`[VideoJob ${this.id}] Starting encoding for ${rendition.name} with codec: ${rendition.codec}`);
-          
           // Prepare encoding options based on codec
           const encodingOptions = rendition.codec === 'libsvtav1' 
             ? this._getAV1Options(rendition)
@@ -486,7 +458,6 @@ export class VideoJob extends EventEmitter {
             }
           );
         } catch (error) {
-          console.warn(`[VideoJob ${this.id}] Storyboard generation failed:`, error.message);
           // Continue without storyboard
         }
       }
@@ -720,39 +691,22 @@ export class VideoJob extends EventEmitter {
    * Cancel the encoding job
    */
   async cancel() {
-    console.log(`[VideoJob] ========== CANCEL CALLED ==========`);
-    console.log(`[VideoJob] Job ID: ${this.id}`);
-    console.log(`[VideoJob] Current status: ${this.status}`);
-    console.log(`[VideoJob] Already cancelled: ${this.cancelled}`);
-    
     this.cancelled = true;
     this.status = 'cancelled';
     
     // Clear encoding queue to prevent new processes from starting
     if (this.encodingQueue) {
-      console.log(`[VideoJob] Encoding queue exists, size: ${this.encodingQueue.size}`);
-      console.log(`[VideoJob] Encoding queue pending: ${this.encodingQueue.pending}`);
-      console.log(`[VideoJob] Pausing and clearing encoding queue`);
       this.encodingQueue.pause();
       this.encodingQueue.clear();
-      console.log(`[VideoJob] Queue cleared`);
-    } else {
-      console.log(`[VideoJob] WARNING: No encoding queue found!`);
     }
     
-    // Check if ffmpeg wrapper exists
+    // Kill all FFmpeg processes
     if (this.ffmpeg) {
-      console.log(`[VideoJob] FFmpeg wrapper exists, calling killAll()`);
       await this.ffmpeg.killAll();
-      console.log(`[VideoJob] killAll() completed`);
-    } else {
-      console.log(`[VideoJob] ERROR: No FFmpeg wrapper found!`);
     }
     
     // Emit cancelled event immediately
-    console.log(`[VideoJob] Emitting cancelled event`);
     this.emit('cancelled');
-    console.log(`[VideoJob] ========== CANCEL COMPLETE ==========`);
     
     // Clean up files in the background
     setImmediate(async () => {

@@ -14,9 +14,6 @@ export class FluentFFmpegWrapper extends EventEmitter {
     this.activeCommands = new Map(); // Map of commandId -> ffmpeg command
     this.activeProcesses = new Map(); // Map of commandId -> process
     
-    console.log(`[FluentFFmpeg] Constructor called for job ${jobId}`);
-    console.log(`[FluentFFmpeg] FFmpeg path: ${this.ffmpegPath}`);
-    console.log(`[FluentFFmpeg] FFprobe path: ${this.ffprobePath}`);
     
     // Set binary paths globally
     ffmpeg.setFfmpegPath(this.ffmpegPath);
@@ -84,34 +81,26 @@ export class FluentFFmpegWrapper extends EventEmitter {
       command.outputOptions('-metadata', `comment=framesend-job-${this.jobId}`);
       
       // Register command immediately
-      console.log(`[FluentFFmpeg] Pre-registering audio command ${commandId} for job ${this.jobId}`);
       this.activeCommands.set(commandId, command);
       
       command
         .on('start', (cmd) => {
-          console.log(`[FluentFFmpeg] Started audio extraction: ${cmd}`);
-          console.log(`[FluentFFmpeg] Active commands now: ${this.activeCommands.size}`);
-          
           // Store the process immediately and keep checking
           const storeProcess = () => {
             if (command.ffmpegProc) {
-              console.log(`[FluentFFmpeg] Storing process PID ${command.ffmpegProc.pid} for command ${commandId}`);
               this.activeProcesses.set(commandId, command.ffmpegProc);
             } else {
-              console.log(`[FluentFFmpeg] WARNING: No ffmpegProc available yet for ${commandId}, retrying...`);
               setTimeout(storeProcess, 50);
             }
           };
           storeProcess();
         })
         .on('end', () => {
-          console.log(`[FluentFFmpeg] Audio extraction completed`);
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
           resolve();
         })
         .on('error', (err) => {
-          console.error(`[FluentFFmpeg] Audio extraction failed:`, err);
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
           reject(err);
@@ -289,23 +278,16 @@ export class FluentFFmpegWrapper extends EventEmitter {
       command.outputOptions('-metadata', `comment=framesend-job-${this.jobId}`);
       
       // Register command immediately before starting
-      console.log(`[FluentFFmpeg] Pre-registering command ${commandId} for job ${this.jobId}`);
       this.activeCommands.set(commandId, command);
       
       // Set up event handlers
       command
         .on('start', (cmd) => {
-          console.log(`[FluentFFmpeg] Started encoding: ${commandId}`);
-          console.log(`[FluentFFmpeg] Full command:\n${cmd}`);
-          console.log(`[FluentFFmpeg] Active commands now: ${this.activeCommands.size}`);
-          
           // Store the process immediately and keep checking
           const storeProcess = () => {
             if (command.ffmpegProc) {
-              console.log(`[FluentFFmpeg] Storing process PID ${command.ffmpegProc.pid} for command ${commandId}`);
               this.activeProcesses.set(commandId, command.ffmpegProc);
             } else {
-              console.log(`[FluentFFmpeg] WARNING: No ffmpegProc available yet for ${commandId}, retrying...`);
               setTimeout(storeProcess, 50);
             }
           };
@@ -317,21 +299,14 @@ export class FluentFFmpegWrapper extends EventEmitter {
           }
         })
         .on('end', () => {
-          console.log(`[FluentFFmpeg] Encoding completed: ${commandId}`);
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
           onProgress(1);
           resolve();
         })
         .on('error', (err, stdout, stderr) => {
-          console.error(`[FluentFFmpeg] Encoding failed: ${commandId}`, err.message);
-          if (stderr) {
-            console.error(`[FluentFFmpeg] FFmpeg stderr:\n${stderr}`);
-          }
-          console.log(`[FluentFFmpeg] Removing command ${commandId} from tracking due to error`);
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
-          console.log(`[FluentFFmpeg] Active commands after error: ${this.activeCommands.size}`);
           
           if (err.message.includes('SIGKILL') || err.message.includes('SIGTERM') || err.message.includes('Exiting normally, received signal 9')) {
             reject(new Error('Encoding cancelled'));
@@ -360,33 +335,26 @@ export class FluentFFmpegWrapper extends EventEmitter {
       command.outputOptions('-metadata', `comment=framesend-job-${this.jobId}`);
       
       // Register command immediately
-      console.log(`[FluentFFmpeg] Pre-registering frame command ${commandId} for job ${this.jobId}`);
       this.activeCommands.set(commandId, command);
       
       command
         .on('start', (cmd) => {
-          console.log(`[FluentFFmpeg] Started frame extraction: ${cmd}`);
-          
           // Store the process immediately
           const storeProcess = () => {
             if (command.ffmpegProc) {
-              console.log(`[FluentFFmpeg] Storing process PID ${command.ffmpegProc.pid} for command ${commandId}`);
               this.activeProcesses.set(commandId, command.ffmpegProc);
             } else {
-              console.log(`[FluentFFmpeg] WARNING: No ffmpegProc available yet for ${commandId}, retrying...`);
               setTimeout(storeProcess, 50);
             }
           };
           storeProcess();
         })
         .on('end', () => {
-          console.log(`[FluentFFmpeg] Frame extraction completed`);
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
           resolve();
         })
         .on('error', (err) => {
-          console.error(`[FluentFFmpeg] Frame extraction failed:`, err);
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
           reject(err);
@@ -404,55 +372,35 @@ export class FluentFFmpegWrapper extends EventEmitter {
    * Kill all active commands
    */
   async killAll() {
-    console.log(`[FluentFFmpeg] killAll() called for job ${this.jobId}`);
-    console.log(`[FluentFFmpeg] Active commands: ${this.activeCommands.size}`);
-    console.log(`[FluentFFmpeg] Active processes: ${this.activeProcesses.size}`);
-    
     if (this.activeCommands.size === 0 && this.activeProcesses.size === 0) {
-      console.log(`[FluentFFmpeg] WARNING: No active commands or processes to kill!`);
       return;
     }
     
     // First try to kill via stored processes
-    console.log(`[FluentFFmpeg] Killing ${this.activeProcesses.size} stored processes...`);
     for (const [commandId, proc] of this.activeProcesses) {
       try {
         if (proc && proc.pid) {
-          console.log(`[FluentFFmpeg] Killing process PID ${proc.pid} for command ${commandId}`);
           proc.kill('SIGKILL');
-          console.log(`[FluentFFmpeg] Kill signal sent to PID ${proc.pid}`);
         }
       } catch (err) {
-        console.error(`[FluentFFmpeg] Error killing process for ${commandId}:`, err);
+        // Ignore errors
       }
     }
     
     // Then try to kill via commands
-    console.log(`[FluentFFmpeg] Active command IDs:`, Array.from(this.activeCommands.keys()));
-    
     for (const [commandId, command] of this.activeCommands) {
       try {
-        console.log(`[FluentFFmpeg] Attempting to kill command: ${commandId}`);
-        
         // Try command.kill first (this is the proper fluent-ffmpeg way)
         if (typeof command.kill === 'function') {
-          console.log(`[FluentFFmpeg] Using command.kill('SIGKILL')`);
           command.kill('SIGKILL');
-          console.log(`[FluentFFmpeg] Kill signal sent successfully`);
-        } else {
-          console.log(`[FluentFFmpeg] ERROR: No kill method available for command ${commandId}`);
         }
       } catch (err) {
-        console.error(`[FluentFFmpeg] Error killing command ${commandId}:`, err);
+        // Ignore errors
       }
     }
     
     // Clear both maps
-    const clearedCommands = this.activeCommands.size;
-    const clearedProcesses = this.activeProcesses.size;
     this.activeCommands.clear();
     this.activeProcesses.clear();
-    
-    console.log(`[FluentFFmpeg] Cleared ${clearedCommands} commands and ${clearedProcesses} processes from tracking`);
   }
 }

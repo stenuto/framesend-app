@@ -1,19 +1,19 @@
 <template>
-  <div class="app-container flex-col flex h-screen w-screen overflow-hidden select-none text-zinc-300/90">
-    <!-- Main Content -->
-    <div class="flex-1 flex h-0 relative">
-      <!-- Sidebar -->
-      <Sidebar v-if="sidebarOpen" />
+<div class="app-container flex-col flex h-screen w-screen overflow-hidden select-none text-zinc-300/90 bg-zinc-900">
+  <!-- Main Content -->
+  <div class="flex-1 flex h-0 relative">
+    <!-- Sidebar -->
+    <Sidebar v-if="sidebarOpen" />
 
-      <div class="flex-1 flex flex-col max-h-full">
-        <div class="flex-1 min-h-0">
-          <slot />
-        </div>
+    <div class="flex-1 flex flex-col max-h-full">
+      <div class="flex-1 min-h-0">
+        <slot />
       </div>
-      <!-- Video detail panel -->
-      <VideoPanel :selected-video="selectedVideo" :width="detailPanelWidth" @start-resize="startResize" />
     </div>
+    <!-- Video detail panel -->
+    <VideoPanel :selected-video="selectedVideo" :width="detailPanelWidth" @start-resize="startResize" />
   </div>
+</div>
 </template>
 
 <script setup>

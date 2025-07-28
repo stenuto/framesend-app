@@ -37,7 +37,7 @@
 
 <script setup>
 // defineProps and defineEmits are compiler macros and don't need to be imported
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import Icon from './Icon.vue'
 
 const props = defineProps({
@@ -98,25 +98,37 @@ watch(() => props.name, (newName) => {
   }
 })
 
+// Function to focus and select text
+const focusAndSelectAll = async () => {
+  editingName.value = props.name
+  await nextTick()
+  
+  if (nameEditRef.value) {
+    // Set the text content directly
+    nameEditRef.value.textContent = props.name
+    
+    // Focus and select all
+    setTimeout(() => {
+      if (nameEditRef.value) {
+        nameEditRef.value.focus()
+        // Use execCommand for better cross-browser support
+        document.execCommand('selectAll', false, null)
+      }
+    }, 0)
+  }
+}
+
 // Watch for when this item becomes editable
-watch(isEditing, (newValue, oldValue) => {
+watch(isEditing, async (newValue, oldValue) => {
   if (newValue && !oldValue) {
-    editingName.value = props.name
-    nextTick(() => {
-      nextTick(() => {
-        if (nameEditRef.value) {
-          nameEditRef.value.focus()
-          // Small delay before selection to ensure focus is complete
-          setTimeout(() => {
-            const range = document.createRange()
-            range.selectNodeContents(nameEditRef.value)
-            const selection = window.getSelection()
-            selection.removeAllRanges()
-            selection.addRange(range)
-          }, 10)
-        }
-      })
-    })
+    await focusAndSelectAll()
+  }
+})
+
+// Also check on mount in case item is created in editing state
+onMounted(async () => {
+  if (isEditing.value) {
+    await focusAndSelectAll()
   }
 })
 

@@ -186,35 +186,19 @@ export class VideoEncodingService extends EventEmitter {
    * @param {string} jobId - Job ID to cancel
    */
   async cancelJob(jobId) {
-    console.log(`[VideoEncodingService] ========== CANCEL JOB ${jobId} ==========`);
-    console.log(`[VideoEncodingService] Active jobs count: ${this.activeJobs.size}`);
-    console.log(`[VideoEncodingService] Active job IDs:`, Array.from(this.activeJobs.keys()));
-    
     const job = this.activeJobs.get(jobId);
     if (!job) {
-      console.error(`[VideoEncodingService] ERROR: Job ${jobId} not found in activeJobs`);
-      console.log(`[VideoEncodingService] Available jobs:`, Array.from(this.activeJobs.keys()));
       throw new Error(`Job ${jobId} not found`);
     }
 
     try {
-      console.log(`[VideoEncodingService] Found job ${jobId}`);
-      console.log(`[VideoEncodingService] Job status: ${job.status}`);
-      console.log(`[VideoEncodingService] Calling job.cancel()`);
-      
       await job.cancel();
       
-      console.log(`[VideoEncodingService] job.cancel() returned, removing from activeJobs`);
       this.activeJobs.delete(jobId);
-      console.log(`[VideoEncodingService] Job removed, active jobs now: ${this.activeJobs.size}`);
       
-      console.log(`[VideoEncodingService] Emitting job:cancelled event`);
       this.emit('job:cancelled', { jobId });
-      
-      console.log(`[VideoEncodingService] ========== CANCEL COMPLETE ==========`);
     } catch (error) {
-      console.error(`[VideoEncodingService] ERROR cancelling job ${jobId}:`, error);
-      console.error(`[VideoEncodingService] Error stack:`, error.stack);
+      console.error(`[VideoEncodingService] Failed to cancel job ${jobId}:`, error.message);
       this.emit('job:error', { 
         jobId, 
         error: new Error(`Failed to cancel job: ${error.message}`),

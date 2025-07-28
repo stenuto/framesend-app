@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { apiService } from '../services/api'
 
 export const useProjectsStore = defineStore('projects', () => {
+  // Loading states
+  const isLoadingProjects = ref(false)
+  const isLoadingContent = ref(false)
+  
   // Projects list
   const projects = ref([
     { 
@@ -90,12 +95,28 @@ export const useProjectsStore = defineStore('projects', () => {
     { id: 'fs8', type: 'folder', name: 'Work_In_Progress', parentId: 'fs2', projectId: 'proj1', orderIndex: 1 },
     
     // Videos in folders
+    // Interviews folder (fs5) - 5 videos
     { id: 'fs9', type: 'video', name: 'CEO_Interview_Raw.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 0, duration: '15:32', size: '1.2 GB', status: 'processing', progress: 67 },
     { id: 'fs10', type: 'video', name: 'CTO_Interview_Raw.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 1, duration: '12:18', size: '980 MB', status: 'processing', progress: 23 },
+    { id: 'fs40', type: 'video', name: 'CFO_Interview_Raw.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 2, duration: '10:45', size: '850 MB', status: 'ready' },
+    { id: 'fs41', type: 'video', name: 'Product_Manager_Interview.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 3, duration: '14:20', size: '1.1 GB', status: 'ready' },
+    { id: 'fs42', type: 'video', name: 'Lead_Designer_Interview.mp4', parentId: 'fs5', projectId: 'proj1', orderIndex: 4, duration: '11:15', size: '920 MB', status: 'ready' },
+    
+    // B-Roll folder (fs6) - 4 videos
     { id: 'fs11', type: 'video', name: 'Office_Tour_B-Roll.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 0, duration: '8:45', size: '750 MB', status: 'queued' },
     { id: 'fs12', type: 'video', name: 'Product_Shots.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 1, duration: '6:20', size: '520 MB', status: 'failed', error: 'Invalid video codec' },
+    { id: 'fs43', type: 'video', name: 'Team_Collaboration.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 2, duration: '5:30', size: '450 MB', status: 'ready' },
+    { id: 'fs44', type: 'video', name: 'Workspace_Footage.mp4', parentId: 'fs6', projectId: 'proj1', orderIndex: 3, duration: '7:15', size: '620 MB', status: 'ready' },
+    
+    // Final_Exports folder (fs7) - 3 videos
     { id: 'fs13', type: 'video', name: 'Campaign_Final_1080p.mp4', parentId: 'fs7', projectId: 'proj1', orderIndex: 0, duration: '2:30', size: '180 MB', status: 'ready' },
     { id: 'fs14', type: 'video', name: 'Campaign_Final_4K.mp4', parentId: 'fs7', projectId: 'proj1', orderIndex: 1, duration: '2:30', size: '680 MB', status: 'ready' },
+    { id: 'fs45', type: 'video', name: 'Campaign_Final_Social_Cut.mp4', parentId: 'fs7', projectId: 'proj1', orderIndex: 2, duration: '1:00', size: '120 MB', status: 'ready' },
+    
+    // Work_In_Progress folder (fs8) - 3 videos
+    { id: 'fs46', type: 'video', name: 'Draft_v1.mp4', parentId: 'fs8', projectId: 'proj1', orderIndex: 0, duration: '2:45', size: '220 MB', status: 'ready' },
+    { id: 'fs47', type: 'video', name: 'Draft_v2_with_music.mp4', parentId: 'fs8', projectId: 'proj1', orderIndex: 1, duration: '2:35', size: '240 MB', status: 'ready' },
+    { id: 'fs48', type: 'video', name: 'Draft_v3_color_corrected.mp4', parentId: 'fs8', projectId: 'proj1', orderIndex: 2, duration: '2:30', size: '250 MB', status: 'ready' },
     
     // Product Demos - Root level
     { id: 'fs15', type: 'folder', name: 'Screen_Recordings', parentId: null, projectId: 'proj2', orderIndex: 0 },
@@ -422,7 +443,7 @@ export const useProjectsStore = defineStore('projects', () => {
     console.log('========================')
   }
 
-  const moveFileSystemItem = (itemId, newParentId) => {
+  const moveFileSystemItem = async (itemId, newParentId) => {
     const itemIndex = fileSystem.value.findIndex(i => i.id === itemId)
     if (itemIndex === -1) return false
     
@@ -430,6 +451,10 @@ export const useProjectsStore = defineStore('projects', () => {
     
     // Don't allow moving to same parent
     if (item.parentId === newParentId) return false
+    
+    // Store the original parent for rollback
+    const originalParentId = item.parentId
+    const originalOrderIndex = item.orderIndex
     
     // Create a completely new array to ensure Vue reactivity
     const newFileSystem = fileSystem.value.map((fsItem, index) => {
@@ -462,12 +487,113 @@ export const useProjectsStore = defineStore('projects', () => {
       movedItem.orderIndex = siblings.length
     }
     
-    // Replace the entire fileSystem array to trigger Vue reactivity
+    // Optimistically update the UI
     fileSystem.value = newFileSystem
     
     console.log(`Moved item ${itemId} (type: ${item.type}) to parent ${newParentId}`)
     
-    return true
+    try {
+      // Make server call based on item type
+      if (item.type === 'folder') {
+        await apiService.updateFolder(itemId, { parentId: newParentId })
+      } else if (item.type === 'video') {
+        await apiService.updateVideo(itemId, { folderId: newParentId })
+      }
+      
+      return true
+    } catch (error) {
+      console.error(`Failed to move ${item.type} on server:`, error)
+      
+      // Rollback - restore to original position
+      const rollbackFileSystem = fileSystem.value.map((fsItem) => {
+        if (fsItem.id === itemId) {
+          return {
+            ...fsItem,
+            parentId: originalParentId,
+            orderIndex: originalOrderIndex
+          }
+        }
+        return fsItem
+      })
+      
+      fileSystem.value = rollbackFileSystem
+      
+      // Show error to user
+      alert(`Failed to move ${item.type}. Please try again.`)
+      
+      return false
+    }
+  }
+
+  // ========== Server Data Hydration ==========
+  
+  /**
+   * Hydrate projects from server data
+   */
+  const hydrateProjects = (serverProjects) => {
+    projects.value = serverProjects.map(project => ({
+      id: project.id,
+      name: project.name,
+      videoCount: project.videoCount || 0,
+      lastModified: new Date(project.lastModified),
+      color: project.color || 'cyan'
+    }))
+  }
+  
+  /**
+   * Hydrate project content (folders and videos) from server
+   */
+  const hydrateProjectContent = (projectId, content) => {
+    // Clear existing content for this project
+    fileSystem.value = fileSystem.value.filter(item => item.projectId !== projectId)
+    
+    // Add folders
+    if (content.folders) {
+      content.folders.forEach(folder => {
+        fileSystem.value.push({
+          id: folder.id,
+          type: 'folder',
+          name: folder.name,
+          parentId: folder.parentId || null,
+          projectId: projectId,
+          orderIndex: folder.orderIndex || 0
+        })
+      })
+    }
+    
+    // Add videos
+    if (content.videos) {
+      content.videos.forEach(video => {
+        fileSystem.value.push({
+          id: video.id,
+          type: 'video',
+          name: video.name,
+          parentId: video.folderId || null,
+          projectId: projectId,
+          orderIndex: video.orderIndex || 0,
+          duration: video.duration,
+          size: video.size,
+          status: video.status || 'ready',
+          progress: video.progress
+        })
+      })
+    }
+  }
+  
+  /**
+   * Load project content from server
+   */
+  const loadProject = async (projectId) => {
+    try {
+      isLoadingContent.value = true
+      const content = await apiService.getProjectContent(projectId)
+      hydrateProjectContent(projectId, content)
+    } catch (error) {
+      console.error('Failed to load project content:', error)
+      // Continue with existing local data
+    } finally {
+      isLoadingContent.value = false
+    }
   }
 
   return {
@@ -477,6 +603,8 @@ export const useProjectsStore = defineStore('projects', () => {
     folders,
     videos,
     fileSystem,
+    isLoadingProjects,
+    isLoadingContent,
     
     // Computed
     selectedProject,
@@ -495,6 +623,11 @@ export const useProjectsStore = defineStore('projects', () => {
     getVideosInFolder,
     getFolderVideoCount,
     moveFileSystemItem,
-    debugFileSystem
+    debugFileSystem,
+    
+    // Server hydration
+    hydrateProjects,
+    hydrateProjectContent,
+    loadProject
   }
 })

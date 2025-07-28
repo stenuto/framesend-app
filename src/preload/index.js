@@ -94,7 +94,13 @@ const api = {
       ipcRenderer.on('menu:action', listener)
       return () => ipcRenderer.removeListener('menu:action', listener)
     }
-  }
+  },
+  
+  // API operations
+  request: (method, url, data, headers) => 
+    ipcRenderer.invoke('api:request', { method, url, data, headers }),
+  setAuthToken: (token) => ipcRenderer.invoke('api:setAuthToken', token),
+  clearAuthToken: () => ipcRenderer.invoke('api:clearAuthToken')
 }
 
 // Extend electronAPI with webUtils

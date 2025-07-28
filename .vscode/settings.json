@@ -8,5 +8,21 @@
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "Vue.volar"
+  },
+  "prettier.printWidth": 120,
+  "editor.formatOnSave": true,
+  "volar.format.initialIndent": {
+    "html": 0
+  },
+  "vue.format.template.initialIndent": false,
+  "vue.format.options.useTabs": false,
+  "vue.format.options.tabSize": 2,
+  "editor.wordWrap": "off",
+  "html.format.wrapLineLength": 0,
+  "html.format.wrapAttributes": "preserve",
+  "vue.format.wrapAttributes": false,
+  "prettier.htmlWhitespaceSensitivity": "ignore"
 }

@@ -1,157 +1,168 @@
 <template>
-  <div class="flex flex-col h-full border-l border-zinc-800">
-    <!-- Project Header with Back Button -->
-    <div class="h-12 flex items-center justify-between shrink-0 drag bg-zinc-900 pr-3 border-b border-zinc-700/50"
-      :class="[!sidebarOpen ? 'pl-20' : 'pl-4']">
-      <div class="flex items-center gap-2">
-        <!-- Show sidebar button when hidden -->
-        <Button v-if="!sidebarOpen" icon-name="panel-left-open" size="sm" variant="ghost" class="text-zinc-500"
-          @click="uiStore.toggleSidebar" />
-        <!-- Breadcrumb navigation for gallery view -->
-        <div v-if="viewMode === 'gallery'" class="flex items-center gap-2.5">
-          <h3 class="text-sm font-medium flex-1 truncate">
-            {{ currentFolderName }}
-          </h3>
-          <!-- Only show dropdown if we're inside a folder (not at root) -->
-          <Button v-if="currentFolderId" 
-            icon-name="chevron-down" 
-            size="sm" 
-            variant="ghost" 
-            class="text-zinc-400 -ml-1"
-            @click="showBreadcrumbMenu" />
-        </div>
-        <!-- Project name for list view -->
-        <h3 v-else class="text-sm font-medium">
-          {{ selectedProject?.name }}
+<div class="flex flex-col h-full">
+  <!-- Project Header with Back Button -->
+  <div class="h-12 flex items-center justify-between shrink-0 drag pr-3 border-b border-zinc-700/50"
+    :class="[!sidebarOpen ? 'pl-20' : 'pl-4']">
+    <div class="flex items-center gap-2">
+      <!-- Show sidebar button when hidden -->
+      <Button v-if="!sidebarOpen" icon-name="panel-left-open" size="sm" variant="ghost" class="text-zinc-500"
+        @click="uiStore.toggleSidebar" />
+      <!-- Breadcrumb navigation for gallery view -->
+      <div v-if="viewMode === 'gallery'" class="flex items-center gap-2.5">
+        <h3 class="text-sm font-medium flex-1 truncate">
+          {{ currentFolderName }}
         </h3>
+        <!-- Only show dropdown if we're inside a folder (not at root) -->
+        <Button v-if="currentFolderId" icon-name="chevron-down" size="sm" variant="ghost" class="text-zinc-400 -ml-1"
+          @click="showBreadcrumbMenu" />
       </div>
-      <div class="flex items-center gap-4">
-        <div class="relative">
-          <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
-          <input v-model="searchQuery" type="text" placeholder="Search"
-            class="w-50 pl-7 pr-3 py-1 bg-zinc-800/50 ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-zinc-700/50 focus:ring-zinc-600 placeholder-zinc-500" />
-        </div>
+      <!-- Project name for list view -->
+      <h3 v-else class="text-sm font-medium">
+        {{ selectedProject?.name }}
+      </h3>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="relative">
+        <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
+        <input v-model="searchQuery" type="text" placeholder="Search"
+          class="w-50 pl-7 pr-3 py-1 bg-zinc-800/50 ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-zinc-700/50 focus:ring-zinc-600 placeholder-zinc-500" />
       </div>
-
     </div>
 
-    <!-- File Explorer Table / Gallery -->
-    <div class="flex-1 flex flex-col overflow-hidden bg-zinc-900">
-      <!-- Table Header (List View Only) -->
-      <div v-if="viewMode === 'list'" class="border-y border-zinc-800 z-10 shrink-0">
-        <div class="flex px-3 py-1 text-[11px] text-zinc-500">
-          <div class="flex-1">Name</div>
-          <div class="w-24">Files</div>
-          <div class="w-28">Size</div>
-          <div class="w-24">Status</div>
-        </div>
+  </div>
+
+  <!-- File Explorer Table / Gallery -->
+  <div class="flex-1 flex flex-col overflow-hidden bg-zinc-900">
+    <!-- Table Header (List View Only) -->
+    <div v-if="viewMode === 'list'" class="border-y border-zinc-800 z-10 shrink-0">
+      <div class="flex px-3 py-1 text-[11px] text-zinc-500">
+        <div class="flex-1">Name</div>
+        <div class="w-24">Files</div>
+        <div class="w-28">Size</div>
+        <div class="w-24">Status</div>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div v-if="viewMode === 'list'" class="flex-1 overflow-y-auto h-full" @drop.prevent="handleDropOnRoot($event)"
+      @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
+      @contextmenu.prevent="handleContextMenu">
+      <!-- Empty State -->
+      <div v-if="rootItems.length === 0" class="flex flex-col items-center justify-center h-full text-zinc-500">
+        <Icon name="folder-open" class="size-16 mb-4 text-zinc-700" :stroke-width="1.5" />
+        <p class="text-sm font-medium mb-1">No files in this project</p>
+        <p class="text-xs text-zinc-600">Upload videos to get started</p>
       </div>
 
-      <!-- List View -->
-      <div v-if="viewMode === 'list'" class="flex-1 overflow-y-auto h-full" @drop.prevent="handleDropOnRoot($event)"
-        @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
-        @contextmenu.prevent="handleContextMenu">
-        <div class="min-h-full pt-1.5">
-          <!-- Root Items using recursive component -->
-          <FileSystemItem v-for="(item, index) in rootItems" :key="item.id" :item="item" :depth="0"
-            :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
-            :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
-            :get-ancestor-ids="getAncestorIds" :is-last-child="index === rootItems.length - 1"
-            :editing-item-id="editingItemId" @set-editing-item="editingItemId = $event" @toggle-folder="toggleFolder"
-            @drag-start="handleDragStartWrapper" @drag-end="handleDragEnd" @drop="handleDropWrapper"
-            @drag-over="handleDragOverWrapper" @drag-leave="handleDragLeaveWrapper"
-            @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" @rename="handleRename" />
-        </div>
+      <!-- File list -->
+      <div v-else class="min-h-full pt-1.5">
+        <!-- Root Items using recursive component -->
+        <FileSystemItem v-for="(item, index) in rootItems" :key="item.id" :item="item" :depth="0"
+          :expanded-folders="expandedFolders" :drag-over-folder="dragOverFolder" :get-folder-items="getFolderItems"
+          :get-folder-video-count="getFolderVideoCount" :last-expanded-folder="lastExpandedFolder"
+          :get-ancestor-ids="getAncestorIds" :is-last-child="index === rootItems.length - 1"
+          :editing-item-id="editingItemId" @set-editing-item="editingItemId = $event" @toggle-folder="toggleFolder"
+          @drag-start="handleDragStartWrapper" @drag-end="handleDragEnd" @drop="handleDropWrapper"
+          @drag-over="handleDragOverWrapper" @drag-leave="handleDragLeaveWrapper"
+          @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" @rename="handleRename" />
+      </div>
+    </div>
+
+    <!-- Gallery View -->
+    <div v-else class="flex-1 overflow-y-auto h-full p-4" @drop.prevent="handleDropOnRoot($event)"
+      @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
+      @contextmenu.prevent="handleContextMenu">
+      <!-- Empty State -->
+      <div v-if="rootItems.length === 0" class="flex flex-col items-center justify-center h-full text-zinc-500">
+        <Icon name="folder-open" class="size-16 mb-4 text-zinc-700" :stroke-width="1.5" />
+        <p class="text-sm font-medium mb-1">{{ emptyStateTitle }}</p>
+        <p class="text-xs text-zinc-600">{{ emptyStateMessage }}</p>
       </div>
 
-      <!-- Gallery View -->
-      <div v-else class="flex-1 overflow-y-auto h-full p-4" @drop.prevent="handleDropOnRoot($event)"
-        @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
-        @contextmenu.prevent="handleContextMenu">
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
-          <div v-for="item in rootItems" :key="item.id" class="group relative" :draggable="editingItemId !== item.id"
-            @dragstart="editingItemId !== item.id ? handleDragStart($event, item) : null" @dragend="handleDragEnd"
-            @drop="item.type === 'folder' ? handleDrop($event, item.id) : null"
-            @dragover.prevent="item.type === 'folder' ? handleDragOver($event, item.id) : null"
-            @dragleave="item.type === 'folder' ? handleDragLeave($event, item.id) : null"
-            @dblclick="item.type === 'folder' ? navigateToFolder(item.id) : null"
-            @contextmenu.prevent="handleItemContextMenu($event, item)">
+      <!-- Grid of items -->
+      <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+        <div v-for="item in rootItems" :key="item.id" class="group relative" :draggable="editingItemId !== item.id"
+          @dragstart="editingItemId !== item.id ? handleDragStart($event, item) : null" @dragend="handleDragEnd"
+          @drop="item.type === 'folder' ? handleDrop($event, item.id) : null"
+          @dragover.prevent="item.type === 'folder' ? handleDragOver($event, item.id) : null"
+          @dragleave="item.type === 'folder' ? handleDragLeave($event, item.id) : null"
+          @dblclick="item.type === 'folder' ? navigateToFolder(item.id) : null"
+          @contextmenu.prevent="handleItemContextMenu($event, item)">
 
-            <!-- Folder Item -->
-            <div v-if="item.type === 'folder'"
-              class="flex flex-col rounded-lg overflow-hidden cursor-pointer transition-colors" :class="{
-                'bg-zinc-800 hover:bg-zinc-700': true,
-                'ring-2 ring-blue-500 bg-blue-500/10': dragOverFolder === item.id
-              }" @dblclick="navigateToFolder(item.id)">
-              <!-- Thumbnail Preview Area -->
-              <FolderThumbnailPreview :items="getVideosInFolder(item.id)" />
-              <!-- Info -->
-              <div class="p-3">
-                <div class="flex items-center gap-1.5">
-                  <Icon name="folder" class="size-3.5 text-zinc-500 flex-shrink-0" :stroke-width="2" />
-                  <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
-                  <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
-                    @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
-                    :data-item-id="item.id"
-                    class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
+          <!-- Folder Item -->
+          <div v-if="item.type === 'folder'"
+            class="flex flex-col rounded-lg overflow-hidden cursor-pointer transition-colors" :class="{
+              'bg-zinc-800 hover:bg-zinc-700': true,
+              'ring-2 ring-blue-500 bg-blue-500/10': dragOverFolder === item.id
+            }" @dblclick="navigateToFolder(item.id)">
+            <!-- Thumbnail Preview Area -->
+            <FolderThumbnailPreview :items="getVideosInFolder(item.id).filter(v => v.status === 'ready')" />
+            <!-- Info -->
+            <div class="p-3">
+              <div class="flex items-center gap-1.5">
+                <Icon name="folder" class="size-3.5 text-zinc-500 flex-shrink-0" :stroke-width="2" />
+                <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
+                <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
+                  @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
+                  :data-item-id="item.id"
+                  class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
+              </div>
+              <div class="flex items-center justify-between mt-1">
+                <span class="text-xs text-zinc-500">{{ getFolderVideoCount(item.id) }} items</span>
+                <span class="text-xs text-zinc-500">{{ getFolderSize(item.id) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Item -->
+          <div v-else-if="item.type === 'video'"
+            class="flex flex-col rounded-lg overflow-hidden bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
+            @click="handleVideoClick(item)">
+            <!-- Thumbnail -->
+            <div class="aspect-video bg-zinc-900 relative overflow-hidden">
+              <PlaceholderImage :seed="item.id" :alt="`${item.name} thumbnail`" />
+              <!-- Status overlay -->
+              <div v-if="item.status === 'processing'"
+                class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <div class="flex flex-col items-center">
+                  <svg class="size-8 -rotate-90" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                      class="text-white/20" />
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                      :stroke-dasharray="`${2 * Math.PI * 10}`"
+                      :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
+                      class="text-blue-500" />
+                  </svg>
+                  <span class="text-white text-sm mt-2">{{ Math.round(item.progress || 0) }}%</span>
                 </div>
-                <div class="flex items-center justify-between mt-1">
-                  <span class="text-xs text-zinc-500">{{ getFolderVideoCount(item.id) }} items</span>
-                  <span class="text-xs text-zinc-500">{{ getFolderSize(item.id) }}</span>
+              </div>
+              <div v-else-if="item.status === 'queued'"
+                class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span class="text-white text-sm">Queued</span>
+              </div>
+              <div v-else-if="item.status === 'failed'"
+                class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <span class="text-red-400 text-sm">Failed</span>
+              </div>
+              <div v-else-if="item.status === 'ready'" class="absolute top-2 right-2">
+                <div class="size-6 rounded-full bg-emerald-600/90 flex items-center justify-center">
+                  <Icon name="check" class="size-4 text-white" />
                 </div>
               </div>
             </div>
-
-            <!-- Video Item -->
-            <div v-else-if="item.type === 'video'"
-              class="flex flex-col rounded-lg overflow-hidden bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
-              @click="handleVideoClick(item)">
-              <!-- Thumbnail -->
-              <div class="aspect-video bg-zinc-900 relative overflow-hidden">
-                <UnsplashImage :seed="item.id" :alt="`${item.name} thumbnail`" />
-                <!-- Status overlay -->
-                <div v-if="item.status === 'processing'"
-                  class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <div class="flex flex-col items-center">
-                    <svg class="size-8 -rotate-90" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
-                        class="text-white/20" />
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
-                        :stroke-dasharray="`${2 * Math.PI * 10}`"
-                        :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
-                        class="text-blue-500" />
-                    </svg>
-                    <span class="text-white text-sm mt-2">{{ Math.round(item.progress || 0) }}%</span>
-                  </div>
-                </div>
-                <div v-else-if="item.status === 'queued'"
-                  class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <span class="text-white text-sm">Queued</span>
-                </div>
-                <div v-else-if="item.status === 'failed'"
-                  class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <span class="text-red-400 text-sm">Failed</span>
-                </div>
-                <div v-else-if="item.status === 'ready'" class="absolute top-2 right-2">
-                  <div class="size-6 rounded-full bg-emerald-600/90 flex items-center justify-center">
-                    <Icon name="check" class="size-4 text-white" />
-                  </div>
-                </div>
+            <!-- Info -->
+            <div class="p-3">
+              <div class="flex items-center gap-1.5">
+                <Icon name="video" class="size-3.5 text-blue-600 flex-shrink-0" :stroke-width="2" />
+                <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
+                <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
+                  @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
+                  :data-item-id="item.id"
+                  class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
               </div>
-              <!-- Info -->
-              <div class="p-3">
-                <div class="flex items-center gap-1.5">
-                  <Icon name="video" class="size-3.5 text-blue-600 flex-shrink-0" :stroke-width="2" />
-                  <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
-                  <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
-                    @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
-                    :data-item-id="item.id"
-                    class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
-                </div>
-                <div class="flex items-center justify-between mt-1">
-                  <span class="text-xs text-zinc-500">{{ item.duration || '0:00' }}</span>
-                  <span class="text-xs text-zinc-500">{{ item.size || '-' }}</span>
-                </div>
+              <div class="flex items-center justify-between mt-1">
+                <span class="text-xs text-zinc-500">{{ item.duration || '0:00' }}</span>
+                <span class="text-xs text-zinc-500">{{ item.size || '-' }}</span>
               </div>
             </div>
           </div>
@@ -159,6 +170,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script>
@@ -169,11 +181,12 @@ import { useVideoEncodingStore } from '@/stores/videoEncoding'
 import { useUIStore } from '@/stores/ui'
 import { useVideoMetadataStore } from '@/stores/videoMetadata'
 import { storeToRefs } from 'pinia'
+import { apiService } from '@/services/api'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
 import FileSystemItem from '@components/FileSystemItem.vue'
 import FolderThumbnailPreview from '@components/FolderThumbnailPreview.vue'
-import UnsplashImage from '@components/UnsplashImage.vue'
+import PlaceholderImage from '@components/PlaceholderImage.vue'
 
 export default {
   name: 'ProjectExplorerPage',
@@ -182,7 +195,7 @@ export default {
     Button,
     FileSystemItem,
     FolderThumbnailPreview,
-    UnsplashImage
+    PlaceholderImage
   },
   meta: {
     title: 'Project Explorer'
@@ -374,6 +387,15 @@ export default {
       return folder?.name || 'Folder'
     })
 
+    // Computed properties for empty state messages
+    const emptyStateTitle = computed(() => {
+      return currentFolderId.value ? 'This folder is empty' : 'No files in this project'
+    })
+
+    const emptyStateMessage = computed(() => {
+      return currentFolderId.value ? 'Add videos to see them here' : 'Upload videos to get started'
+    })
+
     // Build navigation path for breadcrumb
     const buildNavigationPath = (folderId) => {
       const path = []
@@ -528,7 +550,7 @@ export default {
       }
     }
 
-    const handleDrop = (e, folderId) => {
+    const handleDrop = async (e, folderId) => {
       e.preventDefault()
       dragOverFolder.value = null
 
@@ -544,7 +566,7 @@ export default {
       }
 
       // Use the store method to move the item
-      const success = moveFileSystemItem(draggedItem.value.id, folderId)
+      const success = await moveFileSystemItem(draggedItem.value.id, folderId)
 
       if (success) {
         // If moving a folder with contents, expand the destination folder
@@ -626,7 +648,7 @@ export default {
       }
 
       // Use the store method to move the item
-      const success = moveFileSystemItem(draggedItem.value.id, targetFolderId)
+      const success = await moveFileSystemItem(draggedItem.value.id, targetFolderId)
 
       if (success) {
         console.log(`Moved ${draggedItem.value.name} to ${targetFolderId ? 'folder' : 'root'}`)
@@ -903,12 +925,6 @@ export default {
           },
           { type: 'separator' },
           {
-            label: 'New Folder',
-            action: 'folder:newFolder',
-            data: { parentId: item.id }
-          },
-          { type: 'separator' },
-          {
             label: 'Rename',
             action: 'folder:rename',
             data: { itemId: item.id, itemName: item.name, itemType: item.type }
@@ -1037,14 +1053,14 @@ export default {
       }
     }
 
-    const createNewFolder = (parentId = null) => {
+    const createNewFolder = async (parentId = null) => {
       // In gallery view, create in current folder if no parentId specified
       if (viewMode.value === 'gallery' && parentId === null) {
         parentId = currentFolderId.value
       }
 
       // Generate a unique name for the folder
-      let baseName = 'New Folder'
+      let baseName = 'Untitled Folder'
       let counter = 1
       let folderName = baseName
 
@@ -1057,8 +1073,9 @@ export default {
         counter++
       }
 
+      const tempId = `folder_${Date.now()}`
       const newFolder = {
-        id: `folder_${Date.now()}`,
+        id: tempId,
         type: 'folder',
         name: folderName,
         parentId: parentId,
@@ -1066,6 +1083,7 @@ export default {
         orderIndex: fileSystem.value.filter(i => i.parentId === parentId).length
       }
 
+      // Optimistic update - add to UI immediately
       fileSystem.value.push(newFolder)
 
       // If creating inside a folder in list view, expand the parent folder
@@ -1073,35 +1091,94 @@ export default {
         expandedFolders.value.add(parentId)
       }
 
-      // Make the new folder editable immediately
-      nextTick(() => {
-        editingItemId.value = newFolder.id
-      })
+      // Make the new folder editable after a short delay to ensure it's rendered
+      await nextTick()
+      setTimeout(() => {
+        editingItemId.value = tempId
+      }, 100)
 
-      return newFolder
+      try {
+        // Call server to create folder
+        const serverFolder = await apiService.createFolder({
+          name: folderName,
+          parentId: parentId,
+          projectId: selectedProject.value?.id,
+          orderIndex: newFolder.orderIndex
+        })
+
+        // Update the temporary ID with the server-assigned ID
+        const folderIndex = fileSystem.value.findIndex(f => f.id === tempId)
+        if (folderIndex !== -1) {
+          fileSystem.value[folderIndex].id = serverFolder.id
+          // Update editing item ID if still editing
+          if (editingItemId.value === tempId) {
+            editingItemId.value = serverFolder.id
+          }
+        }
+
+        return serverFolder
+      } catch (error) {
+        // Rollback on error
+        console.error('Failed to create folder on server:', error)
+        const index = fileSystem.value.findIndex(f => f.id === tempId)
+        if (index !== -1) {
+          fileSystem.value.splice(index, 1)
+        }
+        alert('Failed to create folder. Please try again.')
+        return null
+      }
     }
 
-    const handleRename = ({ itemId, oldName, newName, itemType }) => {
+    const handleRename = async ({ itemId, oldName, newName, itemType }) => {
       const item = fileSystem.value.find(i => i.id === itemId)
       if (item) {
         // If the new name is empty and it's a new folder, delete it
-        if (!newName.trim() && oldName.startsWith('New Folder')) {
+        if (!newName.trim() && (oldName.startsWith('Untitled Folder') || oldName.startsWith('New Folder'))) {
           const index = fileSystem.value.findIndex(i => i.id === itemId)
           if (index !== -1) {
             fileSystem.value.splice(index, 1)
             console.log(`Deleted empty new folder`)
+
+            // If it was created on server, delete it
+            if (!itemId.startsWith('folder_')) {
+              try {
+                await apiService.deleteFolder(itemId)
+              } catch (error) {
+                console.error('Failed to delete folder on server:', error)
+              }
+            }
           }
         } else if (newName.trim()) {
-          // Only update if the new name is not empty
-          item.name = newName.trim()
+          const trimmedName = newName.trim()
+
+          // Optimistic update
+          const previousName = item.name
+          item.name = trimmedName
 
           // If it's a video with a jobId, update metadata
           if (itemType === 'video' && item.jobId) {
-            metadataStore.updateVideoName(item.jobId, newName.trim())
+            metadataStore.updateVideoName(item.jobId, trimmedName)
           }
 
-          console.log(`Renamed ${itemType} from "${oldName}" to "${newName}"`)
-          // TODO: Persist to database/API later
+          console.log(`Renamed ${itemType} from "${oldName}" to "${trimmedName}"`)
+
+          try {
+            // Call server to update name
+            if (itemType === 'folder') {
+              await apiService.updateFolder(itemId, { name: trimmedName })
+            } else if (itemType === 'video') {
+              await apiService.updateVideo(itemId, { name: trimmedName })
+            }
+          } catch (error) {
+            // Rollback on error
+            console.error(`Failed to rename ${itemType} on server:`, error)
+            item.name = previousName
+            if (itemType === 'video' && item.jobId) {
+              metadataStore.updateVideoName(item.jobId, previousName)
+            }
+            // Don't show alert since we're mocking
+            // alert(`Failed to rename ${itemType}. Please try again.`)
+          }
         }
         // Clear editing state
         editingItemId.value = null
@@ -1134,17 +1211,18 @@ export default {
           if (input) {
             input.focus()
             // Select all text in the input
-            input.setSelectionRange(0, input.value.length)
-          } else if (attempts < 5) {
+            input.select()
+          } else if (attempts < 10) {
             attempts++
             setTimeout(tryFocus, 50)
           }
         }
-        tryFocus()
+        // Add a small delay to ensure the input is fully rendered
+        setTimeout(tryFocus, 100)
       }
     })
 
-    const handleDelete = (itemId, itemName, itemType) => {
+    const handleDelete = async (itemId, itemName, itemType) => {
       // Confirm deletion
       const confirmMessage = itemType === 'folder'
         ? `Delete folder "${itemName}"?`
@@ -1154,22 +1232,48 @@ export default {
         // Find the item index
         const index = fileSystem.value.findIndex(i => i.id === itemId)
         if (index !== -1) {
+          // Store the item for potential rollback
+          const deletedItem = { ...fileSystem.value[index] }
+
           // If it's a video that's encoding, cancel the job first
-          const item = fileSystem.value[index]
-          if (item.type === 'video' && item.jobId && (item.status === 'processing' || item.status === 'queued')) {
-            handleCancelEncoding(item.jobId)
+          if (deletedItem.type === 'video' && deletedItem.jobId && (deletedItem.status === 'processing' || deletedItem.status === 'queued')) {
+            await handleCancelEncoding(deletedItem.jobId)
           }
 
           // Remove metadata if it's a video
-          if (item.type === 'video' && item.jobId) {
-            metadataStore.removeMetadata(item.jobId)
+          if (deletedItem.type === 'video' && deletedItem.jobId) {
+            metadataStore.removeMetadata(deletedItem.jobId)
           }
 
           // Optimistically remove from UI
           fileSystem.value.splice(index, 1)
           console.log(`Deleted ${itemType}: "${itemName}"`)
 
-          // TODO: Persist deletion to database/API
+          try {
+            // Make server call based on item type
+            if (itemType === 'folder') {
+              await apiService.deleteFolder(itemId)
+            } else if (itemType === 'video') {
+              await apiService.deleteVideo(itemId)
+            }
+          } catch (error) {
+            console.error(`Failed to delete ${itemType} on server:`, error)
+
+            // Rollback - restore the item
+            fileSystem.value.splice(index, 0, deletedItem)
+
+            // Restore metadata if it's a video
+            if (deletedItem.type === 'video' && deletedItem.jobId) {
+              metadataStore.initializeMetadata(deletedItem.jobId, {
+                name: deletedItem.name,
+                projectId: deletedItem.projectId,
+                filePath: deletedItem.filePath
+              })
+            }
+
+            // Show error to user
+            alert(`Failed to delete ${itemType}. Please try again.`)
+          }
         }
       }
     }
@@ -1271,7 +1375,9 @@ export default {
       handleItemContextMenu,
       handleGalleryRename,
       galleryEditInput,
-      getFolderSize
+      getFolderSize,
+      emptyStateTitle,
+      emptyStateMessage
     }
   }
 }

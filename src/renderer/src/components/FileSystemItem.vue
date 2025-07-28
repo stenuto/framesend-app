@@ -11,7 +11,7 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-2.5 py-1 relative " :draggable="true" @click="$emit('toggle-folder', item.id)"
+      <div class="flex items-center px-2.5 py-1 relative " :draggable="true" @click="!isEditing && $emit('toggle-folder', item.id)"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @drop="handleDrop" @dragover.prevent="handleDragOver"
         @dragleave="handleDragLeave" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
@@ -23,8 +23,8 @@
               <Icon v-else name="folder-open" class="size-3" />
             </div>
             <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
-              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef"
-              class="truncate outline-none selection:transparent px-1.5"
+              @keydown.esc="cancelEdit" @click="handleNameClick" @mousedown="handleNameMouseDown" @focus="handleNameFocus" ref="nameEditRef"
+              class="truncate outline-none px-1.5"
               :class="{ 'bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
@@ -66,8 +66,8 @@
             <Icon name="video" class="size-3.5 text-blue-600 flex-shrink-0"
               :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
             <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
-              @keydown.esc="cancelEdit" @click="handleNameClick" ref="nameEditRef"
-              class="truncate outline-none selection:transparent px-1.5"
+              @keydown.esc="cancelEdit" @click="handleNameClick" @mousedown="handleNameMouseDown" @focus="handleNameFocus" ref="nameEditRef"
+              class="truncate outline-none px-1.5"
               :class="{ 'bg-zinc-800 rounded': isEditing }">{{ editingName }}</span>
           </div>
         </div>
@@ -260,26 +260,48 @@ export default {
       }
     })
 
+    // Function to select all text in the editable element
+    const selectAllText = () => {
+      if (!nameEditRef.value) return
+      
+      const selection = window.getSelection()
+      const range = document.createRange()
+      range.selectNodeContents(nameEditRef.value)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+
+    // Function to focus and select text
+    const focusAndSelectAll = async () => {
+      editingName.value = props.item.name
+      await nextTick()
+      
+      if (nameEditRef.value) {
+        // Set the text content directly
+        nameEditRef.value.textContent = props.item.name
+        
+        // Focus and select all
+        setTimeout(() => {
+          if (nameEditRef.value) {
+            nameEditRef.value.focus()
+            // Use execCommand for better cross-browser support
+            document.execCommand('selectAll', false, null)
+          }
+        }, 0)
+      }
+    }
+
     // Watch for when this item becomes editable
-    watch(isEditing, (newValue, oldValue) => {
+    watch(isEditing, async (newValue, oldValue) => {
       if (newValue && !oldValue) {
-        editingName.value = props.item.name
-        // Use double nextTick to ensure Vue has completed all updates
-        nextTick(() => {
-          nextTick(() => {
-            if (nameEditRef.value) {
-              nameEditRef.value.focus()
-              // Small delay before selection to ensure focus is complete
-              setTimeout(() => {
-                const range = document.createRange()
-                range.selectNodeContents(nameEditRef.value)
-                const selection = window.getSelection()
-                selection.removeAllRanges()
-                selection.addRange(range)
-              }, 10)
-            }
-          })
-        })
+        await focusAndSelectAll()
+      }
+    })
+
+    // Also check on mount in case item is created in editing state
+    onMounted(async () => {
+      if (isEditing.value) {
+        await focusAndSelectAll()
       }
     })
 
@@ -518,8 +540,28 @@ export default {
     const handleNameClick = (e) => {
       if (isEditing.value) {
         e.stopPropagation()
+        e.preventDefault()
       }
       // When not editing, let the click bubble up to the parent div
+    }
+
+    const handleNameMouseDown = (e) => {
+      if (isEditing.value) {
+        // Only prevent default if clicking would deselect text
+        const selection = window.getSelection()
+        if (selection.toString() && nameEditRef.value.contains(selection.anchorNode)) {
+          e.preventDefault()
+        }
+      }
+    }
+
+    const handleNameFocus = () => {
+      if (isEditing.value) {
+        // Select all text when focused
+        setTimeout(() => {
+          selectAllText()
+        }, 10)
+      }
     }
 
     const handleNameBlur = () => {
@@ -575,6 +617,8 @@ export default {
       editingName,
       nameEditRef,
       handleNameClick,
+      handleNameMouseDown,
+      handleNameFocus,
       handleNameBlur,
       cancelEdit
     }

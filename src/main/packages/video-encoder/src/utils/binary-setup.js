@@ -14,12 +14,9 @@ const __dirname = dirname(__filename);
  * @returns {Promise<Object>} Verified binary paths
  */
 export async function setupBinaries(options = {}) {
-  console.log('[binary-setup] Setting up video encoding binaries...');
-  console.log('[binary-setup] Options:', options);
   
   // Use provided paths directly if available
   if (options.ffmpegPath && options.ffprobePath) {
-    console.log('[binary-setup] Using provided binary paths');
     const binaries = {
       ffmpeg: options.ffmpegPath,
       ffprobe: options.ffprobePath,
@@ -28,7 +25,6 @@ export async function setupBinaries(options = {}) {
     
     // Verify they exist
     if (fs.existsSync(binaries.ffmpeg)) {
-      console.log('[binary-setup] FFmpeg found at:', binaries.ffmpeg);
       
       // Check codec support
       try {
@@ -37,7 +33,7 @@ export async function setupBinaries(options = {}) {
         
         // Check for H.264
         if (!codecs.encoders.includes('libx264')) {
-          console.warn('[binary-setup] H.264 encoding (libx264) not available');
+          console.warn('H.264 encoding (libx264) not available');
         }
         
         // Check for AV1
@@ -46,24 +42,13 @@ export async function setupBinaries(options = {}) {
                        codecs.encoders.includes('av1') ||
                        codecs.encoders.includes('av1_nvenc');
         if (!hasAV1) {
-          console.warn('[binary-setup] AV1 encoding not available');
           binaries.hasAV1 = false;
         } else {
-          console.log('[binary-setup] AV1 encoder available');
           binaries.hasAV1 = true;
         }
       } catch (error) {
-        console.error('[binary-setup] Error checking codecs:', error.message);
         binaries.hasAV1 = false;
       }
-    } else {
-      console.error('[binary-setup] FFmpeg not found at:', binaries.ffmpeg);
-    }
-    
-    if (fs.existsSync(binaries.ffprobe)) {
-      console.log('[binary-setup] FFprobe found at:', binaries.ffprobe);
-    } else {
-      console.error('[binary-setup] FFprobe not found at:', binaries.ffprobe);
     }
     
     return binaries;
@@ -71,7 +56,6 @@ export async function setupBinaries(options = {}) {
   
   // Otherwise try to find them
   const bundledBinaries = getBundledBinaryPaths();
-  console.log('[binary-setup] Bundled binary paths:', bundledBinaries);
   
   const binaries = {
     ffmpeg: options.ffmpegPath || bundledBinaries.ffmpeg || await findBinary('ffmpeg', false),
@@ -81,29 +65,23 @@ export async function setupBinaries(options = {}) {
 
   // For now, just warn if binaries are missing instead of throwing
   if (!binaries.ffmpeg) {
-    console.warn('FFmpeg not found. Video encoding will not work without FFmpeg.');
     // Use placeholder paths for now
     binaries.ffmpeg = 'ffmpeg';
   } else {
     try {
       const ffmpegVersion = await verifyFFmpeg(binaries.ffmpeg);
-      console.log(`FFmpeg found: ${ffmpegVersion}`);
     } catch (error) {
-      console.warn('FFmpeg verification failed:', error.message);
       binaries.ffmpeg = 'ffmpeg';
     }
   }
 
   // Verify FFprobe
   if (!binaries.ffprobe) {
-    console.warn('FFprobe not found. Using default path.');
     binaries.ffprobe = 'ffprobe';
   } else {
     try {
       const ffprobeVersion = await verifyFFprobe(binaries.ffprobe);
-      console.log(`FFprobe found: ${ffprobeVersion}`);
     } catch (error) {
-      console.warn('FFprobe verification failed:', error.message);
       binaries.ffprobe = 'ffprobe';
     }
   }
@@ -112,9 +90,7 @@ export async function setupBinaries(options = {}) {
   if (binaries.whisper) {
     try {
       const whisperVersion = await verifyWhisper(binaries.whisper);
-      console.log(`Whisper found: ${whisperVersion}`);
     } catch (error) {
-      console.warn('Whisper not available, captions will be skipped');
       binaries.whisper = null;
     }
   }
@@ -131,7 +107,6 @@ function getBundledBinaryPaths() {
   
   // Since we can't access electron's app here, we'll just return empty
   // The handler should provide the correct paths
-  console.log('[binary-setup] getBundledBinaryPaths called without app access');
   return {};
   
   const ext = platform === 'win32' ? '.exe' : '';
@@ -154,9 +129,6 @@ function getBundledBinaryPaths() {
         }
       }
       verifiedPaths[name] = binPath;
-      console.log(`Found bundled ${name} at:`, binPath);
-    } else {
-      console.log(`Bundled ${name} not found at:`, binPath);
     }
   }
   
@@ -243,13 +215,11 @@ async function verifyFFmpeg(ffmpegPath) {
     const match = stdout.match(/ffmpeg version ([^\s]+)/);
     
     if (!match) {
-      console.warn('[binary-setup] Could not parse FFmpeg version');
       return 'unknown';
     }
 
     return match[1];
   } catch (error) {
-    console.error('[binary-setup] Failed to verify FFmpeg:', error.message);
     throw new Error(`Failed to verify FFmpeg: ${error.message}`);
   }
 }
@@ -320,16 +290,4 @@ export async function downloadBinaries(targetDir) {
   
   const platform = os.platform();
   const arch = os.arch();
-  
-  console.log(`
-To install required binaries for ${platform} (${arch}):
-
-1. FFmpeg:
-   - macOS: brew install ffmpeg
-   - Ubuntu/Debian: sudo apt install ffmpeg
-   - Windows: Download from https://ffmpeg.org/download.html
-
-2. Whisper.cpp (optional):
-   - See: https://github.com/ggerganov/whisper.cpp
-  `);
 }

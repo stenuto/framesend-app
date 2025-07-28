@@ -193,7 +193,18 @@ const result = await window.api.window.minimize()
 - FFmpeg commands are built programmatically (no shell injection)
 - Temporary files are cleaned up after processing
 
-## Future API Integration
+## API Integration
+
+### API Specification
+
+The complete API specification is documented in [`API_SPEC.md`](./API_SPEC.md). This document defines:
+- All REST endpoints (methods, routes, payloads, responses)
+- Standard response formats and error codes
+- Authentication requirements
+- WebSocket events for real-time updates
+- Rate limiting guidelines
+
+**Important**: Keep `API_SPEC.md` updated when adding or modifying API calls in the application.
 
 ### Video Upload & Metadata Flow
 
@@ -232,6 +243,70 @@ When the web server is implemented, the video upload and encoding flow will work
    - Videos use `fs_${jobId}` as temporary IDs
    - Names are stored in file system state and synced via shared store
    - Queue watches for name changes in file system items
+
+## Auto-Focus and Text Selection for New Items
+
+### The Challenge
+When creating new folders or projects, we want them to be immediately editable with all text selected so users can just start typing. This is tricky because:
+
+1. **Timing Issues**: The component must be rendered in the DOM before we can focus it
+2. **Vue Reactivity**: Setting the edit state too early means the component doesn't exist yet
+3. **Server Updates**: When the server responds with a real ID, it can cause re-renders that lose focus
+
+### Solution for Folders
+Folders are simpler because they don't involve navigation:
+1. Create folder and add to fileSystem array
+2. Set `editingItemId` immediately
+3. Component's `onMounted` hook checks if `isEditing` is true
+4. If editing, it focuses and selects all text using `document.execCommand('selectAll')`
+
+### Solution for Projects
+Projects are more complex due to navigation and server ID updates:
+1. Create project with temporary ID (`temp_project_123...`)
+2. Add to projects array
+3. Use `requestAnimationFrame` to set `editingProjectId` after DOM paint
+4. Component's `onMounted` hook focuses and selects text
+5. When server responds (~100ms later), preserve editing state:
+   - Check if currently editing before updating ID
+   - Update project ID from temp to server ID
+   - If was editing, update `editingProjectId` to new ID
+   - Don't navigate until user finishes renaming
+
+### Key Code Patterns
+
+**FileSystemItem.vue / SidebarItem.vue:**
+```javascript
+// Focus and select on mount if created in editing state
+onMounted(async () => {
+  if (isEditing.value) {
+    await focusAndSelectAll()
+  }
+})
+```
+
+**Project Creation:**
+```javascript
+// Wait for DOM before setting edit state
+await nextTick()
+requestAnimationFrame(() => {
+  editingProjectId.value = tempId
+})
+```
+
+**Preserving Edit State During ID Update:**
+```javascript
+const wasEditing = editingProjectId.value === tempId
+projects.value[projectIndex].id = serverProject.id
+if (wasEditing) {
+  editingProjectId.value = serverProject.id
+}
+```
+
+### Why This Works
+- `onMounted` ensures the DOM element exists
+- `requestAnimationFrame` ensures browser has painted
+- `document.execCommand('selectAll')` is more reliable than manual selection
+- Preserving edit state prevents focus loss during server updates
 
 # Important Reminders
 

@@ -37,7 +37,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
     
   } catch (error) {
     console.error('Failed to load video encoder modules:', error);
-    console.error('Stack:', error.stack);
     
     // Provide a basic validation function if loading fails
     validateVideoFile = async (filePath) => {
@@ -83,14 +82,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       const ffmpegPath = path.join(resourcesPath, process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
       const ffprobePath = path.join(resourcesPath, process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe');
       
-      
-      // Verify binaries exist
-      if (!fs.existsSync(ffmpegPath)) {
-        console.error('FFmpeg binary not found at:', ffmpegPath);
-      }
-      if (!fs.existsSync(ffprobePath)) {
-        console.error('FFprobe binary not found at:', ffprobePath);
-      }
       
       encodingService = new VideoEncodingService({
         outputDir: path.join(app.getPath('userData'), 'encoded-videos'),
@@ -225,9 +216,22 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       // Queue the video with settings
       const job = await service.queueVideo(filePath, mergedOptions);
       
+      // Log API call for video creation
+      console.log('📡 POST /api/videos', {
+        projectId: options.projectId || 'default-project',
+        name: path.basename(filePath),
+        status: 'queued'
+      });
+      console.log('📡 Response: { id:', `"${job.id}", ... }`);
+      
       // Set up event forwarding for this job
       const startHandler = (data) => {
         if (data.jobId === job.id) {
+          // Log API call for status update to processing
+          console.log(`📡 PUT /api/videos/${job.id}`, {
+            status: 'processing'
+          });
+          
           event.sender.send('encoding:start', data);
         }
       };
@@ -240,6 +244,12 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       
       const completeHandler = (result) => {
         if (result.jobId === job.id) {
+          // Log API call for status update to ready
+          console.log(`📡 PUT /api/videos/${job.id}`, {
+            status: 'ready',
+            metadata: result.metadata
+          });
+          
           event.sender.send('encoding:complete', result);
           // Clean up listeners
           service.off('job:progress', progressHandler);
@@ -250,6 +260,12 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       
       const errorHandler = (error) => {
         if (error.jobId === job.id) {
+          // Log API call for status update to failed
+          console.log(`📡 PUT /api/videos/${job.id}`, {
+            status: 'failed',
+            error: error.error?.message || error.message || 'Unknown error'
+          });
+          
           event.sender.send('encoding:error', {
             ...error,
             message: error.message,
@@ -267,6 +283,12 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       
       const cancelledHandler = (data) => {
         if (data.jobId === job.id) {
+          // Log API call for status update to failed (cancelled)
+          console.log(`📡 PUT /api/videos/${job.id}`, {
+            status: 'failed',
+            error: 'Encoding cancelled by user'
+          });
+          
           event.sender.send('encoding:cancelled', data);
           // Clean up listeners
           service.off('job:start', startHandler);
@@ -304,33 +326,23 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
    * Cancel an encoding job
    */
   ipcMain.handle('video:cancel', async (event, jobId) => {
-    console.log(`[video:cancel] Received cancel request for job ${jobId}`);
-    
     try {
       // Try the proper way first - cancel through the service
       // This will now use fluent-ffmpeg's kill method
       const service = await getEncodingService();
       await service.cancelJob(jobId);
       
-      console.log(`[video:cancel] Job ${jobId} cancelled through service`);
-      
       // Also use robust killer to ensure processes are killed
-      console.log(`[video:cancel] Using RobustKiller to ensure processes are killed`);
       const killedCount = await RobustKiller.killJobProcesses(jobId);
-      console.log(`[video:cancel] RobustKiller killed ${killedCount} additional processes`);
       
       return {
         success: true,
         killedCount,
       };
     } catch (error) {
-      console.error(`[video:cancel] Service cancel failed for job ${jobId}:`, error);
-      
       // Try robust killer as fallback
-      console.log(`[video:cancel] Trying RobustKiller as fallback`);
       try {
         const killedCount = await RobustKiller.killJobProcesses(jobId);
-        console.log(`[video:cancel] RobustKiller killed ${killedCount} processes`);
         
         return {
           success: true,
@@ -338,7 +350,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           fallback: true,
         };
       } catch (killError) {
-        console.error(`[video:cancel] RobustKiller also failed:`, killError);
+        console.error(`[video:cancel] Failed to cancel job ${jobId}:`, error.message);
         return {
           success: false,
           error: error.message,
@@ -462,32 +474,27 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
    * Force kill processes for a job (direct approach)
    */
   ipcMain.handle('video:forceKill', async (event, jobId) => {
-    console.log(`[video:forceKill] Force killing processes for job ${jobId}`);
-    
     try {
       let totalKilled = 0;
       
       // First try the ProcessFinder which uses lsof to find processes by directory
       const finderKilled = await ProcessFinder.killJobProcesses(jobId);
       totalKilled += finderKilled;
-      console.log(`[video:forceKill] ProcessFinder killed ${finderKilled} processes`);
       
       // Then try the direct FFmpeg killer
       const directKilled = await FFmpegKiller.killByJobId(jobId);
       totalKilled += directKilled;
-      console.log(`[video:forceKill] Direct killer killed ${directKilled} processes`);
       
       // Then try the global process manager
       const managerKilled = await globalProcessManager.killJobProcesses(jobId);
       totalKilled += managerKilled;
-      console.log(`[video:forceKill] Global manager killed ${managerKilled} processes`);
       
       // Finally try the service cancel
       try {
         const service = await getEncodingService();
         await service.cancelJob(jobId);
       } catch (e) {
-        console.log('[video:forceKill] Service cancel failed (job might not exist):', e.message);
+        // Job might not exist
       }
       
       return {
@@ -507,20 +514,16 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
    * Emergency stop all encoding
    */
   ipcMain.handle('video:emergencyStop', async (event) => {
-    console.log('[video:emergencyStop] Emergency stop requested!');
-    
     try {
       let totalKilled = 0;
       
       // First use RobustKiller for all app FFmpeg processes
       const robustKilled = await RobustKiller.killAllAppFFmpeg();
       totalKilled += robustKilled;
-      console.log(`[video:emergencyStop] RobustKiller killed ${robustKilled} processes`);
       
       // Then use global manager
       const managerKilled = globalProcessManager.killAllProcesses();
       totalKilled += managerKilled;
-      console.log(`[video:emergencyStop] Global manager killed ${managerKilled} processes`);
       
       // Also try to cleanup the service
       if (encodingService) {
@@ -571,5 +574,4 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
     }
   });
   
-  console.log('Video encoding handlers registered successfully');
 }

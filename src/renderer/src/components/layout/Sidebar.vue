@@ -1,70 +1,67 @@
 <template>
-  <div class="flex h-full w-60 flex-col shrink-0 bg-zinc-900">
-    <div class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5 text-zinc-400/75">
-      <Button icon-name="arrow-left" size="sm" variant="ghost" :disabled="!canGoBack" @click="router.goBack()" />
-      <Button icon-name="arrow-right" size="sm" variant="ghost" :disabled="!canGoForward" @click="router.goForward()" />
-      <!-- <Button icon-name="panel-right-open" size="sm" variant="ghost" @click="toggleSidebar" /> -->
+<div class="flex h-full w-60 flex-col shrink-0 border-r border-zinc-800">
+  <div class="drag h-12 w-full shrink-0 items-center flex justify-end pr-3 gap-1.5 text-zinc-400/75">
+    <Button icon-name="arrow-left" size="sm" variant="ghost" :disabled="!canGoBack" @click="router.goBack()" />
+    <Button icon-name="arrow-right" size="sm" variant="ghost" :disabled="!canGoForward" @click="router.goForward()" />
+    <!-- <Button icon-name="panel-right-open" size="sm" variant="ghost" @click="toggleSidebar" /> -->
+  </div>
+
+  <!-- Account Button -->
+  <AccountButton type="team" name="Motioncrafter" subtitle="Pro plan"
+    :avatar-url="'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBwgHBhEIBxEVFRATDRgVFRYWFxsWEBoSGx0iGhgWHxcdKCksHiYxJxcYIT0tMTUtLi4uGR8/OD8tNzQtLiwBCgoKDg0OGRAQGzceHiY3LS0tKy03Ny0rLSstLTcuLSstLS0tLS0tLS0rLTUtLS0tLSstLSstLS0tKy0tLS01Lf/AABEIAMgAyAMBEQACEQEDEQH/xAAaAAEBAQEBAQEAAAAAAAAAAAAAAgUEBgMB/8QAOxAAAgECAwUGBAQCCwAAAAAAAAECAxEEBRIGEyExkQczUVJhciJBcYEUFTKhI+EXNUJidJKisbLBwv/EABsBAQEAAwEBAQAAAAAAAAAAAAACAQMEBQcG/8QAMBEBAAICAQMDAgMHBQAAAAAAAAECAxESBCExBRNRIkEVkeEUIzJxgbHBM0Jh8PH/2gAMAwEAAhEDEQA/AMM+jvLAAAAAAAAAAAAAAAAAAAAAAAAAAAuj30fcib+CEFAAAAAAAAAAAAAAAAAAAAAAAAAAAF0e+j7kTfwQgoAAAAAAAAAAAAAAAAAAAAAAAAAAAuj30fcib+CEFAAAAAAAAAAAAAAAAAAAAAAAAAAAF0e+j7kTfwQgoAAAAAAAAAAAAAAAAAAAAAAAAAAAuj30fcib+CEFAAAAAAAAAAAAAAAAAAAAAAAAAAAF0e+j7kTfwQgoAAAAAAAAAAAAAAAAAAAAAAAAAAAuj30fcib+CEFAAAAAAAAAAAAAAAAAAAAAAAAAAAF0e+j7kTfwQgoAAAAAAAAAAAAAAAAAAAAAAAAAAAuj30fcib+CEFAAAAAAAAAAAAAAAAAAAAAAAAAAAF0e+j7kTfwQgoAA2AAGpDH3NyA++wdjXcMcvhme32CmIASGO5OweQGzuGTuA7gPuqnTnVnopJt+CV2Ra9a+ZZivfZOEqcnGaaa+T4MReLR2klJXdjsDXyd5DJ3BsALo99H3Im/ghBRL64WhPFYqGHpW1Tmoq/K7dka8uWMdZtKqxt6qn2dZ5Kq4SdJJRvqcnZ+nBXvw/c8ifXMMeIlt9iycP2e55VqSjPdwUXZOUnaXqtKf72M39bwxEaiZPYsw8wyTH4DNFlteDdVtaVHjqvyaO/F1mLJjnLE9oa7UtE6egXZznTw+8cqSla+jU9X0va1/uef+OYeWtTr5bPYmI2jYjZytidoZRx9OOjDytWhPi7yjJR4cnxVzHqfXV9iPbn+Lx/QxY922bebN1csxk8woxpxw86sYwjHg09PH4bWX6WPTOurkx+1afq1PdnLj1bbp7Qaua16GFjmNOnG7lo3cnJvhHndeqNfpPtUteaz+bOXk58L2eZ1XwyqzdODavplJ6/vZNI25PW8Vb6rG4+UxgtLGp7PZjLPFk04qNZ3tqfwWScr3Xysjtt1+KMHvR3hHtW22afZ1nk9Wp0lZ8LyfH6WX+9jin1vDGtRK/YlgUslzCrmzyqFN79SacfD1b5W9T0LdZijD72/pa/btvTexXZ7nGHwrrqVKTUbuKk1Lq0l+55+P1vFa3GYlttgnTky/YvN8xwFPG4VQcKj4XlaSV2rvh6G7N6thx3mk/ZNcVphdLYjNKuaVMvjKlqpxi5y1vStXFfK/7ET6tjrjjJMT38EYZ2nPNjMzyfB/jKjhOmranBt29WmlwK6b1XHlvw1qS+GYe42TyLF5Ns7OeHjTeLqfEm23C3DSm7Xsudjw+v6qufP3/hhvpTVU5JluJznHVsZtHToT0rcxSjdKUG9T4+JjPlrhpWuGZj7/AJs1rt4DOtm8fluZwwclGU6rbhGDv87W5I/Q9L19MmKbz215c1scxOmpLs6zqOH3idJytfQpPV9L2tf7nNHreLlqYnXyr2JiGTkuzWY5zVq0sKoqVFpTU24u7vw5f3WdfU+oYsEVme8WRXFaZVnWzGYZJgYYrHuC1y0qKbc07X48LfLxMdL6jTqMk0rH9S2LixD0GtdHvo+5GL+CEFDuyL+u8N/iqf8AyRydb/oW/kvHPd7nbzG4qjtbg6VKpJRShKybS1ObTfRI8D07DW/T5JmP+6dGWZ5Qbf47FUdqMHSo1JRilCVk2lqc2m+HojPpuGl8GSZhnLaeUNfNalCl2g4OVe13hpqLfnbdv+19zkwxeejyRHjcKtqLMqvlm0Utvlioa91v09d/4W4+cel1bxOmubpo6Lh/u/ynjblv7PpicRRfapSjRlb+E4zs+Dnu52v9nExXHb8NtMx9+35kzHOHn+0DA5j+e4jFShU/D6oNSs91xilz5c+B3+mZsXsRSJ+ru15q23t6raupQo5vlNTE20KrK9+SfwWfWx5nR1tbHnivn/1tvHerg2wyzaLE7U062Xa3TtDdyi7Qg/7V/Djx9Td0WfpadPNcnnuxki03+lqZtUoS7RMBThbeRpVdXjZwlpT/ANXU5sVbfsWSZ8bj+6p1ziGTPG4p9qioupLQpadN3p07u9rfXidcYafhvLXf9Ucv3kw2MtnQh2h42E7byWHp6foox1f+ehyZYtPQ45+25/uqJiMkvF5lku1P4rFVKkarVpOclL4Zwv8ALj8S9D2MHU9HwpH3+382q9b7mW/VxVfB9llOphpOMnaN07Ss6jvx/Y4a46ZPUpi0bj9F8v3bN2KyehmWAxOa5lvK2hOO6jJ6p6YqVnZ3l8kl6G/1PqJxXrix/T/ynFTcbeiounPYXFulhZYaO7qWhJtt/D+vjy/keZ3/AGqu7cp7d22d8PDLyurU/ourzcndOVnfj+pHbliv4jXt2/REb9t8+yevKWMxMJybe7i0m7/N3f7o2+uUiK0mITgmZ259kcJi8DthCebQnHU6saTqJ2c/Rv0v1HW5seTpJrinetb0zWJ9zu9BiXQwW00sTSwGKnXcnarGTdKSatzvZL0fKx5tZm2HhN4iPht8W8GxmJjjNo8yrxpyp3lSvCVtSklJSvb1TL66nDBhje/Kcc/Vbs8Hl2XZxtXXqSpz1yi1KWubS+K/Loe9fNg6Kte2tufU3Y2IpSw9eVGp+qM3F/VOx6OO8XrFoa5iY7Pyj30fcjN/4WIQUyujVnQrRrUnaUZKUX4STumRkpF6zWSJ1Lrx2b4/MMXHFYyo5VIJKMrJWs7rkvFmjF0mLFSa1jtKpvaTH5vj8xxUcTjajlUgkotpK1ndcl4mcXSYsVZrWO0sTe0935mObY/M60a2OqOUoq0XwTSvf5DF0mLFWa0jUSTaZ7y0o7Z7QRw24WIla1r2i5291r/c5vwrpeXLir3rsWGIrU8QsRCTVRT1ar/Fq53v4nbbFW1OEx2+Ebne2rj9qs7zHCPCYus3BrilGMb/AFaRyY/Tenx251r3XbLezkzLOMwzSMI4+o5qF9N0la9r8l6I3YejxYtzSNb8pm8z5d2F2vz7C4ZYejiHpSsrqMpJfVq5ov6X01r8pquMto8M6jmmOoZj+YU6kt9dvW+MrtWfP0Z026XFbH7Wu3wjlO+SvzbH/mf5nvHv7312V7208rW5GP2XF7fta+n4Offaa+aY6vmH5hVqS3118a+GXBWXL0FelxVx+3EfT8M8p3vbRxO2Gf4rDfh6uIelqzsoxk17krnPT0rpqW5RVXvWlw1M4zCpliy2dR7hcoWVud+dr8zojpMUZPciPq+U89xxfuU51mOTzlLLajhq/UrKUX9nwMdR0mLPr3I3orea9nRidqM7xNKdKvXk41E1JWVmmrWtbh9jVX03p66mK+Gfct8uWnnGPpZa8up1GqEucLKz438Lm6ekxTkjLr6oTF7cdPnl2YYvLMUsTgZuE0rXXh4NPg0Vn6emavG8bgra0d4dea7RZtm2n8dVbUJaopJRSl5vhS4+ppwdBgw741/yzOWZ0647a7QxoblYh2ta7jFy/wA1rmr8K6WZ5cVe7aduHA59muArVK2FrSU6jTnLhKUmr2u3fxZuydDgyVitq7iPCYy2jb55Xm+PymUpZdUcHNLVZJ3ty5r1Kz9LjzRHON6YreauSrUnWqurUd5Sk234t8zfSsVjUeGNzPco99H3IzfwxCCgAAAAAAAAAAAAAAAAAAAAAAAAAAC6PfR9yJv4IQUAAAAAAAAAAAAAAAAAAAAAAAAAAAXR76PuRN/BCCgAAAAAAAAAAAAAAAAAAAAAAAAAAC6PfR9yJv4IQUAAAAAAAAAAAAAAAAAAAAAAAAAAAXR76PuRN/BCCgAAAAAAAAAAAAAAAAAAAAAAAAAAC6PfR9yJv4IQUAAAAAAAAAAAAAAAAAAAAAAAAAAAXR76PuRN/BCCgAAAAAAAAAAAAAAAAAAAAAAAAAAC6PfR9yJv4IQUAAAAAAAAAAAAAAAAAAAAAAAAAAAXR76PuRN/BCCgAAAAAAAAAAAAAAAAAAAAAAAAAAC6PfR9yJv4IQUAAAAAAAAAAAAAAAAAAAAAAAAAAAXR76PuRN/BBuqnlfQc4NG6qeV9Bzg0bqp5X0HODRuqnlfQc4NG6qeV9Bzg0bqp5X0HODRuqnlfQc4NG6qeV9Bzg0bqp5X0HODRuqnlfQc4NG6qeV9Bzg0bqp5X0HODRuqnlfQc4NG6qeV9Bzg0bqp5X0HODRuqnlfQc4NG6qeV9Bzg0bqp5X0HODRuqnlfQc4NG6qeV9Bzg0bqp5X0HODRuqnlfQc4NG6qeV9Bzg0bqp5X0HODS6NKpvY/C/1L5E2vGmYh/9k='"
+    @click="handleAccountClick" />
+
+  <!-- Project List -->
+  <div class="flex justify-between items-center group pl-5 pr-[19px] pt-2 mt-4">
+    <div class="text-[11px] font-regular text-current/60">
+      Projects
     </div>
-
-    <!-- Account Button -->
-    <AccountButton type="team" name="Motioncrafter" subtitle="Pro plan"
-      :avatar-url="'data:image/jpeg;base64,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'"
-      @click="handleAccountClick" />
-
-    <!-- Project List -->
-    <div class="flex justify-between items-center group pl-5 pr-[19px] pt-2 mt-4">
-      <div class="text-[11px] font-regular text-current/60">
-        Projects
+    <Button class="group-hover:opacity-100 opacity-0 transition-opacity duration-50" icon-name="plus" size="sm"
+      variant="ghost" @click="createProject" :title="`New Project (${isMac ? '⌘' : 'Ctrl'}+N)`" />
+  </div>
+  <div class="flex-1 overflow-y-auto" :class="{ 'dragging-active': !!draggedProjectId }">
+    <div class="px-3 pb-3 space-y-0.5 relative">
+      <!-- Drop zone at the start -->
+      <div class="drop-zone h-3 -mb-2 relative" @dragover.prevent="handleDropZoneDragOver($event, 0)"
+        @drop.prevent="handleDropZoneDrop($event, 0)" @dragleave="handleDropZoneDragLeave">
+        <div v-if="dropZoneIndex === 0"
+          class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-blue-500 rounded-full animate-pulse" />
       </div>
-      <Button class="group-hover:opacity-100 opacity-0 transition-opacity duration-50" icon-name="plus" size="sm"
-        variant="ghost" @click="createProject" :title="`New Project (${isMac ? '⌘' : 'Ctrl'}+N)`" />
-    </div>
-    <div class="flex-1 overflow-y-auto" :class="{ 'dragging-active': !!draggedProjectId }">
-      <div class="px-3 pb-3 space-y-0.5 relative">
-        <!-- Drop zone at the start -->
-        <div class="drop-zone h-3 -mb-2 relative" @dragover.prevent="handleDropZoneDragOver($event, 0)"
-          @drop.prevent="handleDropZoneDrop($event, 0)" @dragleave="handleDropZoneDragLeave">
-          <div v-if="dropZoneIndex === 0"
+
+      <!-- Projects -->
+      <template v-for="(project, index) in orderedProjects" :key="project.id">
+
+        <SidebarItem :name="project.name" icon-name="folder" :highlighted="isProjectHighlighted(project.id)"
+          :item-id="project.id" :editing-item-id="editingProjectId" :enable-context-menu="true" :editable="true"
+          :draggable="true" @click="handleProjectClick(project.id)"
+          @context-menu="handleProjectContextMenu($event, project)" @rename="handleProjectRename"
+          @set-editing-item="editingProjectId = $event" @drag-start="handleProjectDragStart"
+          @drag-end="handleProjectDragEnd" @drag-over="({ event }) => event.preventDefault()"
+          @drop="({ event }) => event.stopPropagation()" />
+
+        <!-- Drop zone after each item -->
+        <div class="drop-zone h-4 -my-2 relative" @dragover.prevent="handleDropZoneDragOver($event, index + 1)"
+          @drop.prevent="handleDropZoneDrop($event, index + 1)" @dragleave="handleDropZoneDragLeave">
+          <div v-if="dropZoneIndex === index + 1"
             class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-blue-500 rounded-full animate-pulse" />
         </div>
-
-        <!-- Projects -->
-        <template v-for="(project, index) in orderedProjects" :key="project.id">
-
-          <SidebarItem :name="project.name" icon-name="folder" :highlighted="isProjectHighlighted(project.id)"
-            :item-id="project.id" :editing-item-id="editingProjectId" :enable-context-menu="true" :editable="true"
-            :draggable="true" @click="handleProjectClick(project.id)"
-            @context-menu="handleProjectContextMenu($event, project)" @rename="handleProjectRename"
-            @set-editing-item="editingProjectId = $event" @drag-start="handleProjectDragStart"
-            @drag-end="handleProjectDragEnd" @drag-over="({ event }) => event.preventDefault()"
-            @drop="({ event }) => event.stopPropagation()" />
-
-          <!-- Drop zone after each item -->
-          <div class="drop-zone h-4 -my-2 relative" @dragover.prevent="handleDropZoneDragOver($event, index + 1)"
-            @drop.prevent="handleDropZoneDrop($event, index + 1)" @dragleave="handleDropZoneDragLeave">
-            <div v-if="dropZoneIndex === index + 1"
-              class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-blue-500 rounded-full animate-pulse" />
-          </div>
-        </template>
-      </div>
-
-      <!-- Divider -->
-      <div class="border-t border-zinc-700/50 mx-3" />
-
-      <!-- Additional Items -->
-      <div class="p-3 space-y-0.5">
-        <SidebarItem name="Analytics" icon-name="chart-no-axes-column" :highlighted="isQueueHighlighted"
-          @click="goToQueue" />
-        <!-- <SidebarItem name="Queue" icon-name="list" :highlighted="isQueueHighlighted" @click="goToQueue" /> -->
-        <SidebarItem name="Settings" icon-name="settings" :highlighted="isSettingsHighlighted" @click="goToSettings" />
-
-      </div>
+      </template>
     </div>
 
-    <AccountButton type="user" name="Steve Tenuto" subtitle="Admin"
-      avatar-url="https://pbs.twimg.com/profile_images/1800308863977291777/wawcQz6k_400x400.jpg"
-      @click="handleAccountClick" class="mb-3" />
+    <!-- Divider -->
+    <div class="border-t border-zinc-700/50 mx-3" />
+
+    <!-- Additional Items -->
+    <div class="p-3 space-y-0.5">
+      <SidebarItem name="Analytics" icon-name="chart-no-axes-column" :highlighted="isQueueHighlighted" @click="goToQueue" />
+      <!-- <SidebarItem name="Queue" icon-name="list" :highlighted="isQueueHighlighted" @click="goToQueue" /> -->
+      <SidebarItem name="Settings" icon-name="settings" :highlighted="isSettingsHighlighted" @click="goToSettings" />
+
+    </div>
   </div>
+
+  <AccountButton type="user" name="Steve Tenuto" subtitle="Admin" avatar-url="https://pbs.twimg.com/profile_images/1800308863977291777/wawcQz6k_400x400.jpg" @click="handleAccountClick" class="mb-3" />
+</div>
 </template>
 
 <script>
@@ -74,6 +71,7 @@ import { useRouterStore } from '@/stores/router'
 import { useUIStore } from '@/stores/ui'
 import { useSettingsStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
+import { apiService } from '@/services/api'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
 import AccountButton from '@components/base/AccountButton.vue'
@@ -268,7 +266,7 @@ export default defineComponent({
     }
 
     // Handle menu actions
-    const handleMenuAction = (action, data) => {
+    const handleMenuAction = async (action, data) => {
       switch (action) {
         case 'project:rename':
           editingProjectId.value = data.projectId
@@ -278,6 +276,11 @@ export default defineComponent({
           if (confirm(`Delete project "${data.projectName}"?\n\nThis action cannot be undone.`)) {
             const index = projects.value.findIndex(p => p.id === data.projectId)
             if (index !== -1) {
+              // Store the project for potential rollback
+              const deletedProject = { ...projects.value[index] }
+              const originalOrder = [...projectOrder.value]
+
+              // Optimistic update - remove from UI
               projects.value.splice(index, 1)
 
               // Update the saved order to remove the deleted project
@@ -285,7 +288,8 @@ export default defineComponent({
               updateProjectOrder(currentOrder)
 
               // If we deleted the selected project, select another one
-              if (selectedProjectId.value === data.projectId) {
+              const wasSelected = selectedProjectId.value === data.projectId
+              if (wasSelected) {
                 const nextProject = projects.value[0]
                 if (nextProject) {
                   selectProject(nextProject.id)
@@ -297,10 +301,26 @@ export default defineComponent({
               }
 
               console.log(`Project deleted: "${data.projectName}"`)
-              // TODO: API call to delete project
-              console.log('TODO: API call to delete project:', {
-                projectId: data.projectId
-              })
+
+              try {
+                // Call server to delete project
+                await apiService.deleteProject(data.projectId)
+              } catch (error) {
+                console.error('Failed to delete project on server:', error)
+
+                // Rollback - restore the project
+                projects.value.splice(index, 0, deletedProject)
+                updateProjectOrder(originalOrder)
+
+                // Restore selection if needed
+                if (wasSelected) {
+                  selectProject(data.projectId)
+                  router.navigateTo('project-explorer', { projectId: data.projectId })
+                }
+
+                // Show error to user
+                alert('Failed to delete project. Please try again.')
+              }
             }
           }
           break
@@ -308,48 +328,126 @@ export default defineComponent({
     }
 
     // Handle project rename
-    const handleProjectRename = ({ itemId, oldName, newName }) => {
+    const handleProjectRename = async ({ itemId, oldName, newName }) => {
       const project = projects.value.find(p => p.id === itemId)
       if (project) {
+        // Check if this is a new project (untitled)
+        const isNewProject = oldName === 'Untitled Project'
+
+        // Optimistic update
         project.name = newName
         console.log(`Project renamed from "${oldName}" to "${newName}"`)
-        // TODO: API call to persist project rename
-        console.log('TODO: API call to persist project rename:', {
-          projectId: itemId,
-          newName: newName
-        })
         editingProjectId.value = null
+
+        // If it's a new project and we haven't navigated yet, navigate now
+        if (isNewProject && currentPage.value !== 'project-explorer') {
+          router.navigateTo('project-explorer', { projectId: project.id })
+        }
+
+        try {
+          // Call server to update project
+          await apiService.updateProject(itemId, {
+            name: newName
+          })
+        } catch (error) {
+          console.error('Failed to rename project on server:', error)
+
+          // Rollback
+          project.name = oldName
+
+          // Show error to user
+          alert('Failed to rename project. Please try again.')
+        }
       }
     }
 
     // Create new project
-    const createProject = () => {
+    const createProject = async () => {
+      const tempId = `temp_project_${Date.now()}`
       const newProject = {
-        id: `project_${Date.now()}`,
-        name: 'New Project',
+        id: tempId,
+        name: 'Untitled Project',
         createdAt: new Date(),
         fileCount: 0
       }
 
-      // Add to projects array
+      // Optimistic update - add to projects array
       projects.value.unshift(newProject)
 
       // Update the order to include the new project at the beginning
       const currentOrder = orderedProjects.value.map(p => p.id)
       updateProjectOrder(currentOrder)
 
-      // Select the new project
+      // Select the new project but don't navigate yet
       selectProject(newProject.id)
-      router.navigateTo('project-explorer', { projectId: newProject.id })
 
-      // Make it editable immediately
-      nextTick(() => {
-        editingProjectId.value = newProject.id
+      // Make it editable after a small delay to ensure DOM is ready
+      await nextTick()
+      requestAnimationFrame(() => {
+        editingProjectId.value = tempId
       })
 
+      try {
+        // Call server to create project
+        const serverProject = await apiService.createProject({
+          name: newProject.name
+        })
+
+        // Update temporary ID with server ID
+        const projectIndex = projects.value.findIndex(p => p.id === tempId)
+        if (projectIndex !== -1 && serverProject) {
+          // Check if we're currently editing this project
+          const wasEditing = editingProjectId.value === tempId
+
+          projects.value[projectIndex].id = serverProject.id
+
+          // Update the saved order with the new server ID
+          const updatedOrder = projectOrder.value.map(id => id === tempId ? serverProject.id : id)
+          updateProjectOrder(updatedOrder)
+
+          // Update selection if this is still the selected project
+          if (selectedProjectId.value === tempId) {
+            selectProject(serverProject.id)
+            // Don't navigate yet if we're editing
+            if (!wasEditing) {
+              router.navigateTo('project-explorer', { projectId: serverProject.id })
+            }
+          }
+
+          // Preserve editing state with new ID
+          if (wasEditing) {
+            editingProjectId.value = serverProject.id
+          }
+        }
+      } catch (error) {
+        console.error('Failed to create project on server:', error)
+
+        // Rollback - remove the project
+        const index = projects.value.findIndex(p => p.id === tempId)
+        if (index !== -1) {
+          projects.value.splice(index, 1)
+        }
+
+        // Reset order
+        const rollbackOrder = projectOrder.value.filter(id => id !== tempId)
+        updateProjectOrder(rollbackOrder)
+
+        // Navigate to first project or settings
+        const firstProject = projects.value[0]
+        if (firstProject) {
+          selectProject(firstProject.id)
+          router.navigateTo('project-explorer', { projectId: firstProject.id })
+        } else {
+          goToSettings()
+        }
+
+        // Show error to user
+        alert('Failed to create project. Please try again.')
+        return
+      }
+
+
       console.log('New project created:', newProject)
-      // TODO: API call to create project
-      console.log('TODO: API call to create project in backend')
     }
 
     // Keyboard shortcut handler
