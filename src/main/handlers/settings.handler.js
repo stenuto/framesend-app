@@ -36,6 +36,9 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
         },
         quality: 5
       }
+    },
+    ui: {
+      viewMode: 'list'
     }
   }
   
@@ -63,6 +66,10 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
         encoding: {
           ...defaultSettings.encoding,
           ...settings.encoding
+        },
+        ui: {
+          ...defaultSettings.ui,
+          ...settings.ui
         }
       }
     } catch (error) {

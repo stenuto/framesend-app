@@ -70,7 +70,7 @@
     <!-- Info Section -->
     <div class="p-2">
       <div class="flex items-center gap-1.5">
-        <Icon v-if="!isEditing" :name="itemIcon" class="size-[13px] flex-shrink-0" :class="iconColor" :stroke-width="2" />
+        <Icon v-if="!isEditing && item.type === 'video'" :name="itemIcon" class="size-[13px] flex-shrink-0" :class="iconColor" :stroke-width="2" />
 
         <h4 v-if="!isEditing" class="text-[13px] font-medium truncate">
           {{ item.name }}

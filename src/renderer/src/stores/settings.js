@@ -36,6 +36,9 @@ export const useSettingsStore = defineStore('settings', () => {
     },
     projects: {
       order: [] // Array of project IDs in custom order
+    },
+    ui: {
+      viewMode: 'list' // 'list' or 'gallery'
     }
   })
   
@@ -85,6 +88,10 @@ export const useSettingsStore = defineStore('settings', () => {
           projects: {
             order: loaded.projects?.order || [],
             ...loaded.projects
+          },
+          ui: {
+            ...settings.value.ui,
+            ...loaded.ui
           }
         }
       }
@@ -122,6 +129,16 @@ export const useSettingsStore = defineStore('settings', () => {
     return settings.value.projects?.order || []
   }
   
+  // View mode helpers
+  const viewMode = computed({
+    get: () => settings.value.ui?.viewMode || 'list',
+    set: (mode) => {
+      if (!settings.value.ui) {
+        settings.value.ui = {}
+      }
+      settings.value.ui.viewMode = mode
+    }
+  })
   
   // Watch for settings changes and save
   watch(settings, () => {
@@ -144,6 +161,7 @@ export const useSettingsStore = defineStore('settings', () => {
     getProjectOrder,
     // Getters
     encodingSettings: () => settings.value.encoding,
-    projectOrder: computed(() => settings.value.projects?.order || [])
+    projectOrder: computed(() => settings.value.projects?.order || []),
+    viewMode
   }
 })

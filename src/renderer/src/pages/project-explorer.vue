@@ -118,6 +118,7 @@ import { useRouterStore } from '@/stores/router'
 import { useVideoEncodingStore } from '@/stores/videoEncoding'
 import { useUIStore } from '@/stores/ui'
 import { useVideoMetadataStore } from '@/stores/videoMetadata'
+import { useSettingsStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
 import { apiService } from '@/services/api'
 import Icon from '@components/base/Icon.vue'
@@ -146,6 +147,7 @@ export default {
     const videoEncodingStore = useVideoEncodingStore()
     const uiStore = useUIStore()
     const metadataStore = useVideoMetadataStore()
+    const settingsStore = useSettingsStore()
     const { selectedProject } = storeToRefs(projectsStore)
     const { sidebarOpen } = storeToRefs(uiStore)
     const { currentParams } = storeToRefs(router)
@@ -164,7 +166,12 @@ export default {
     const dragOverFolder = ref(null)
     const lastExpandedFolder = ref(null)
     const searchQuery = ref('')
-    const viewMode = ref('list') // 'list' or 'gallery'
+    const viewMode = computed({
+      get: () => settingsStore.viewMode,
+      set: (value) => {
+        settingsStore.viewMode = value
+      }
+    })
     const editingItemId = ref(null) // Track which item is being edited
     const currentFolderId = ref(null) // Track current folder for gallery view
     const navigationPath = ref([]) // Breadcrumb path for gallery view
@@ -209,8 +216,8 @@ export default {
 
     // Watch for view mode changes to persist preference
     watch(viewMode, (newMode, oldMode) => {
-      // Save view mode preference
-      localStorage.setItem('fileExplorerViewMode', newMode)
+      // Update application menu to reflect current view mode
+      window.electron?.ipcRenderer?.send('menu:updateViewMode', newMode)
 
       // When switching from list to gallery via any method (not just menu)
       if (newMode === 'gallery' && oldMode === 'list') {
@@ -243,22 +250,24 @@ export default {
         selectProject(currentParams.value.projectId)
       }
 
-      // Load saved view mode preference
-      const savedViewMode = localStorage.getItem('fileExplorerViewMode')
-      if (savedViewMode && ['list', 'gallery'].includes(savedViewMode)) {
-        viewMode.value = savedViewMode
-        if (savedViewMode === 'gallery') {
-          // Check for folderId in route params
-          const folderId = currentParams.value.folderId
-          if (folderId) {
-            currentFolderId.value = folderId
-            navigationPath.value = buildNavigationPath(folderId)
-          } else {
-            currentFolderId.value = null
-            navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
-          }
+      // Check if gallery mode and set folder from route params
+      if (viewMode.value === 'gallery') {
+        // Check for folderId in route params
+        const folderId = currentParams.value.folderId
+        if (folderId) {
+          currentFolderId.value = folderId
+          navigationPath.value = buildNavigationPath(folderId)
+        } else {
+          currentFolderId.value = null
+          navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
         }
       }
+      
+      // Sync the loaded view mode with the application menu
+      // Use setTimeout to ensure menu is ready
+      setTimeout(() => {
+        window.electron?.ipcRenderer?.send('menu:updateViewMode', viewMode.value)
+      }, 100)
     })
 
     // Watch for metadata changes and sync with file system
@@ -790,6 +799,10 @@ export default {
       unsubscribeCancelled?.()
       unsubscribeThumbnail?.()
       unsubscribeMenu?.()
+      
+      // Remove application menu listeners
+      window.electron?.ipcRenderer?.removeAllListeners('menu:action')
+      window.electron?.ipcRenderer?.removeAllListeners('menu:getViewMode')
     })
 
     // Wrapper methods for recursive component events
@@ -1271,6 +1284,16 @@ export default {
     // Set up menu action listener
     onMounted(() => {
       unsubscribeMenu = window.api.menu.onAction(handleMenuAction)
+      
+      // Listen for actions from application menu
+      window.electron?.ipcRenderer?.on('menu:action', (event, action) => {
+        handleMenuAction(action)
+      })
+      
+      // Listen for view mode request from menu
+      window.electron?.ipcRenderer?.on('menu:getViewMode', () => {
+        window.electron?.ipcRenderer?.send('menu:updateViewMode', viewMode.value)
+      })
     })
 
     const getFolderSize = (folderId) => {
