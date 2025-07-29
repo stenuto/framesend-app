@@ -210,10 +210,11 @@ export class FluentFFmpegWrapper extends EventEmitter {
           .outputOptions('-crf', String(options.crf || 35))
           .outputOptions('-preset', String(options.preset || 8))
           .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p10le')
-          // GOP settings for AV1 - 2 second GOP
-          .outputOptions('-g', '240')
-          .outputOptions('-keyint_min', '240')
-          .outputOptions('-sc_threshold', '40');
+          // GOP settings for AV1 - 2 second GOP at source framerate
+          // This will be overridden by force_key_frames for HLS
+          .outputOptions('-g', '120')  // 2 seconds at 60fps (conservative)
+          .outputOptions('-keyint_min', '120')
+          .outputOptions('-sc_threshold', '0');  // Disable scene detection for consistent segments
         
         if (options.maxrate) {
           command.outputOptions('-maxrate', options.maxrate);
@@ -263,9 +264,12 @@ export class FluentFFmpegWrapper extends EventEmitter {
         }
       }
       
-      // HLS options
+      // HLS options with forced keyframes for consistent segmentation
       if (options.hls_time) {
+        // Force keyframes at exact 2-second intervals for consistent segmentation
+        // This ensures all renditions have the same segment boundaries
         command
+          .outputOptions('-force_key_frames', 'expr:gte(t,n_forced*2)')
           .outputOptions('-f', 'hls')
           .outputOptions('-hls_time', String(options.hls_time))
           .outputOptions('-hls_playlist_type', options.hls_playlist_type || 'vod')

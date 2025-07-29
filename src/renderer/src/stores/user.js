@@ -6,6 +6,7 @@ export const useUserStore = defineStore('user', () => {
   const currentUser = ref(null)
   const isAuthenticated = ref(false)
   const isLoading = ref(false)
+  const storageUsedGB = ref(0) // Reactive storage tracking
 
   // Mock user data for development
   const mockUser = {
@@ -175,10 +176,16 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  // Update storage used
+  function updateStorageUsed(gbValue) {
+    storageUsedGB.value = gbValue
+  }
+
   // Initialize with mock user for development
   function initializeMockUser() {
     currentUser.value = mockUser
     isAuthenticated.value = true
+    storageUsedGB.value = 42.7 // Set initial mock storage
   }
 
   return {
@@ -186,6 +193,7 @@ export const useUserStore = defineStore('user', () => {
     currentUser,
     isAuthenticated,
     isLoading,
+    storageUsedGB,
     
     // Getters
     userInitials,
@@ -201,6 +209,7 @@ export const useUserStore = defineStore('user', () => {
     logout,
     updateProfile,
     updateTeam,
+    updateStorageUsed,
     initializeMockUser
   }
 })

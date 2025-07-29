@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { apiService } from '../services/api'
+import { useUserStore } from './user'
 
 export const useProjectsStore = defineStore('projects', () => {
   // Loading states

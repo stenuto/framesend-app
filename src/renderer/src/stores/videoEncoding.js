@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useUserStore } from './user';
+import { useProjectsStore } from './projects';
 
 export const useVideoEncodingStore = defineStore('videoEncoding', () => {
+  const userStore = useUserStore();
+  const projectsStore = useProjectsStore();
+  
   // State
   const jobs = ref(new Map()); // Map of jobId -> job data
   const queueStatus = ref({
@@ -38,6 +43,31 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     
     const totalProgress = jobsList.reduce((sum, job) => sum + (job.progress || 0), 0);
     return totalProgress / jobsList.length;
+  });
+  
+  // Calculate total storage used in GB
+  const totalStorageUsedGB = computed(() => {
+    let totalBytes = 0;
+    
+    // Sum up all videos from fileSystem that have encoded sizes
+    if (projectsStore.fileSystem) {
+      projectsStore.fileSystem.forEach(item => {
+        if (item.type === 'video' && item.status === 'ready' && item.encodedSize) {
+          totalBytes += item.encodedSize;
+        }
+      });
+    }
+    
+    // Add currently encoding videos from jobs
+    allJobs.value.forEach(job => {
+      if (job.status === 'processing' && job.encodedSize) {
+        // Currently encoding - use current encoded size from progress
+        totalBytes += job.encodedSize;
+      }
+    });
+    
+    // Convert bytes to GB
+    return totalBytes / (1024 * 1024 * 1024);
   });
 
   // Actions
@@ -76,6 +106,11 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
         job.currentStage = data.currentStage;
         job.details = data.details;
         job.status = 'processing'; // Changed from 'encoding' to 'processing'
+        
+        // Update encoded size if available
+        if (data.encodedSize !== undefined && data.encodedSize > 0) {
+          job.encodedSize = data.encodedSize;
+        }
         
         // Log detailed stage information
         if (data.currentStage) {
@@ -389,6 +424,11 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
 
   // Initialize listeners when store is created
   initializeListeners();
+  
+  // Watch total storage and update user store
+  watch(totalStorageUsedGB, (newValue) => {
+    userStore.updateStorageUsed(newValue);
+  });
 
   return {
     // State
@@ -401,6 +441,7 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     completedJobs,
     failedJobs,
     totalProgress,
+    totalStorageUsedGB,
     
     // Actions
     validateVideo,

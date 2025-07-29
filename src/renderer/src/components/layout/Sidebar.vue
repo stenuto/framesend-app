@@ -9,7 +9,7 @@
   <!-- Account Button -->
   <AccountButton type="team" :name="teamName" :subtitle="teamPlanDisplay"
     :avatar-url="teamAvatar"
-    @click="handleAccountClick" />
+    @click="handleTeamAccountClick" />
 
   <!-- Project List -->
   <div class="flex justify-between items-center group pl-5 pr-[19px] pt-2 mt-4">
@@ -60,7 +60,7 @@
     </div>
   </div>
 
-  <AccountButton type="user" :name="currentUser?.name || 'User'" :subtitle="currentUser?.role || 'Member'" :avatar-url="currentUser?.avatar || ''" @click="handleAccountClick" class="mb-3" />
+  <AccountButton type="user" :name="currentUser?.name || 'User'" :subtitle="currentUser?.role || 'Member'" :avatar-url="currentUser?.avatar || ''" @click="handleUserAccountClick" class="mb-3" />
 </div>
 </template>
 
@@ -97,7 +97,7 @@ export default defineComponent({
     const { toggleSidebar } = uiStore
     const { updateProjectOrder } = settingsStore
     const { isLoading: settingsLoading, projectOrder } = storeToRefs(settingsStore)
-    const { currentUser } = storeToRefs(userStore)
+    const { currentUser, storageUsedGB } = storeToRefs(userStore)
 
     // State for editing projects
     const editingProjectId = ref(null)
@@ -176,9 +176,85 @@ export default defineComponent({
       router.navigateTo('queue')
     }
 
-    const handleAccountClick = () => {
-      // Handle account button click (e.g., show account menu, switch accounts, etc.)
-      console.log('Account button clicked')
+    const handleTeamAccountClick = async (e) => {
+      const team = currentUser.value?.team
+      if (!team) return
+
+      // Calculate storage usage - use reactive value from user store
+      const storageUsed = storageUsedGB.value || 0
+      const storageLimit = team.planDetails?.maxStorageGB || 100
+      const storagePercentage = Math.round((storageUsed / storageLimit) * 100)
+
+      const menuTemplate = [
+        {
+          label: `${storageUsed.toFixed(1)} GB of ${storageLimit} GB used (${storagePercentage}%)`,
+          enabled: false
+        },
+        {
+          label: 'Upgrade Your Plan',
+          action: 'team:upgrade'
+        },
+        { type: 'separator' },
+        {
+          label: 'Invite Team Members',
+          action: 'team:invite'
+        },
+        {
+          label: 'Team Settings',
+          action: 'team:settings'
+        },
+        { type: 'separator' },
+        {
+          label: 'Sign Out',
+          action: 'auth:signout'
+        }
+      ]
+
+      // Get the button element for positioning
+      const button = e.currentTarget || e.target
+      const rect = button.getBoundingClientRect()
+
+      await window.api.menu.showContext(menuTemplate, {
+        x: Math.round(rect.left),
+        y: Math.round(rect.bottom)
+      })
+    }
+
+    const handleUserAccountClick = async (e) => {
+      const menuTemplate = [
+        {
+          label: currentUser.value?.email || 'user@example.com',
+          enabled: false
+        },
+        { type: 'separator' },
+        {
+          label: 'Account Settings',
+          action: 'user:account'
+        },
+        { type: 'separator' },
+        {
+          label: 'Keyboard Shortcuts',
+          action: 'user:shortcuts'
+        },
+        {
+          label: 'Help & Documentation',
+          action: 'user:help'
+        },
+        { type: 'separator' },
+        {
+          label: 'Sign Out',
+          action: 'auth:signout'
+        }
+      ]
+
+      // Get the button element for positioning
+      const button = e.currentTarget || e.target
+      const rect = button.getBoundingClientRect()
+
+      await window.api.menu.showContext(menuTemplate, {
+        x: Math.round(rect.left),
+        y: Math.round(rect.top - 10) // Show above the button since it's at the bottom
+      })
     }
 
     // Computed property to check if project is highlighted
@@ -334,6 +410,56 @@ export default defineComponent({
               }
             }
           }
+          break
+
+        case 'team:upgrade':
+          // Open upgrade page or modal
+          console.log('Opening upgrade page...')
+          // In a real app, this would navigate to upgrade page or open a modal
+          alert('Upgrade functionality coming soon!')
+          break
+
+        case 'team:invite':
+          // Open invite team members modal
+          console.log('Opening invite team members...')
+          alert('Team invite functionality coming soon!')
+          break
+
+        case 'team:settings':
+          // Navigate to team settings
+          console.log('Opening team settings...')
+          router.navigateTo('settings/team')
+          break
+
+        case 'auth:signout':
+          if (confirm('Are you sure you want to sign out?')) {
+            const result = await userStore.logout()
+            if (result.success) {
+              // Navigate to signin page
+              router.navigateTo('signin')
+            } else {
+              alert('Failed to sign out. Please try again.')
+            }
+          }
+          break
+
+        case 'user:account':
+          // Navigate to account settings
+          console.log('Opening account settings...')
+          router.navigateTo('settings/account')
+          break
+
+        case 'user:shortcuts':
+          // Show keyboard shortcuts modal or navigate to help
+          console.log('Opening keyboard shortcuts...')
+          alert('Keyboard Shortcuts:\n\n⌘/Ctrl + N - New Project\n⌘/Ctrl + , - Settings\n⌘/Ctrl + Q - Quit\n\nMore shortcuts coming soon!')
+          break
+
+        case 'user:help':
+          // Open help documentation
+          console.log('Opening help documentation...')
+          // In a real app, this would open external docs or help center
+          window.open('https://help.framesend.com', '_blank')
           break
       }
     }
@@ -559,7 +685,8 @@ export default defineComponent({
       formatDate,
       goToSettings,
       goToQueue,
-      handleAccountClick,
+      handleTeamAccountClick,
+      handleUserAccountClick,
       toggleSidebar,
       isProjectHighlighted,
       isSettingsHighlighted,

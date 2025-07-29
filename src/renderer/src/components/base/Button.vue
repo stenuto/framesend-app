@@ -1,15 +1,14 @@
-<template>
-  <button :class="[
-    'inline-flex items-center justify-center whitespace-nowrap rounded-smooth font-medium text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-    variantClasses[variant],
-    // Use icon-only size classes if only icon exists, otherwise regular size classes
-    iconName && !hasDefaultSlot ? iconOnlySizeClasses[size] : sizeClasses[size],
-    className
-  ]" :disabled="disabled" v-bind="$attrs">
-    <Icon v-if="iconName" :name="iconName" :class="iconClasses" />
-    <slot />
-  </button>
-</template>
+<template><button :class="[
+  'inline-flex items-center justify-center whitespace-nowrap rounded-smooth font-medium text-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  variantClasses[variant],
+  // Use icon-only size classes if only icon exists, otherwise regular size classes
+  iconName && !hasDefaultSlot && !chevron ? iconOnlySizeClasses[size] : sizeClasses[size],
+  className
+]" :disabled="disabled" v-bind="$attrs">
+  <Icon v-if="iconName" :name="iconName" :class="iconClasses" />
+  <slot />
+  <Icon v-if="chevron && hasDefaultSlot" name="chevron-down" :class="chevronClasses" />
+</button></template>
 
 <script setup>
 import { computed, useSlots, Comment } from 'vue'
@@ -33,6 +32,10 @@ const props = defineProps({
   iconName: {
     type: String,
     default: null
+  },
+  chevron: {
+    type: Boolean,
+    default: false
   },
   className: {
     type: String,
@@ -79,6 +82,13 @@ const iconClasses = computed(() => {
   // Properly scale icon based on button size
   const sizeClass = props.size === 'sm' ? 'size-3.5' : props.size === 'lg' ? 'size-5' : 'size-4'
   const marginClass = hasDefaultSlot.value ? (props.size === 'sm' ? 'mr-1' : 'mr-2') : ''
+  return `${sizeClass} ${marginClass}`
+})
+
+// Chevron classes - smaller than main icon and with left margin
+const chevronClasses = computed(() => {
+  const sizeClass = props.size === 'sm' ? 'size-3' : props.size === 'lg' ? 'size-4' : 'size-3.5'
+  const marginClass = props.size === 'sm' ? 'ml-1' : 'ml-1.5'
   return `${sizeClass} ${marginClass}`
 })
 </script>

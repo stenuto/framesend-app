@@ -140,7 +140,7 @@ export const AV1_CONFIG = {
     'profile': 0, // Main 10 profile
     'tune': 0, // PSNR/BDRate-centric default
     'aq-mode': 1, // Content-adaptive quantization
-    'sc-threshold': 40, // Modest scene-cut sensitivity
+    'scd': 0, // Disable scene change detection for consistent HLS segments
     'tile-columns': 2, // 1x2 tiling for smooth parallel decoding
     'tile-rows': 1,
     'film-grain': 0, // Disabled by default (can be enabled for grain sources)
@@ -157,14 +157,14 @@ export const H264_ENCODING_PARAMS = {
   colorSpace: 'bt709', // HD color space
   // x264 specific parameters for HLS optimization
   'x264-params': [
-    'keyint=240',       // Keyframe interval: 2 seconds GOP (240 frames at 30fps for AV1 compatibility)
-    'min-keyint=240',   // Fixed GOP size for HLS
-    'scenecut=40',      // Enable scene cut detection with threshold
-    'bframes=3',       // B-frames as per reference
-    'ref=4',           // Reference frames as per reference
-    'rc-lookahead=40', // Lookahead as per reference
-    'aq-mode=1',       // Adaptive quantization mode
-    'threads=0',       // Use all available threads
+    'keyint=120',       // Keyframe interval: 2 seconds at 60fps (conservative for variable framerates)
+    'min-keyint=120',   // Fixed GOP size for HLS
+    'scenecut=0',       // Disable scene cut detection for consistent HLS segments
+    'bframes=3',        // B-frames for compression efficiency
+    'ref=4',            // Reference frames for quality
+    'rc-lookahead=40',  // Lookahead for rate control
+    'aq-mode=1',        // Adaptive quantization mode
+    'threads=0',        // Use all available threads
   ].join(':'),
 };
 

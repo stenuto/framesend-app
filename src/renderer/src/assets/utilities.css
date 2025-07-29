@@ -37,27 +37,23 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0);
+  background: var(--color-zinc-700);
+  opacity: 0.1;
   border-radius: 4px;
   transition: background 0.2s;
 }
 
 /* Show scrollbar on hover or when scrolling */
 :hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--color-zinc-600);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--color-zinc-600);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: rgba(0, 0, 0, 0.4);
-}
-
-/* For dark backgrounds, you might want lighter scrollbars */
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--color-zinc-600);
 }
 
 /* Hide scrollbars until container is hovered */

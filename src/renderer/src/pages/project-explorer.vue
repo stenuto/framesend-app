@@ -9,12 +9,15 @@
         @click="uiStore.toggleSidebar" />
       <!-- Breadcrumb navigation for gallery view -->
       <div v-if="viewMode === 'gallery'" class="flex items-center gap-2.5">
-        <h3 class="text-sm font-medium flex-1 truncate">
+        <!-- Show as button with chevron if inside a folder, otherwise just text -->
+        <Button v-if="currentFolderId" variant="ghost" size="default" chevron 
+          class="text-sm font-medium -ml-2 -mr-2"
+          @click="showBreadcrumbMenu">
+          {{ currentFolderName }}
+        </Button>
+        <h3 v-else class="text-sm font-medium flex-1 truncate">
           {{ currentFolderName }}
         </h3>
-        <!-- Only show dropdown if we're inside a folder (not at root) -->
-        <Button v-if="currentFolderId" icon-name="chevron-down" size="sm" variant="ghost" class="text-zinc-400 -ml-1"
-          @click="showBreadcrumbMenu" />
       </div>
       <!-- Project name for list view -->
       <h3 v-else class="text-sm font-medium">
@@ -24,7 +27,7 @@
     <div class="flex items-center gap-4">
       <div class="relative">
         <Icon name="search" class="absolute left-2 top-1/2 -translate-y-1/2 size-3 text-zinc-500" />
-        <input v-model="searchQuery" type="text" placeholder="Search"
+        <input v-model="searchQuery" type="text" :placeholder="searchPlaceholder"
           class="w-50 pl-7 pr-3 py-1 bg-zinc-800/50 ring-1 text-current text-[13px] rounded-smooth-md focus:border-zinc-300 focus:outline-none focus:ring-2 ring-zinc-700/50 focus:ring-zinc-600 placeholder-zinc-500" />
       </div>
     </div>
@@ -81,94 +84,27 @@
 
       <!-- Grid of items -->
       <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
-        <div v-for="item in rootItems" :key="item.id" class="group relative" :draggable="editingItemId !== item.id"
-          @dragstart="editingItemId !== item.id ? handleDragStart($event, item) : null" @dragend="handleDragEnd"
-          @drop="item.type === 'folder' ? handleDrop($event, item.id) : null"
-          @dragover.prevent="item.type === 'folder' ? handleDragOver($event, item.id) : null"
-          @dragleave="item.type === 'folder' ? handleDragLeave($event, item.id) : null"
-          @dblclick="item.type === 'folder' ? navigateToFolder(item.id) : null"
-          @contextmenu.prevent="handleItemContextMenu($event, item)">
-
-          <!-- Folder Item -->
-          <div v-if="item.type === 'folder'"
-            class="flex flex-col rounded-lg overflow-hidden cursor-pointer transition-colors" :class="{
-              'bg-zinc-800 hover:bg-zinc-700': true,
-              'ring-2 ring-blue-500 bg-blue-500/10': dragOverFolder === item.id
-            }" @dblclick="navigateToFolder(item.id)">
-            <!-- Thumbnail Preview Area -->
-            <FolderThumbnailPreview :items="getVideosInFolder(item.id).filter(v => v.status === 'ready')" />
-            <!-- Info -->
-            <div class="p-3">
-              <div class="flex items-center gap-1.5">
-                <Icon name="folder" class="size-3.5 text-zinc-500 flex-shrink-0" :stroke-width="2" />
-                <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
-                <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
-                  @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
-                  :data-item-id="item.id"
-                  class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
-              </div>
-              <div class="flex items-center justify-between mt-1">
-                <span class="text-xs text-zinc-500">{{ getFolderVideoCount(item.id) }} items</span>
-                <span class="text-xs text-zinc-500">{{ getFolderSize(item.id) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Video Item -->
-          <div v-else-if="item.type === 'video'"
-            class="flex flex-col rounded-lg overflow-hidden bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer"
-            @click="handleVideoClick(item)">
-            <!-- Thumbnail -->
-            <div class="aspect-video bg-zinc-900 relative overflow-hidden">
-              <img v-if="getThumbnailForItem(item)" :src="getThumbnailForItem(item)" :alt="`${item.name} thumbnail`"
-                class="w-full h-full object-cover" />
-              <PlaceholderImage v-else :seed="item.id" :alt="`${item.name} thumbnail`" />
-              <!-- Status overlay -->
-              <div v-if="item.status === 'processing'"
-                class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <div class="flex flex-col items-center">
-                  <svg class="size-8 -rotate-90" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
-                      class="text-white/20" />
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
-                      :stroke-dasharray="`${2 * Math.PI * 10}`"
-                      :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
-                      class="text-blue-500" />
-                  </svg>
-                  <span class="text-white text-sm mt-2">{{ Math.round(item.progress || 0) }}%</span>
-                </div>
-              </div>
-              <div v-else-if="item.status === 'queued'"
-                class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <span class="text-white text-sm">Queued</span>
-              </div>
-              <div v-else-if="item.status === 'failed'"
-                class="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <span class="text-red-400 text-sm">Failed</span>
-              </div>
-              <div v-else-if="item.status === 'ready'" class="absolute top-2 right-2">
-                <div class="size-6 rounded-full bg-emerald-600/90 flex items-center justify-center">
-                  <Icon name="check" class="size-4 text-white" />
-                </div>
-              </div>
-            </div>
-            <!-- Info -->
-            <div class="p-3">
-              <div class="flex items-center gap-1.5">
-                <Icon name="video" class="size-3.5 text-blue-600 flex-shrink-0" :stroke-width="2" />
-                <h4 v-if="editingItemId !== item.id" class="text-sm font-medium truncate">{{ item.name }}</h4>
-                <input v-else :value="item.name" @blur="handleGalleryRename($event, item)"
-                  @keydown.enter="handleGalleryRename($event, item)" @keydown.esc="editingItemId = null"
-                  :data-item-id="item.id"
-                  class="text-sm font-medium w-full bg-zinc-700 rounded outline-none focus:ring-2 focus:ring-blue-500 px-1" />
-              </div>
-              <div class="flex items-center justify-between mt-1">
-                <span class="text-xs text-zinc-500">{{ item.duration || '0:00' }}</span>
-                <span class="text-xs text-zinc-500">{{ item.size || '' }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GalleryItem
+          v-for="item in rootItems" 
+          :key="item.id"
+          :item="item"
+          :is-editing="editingItemId === item.id"
+          :is-drag-over="dragOverFolder === item.id"
+          :folder-videos="item.type === 'folder' ? getVideosInFolder(item.id).filter(v => v.status === 'ready') : []"
+          :folder-video-count="item.type === 'folder' ? getFolderVideoCount(item.id) : 0"
+          :folder-size="item.type === 'folder' ? getFolderSize(item.id) : '-'"
+          :thumbnail="item.type === 'video' ? getThumbnailForItem(item) : null"
+          @click="handleVideoClick"
+          @double-click="navigateToFolder(item.id)"
+          @drag-start="handleDragStart"
+          @drag-end="handleDragEnd"
+          @drag-over="handleDragOver"
+          @drag-leave="handleDragLeave"
+          @drop="handleDrop"
+          @context-menu="handleItemContextMenu"
+          @rename="handleGalleryRename"
+          @cancel-edit="editingItemId = null"
+        />
       </div>
     </div>
   </div>
@@ -189,6 +125,7 @@ import Button from '@components/base/Button.vue'
 import FileSystemItem from '@components/FileSystemItem.vue'
 import FolderThumbnailPreview from '@components/FolderThumbnailPreview.vue'
 import PlaceholderImage from '@components/PlaceholderImage.vue'
+import GalleryItem from '@components/GalleryItem.vue'
 
 export default {
   name: 'ProjectExplorerPage',
@@ -197,7 +134,8 @@ export default {
     Button,
     FileSystemItem,
     FolderThumbnailPreview,
-    PlaceholderImage
+    PlaceholderImage,
+    GalleryItem
   },
   meta: {
     title: 'Project Explorer'
@@ -230,7 +168,6 @@ export default {
     const editingItemId = ref(null) // Track which item is being edited
     const currentFolderId = ref(null) // Track current folder for gallery view
     const navigationPath = ref([]) // Breadcrumb path for gallery view
-    const galleryEditInput = ref(null)
 
     let unsubscribeMenu = null
 
@@ -271,13 +208,16 @@ export default {
     }, { deep: true })
 
     // Watch for view mode changes to persist preference
-    watch(viewMode, (newMode) => {
-      // Save view mode preference (you could persist this to local storage)
+    watch(viewMode, (newMode, oldMode) => {
+      // Save view mode preference
       localStorage.setItem('fileExplorerViewMode', newMode)
 
-      // Initialize navigation path when switching to gallery
-      if (newMode === 'gallery' && navigationPath.value.length === 0) {
+      // When switching from list to gallery via any method (not just menu)
+      if (newMode === 'gallery' && oldMode === 'list') {
+        // Always start at root when switching from list to gallery
+        currentFolderId.value = null
         navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
+        router.navigateTo('project-explorer', { projectId: selectedProject.value?.id })
       }
     })
 
@@ -400,6 +340,17 @@ export default {
       }
       const folder = fileSystem.value.find(item => item.id === currentFolderId.value)
       return folder?.name || 'Folder'
+    })
+    
+    // Computed property for search placeholder
+    const searchPlaceholder = computed(() => {
+      if (viewMode.value === 'list' || !currentFolderId.value) {
+        // List view or gallery at root level
+        return 'Search in project'
+      } else {
+        // Gallery view inside a folder
+        return 'Search in folder'
+      }
     })
 
     // Computed properties for empty state messages
@@ -811,7 +762,7 @@ export default {
         item.error = 'Cancelled by user'
       }
     })
-    
+
     const unsubscribeThumbnail = window.api.video.onThumbnail?.((data) => {
       console.log('[ProjectExplorer] Received thumbnail event:', data)
       const item = fileSystem.value.find(i => i.jobId === data.jobId)
@@ -820,7 +771,7 @@ export default {
         item.thumbnailPath = data.thumbnailPath
         item.thumbnailIsTemporary = data.isTemporary
         console.log(`[ProjectExplorer] Updated item ${item.name} with thumbnail: ${data.thumbnailPath}`)
-        
+
         // Force reactivity update
         const index = fileSystem.value.findIndex(i => i.jobId === data.jobId)
         if (index !== -1) {
@@ -1042,22 +993,40 @@ export default {
           break
 
         case 'explorer:viewList':
+          // Remember the folder we were viewing in gallery mode
+          const folderToExpand = currentFolderId.value
+          
           viewMode.value = 'list'
+          
+          // Clear all expanded folders first
+          expandedFolders.value.clear()
+          
+          // If we were viewing a folder in gallery mode, expand it and its ancestors
+          if (folderToExpand) {
+            // Expand the folder itself
+            expandedFolders.value.add(folderToExpand)
+            
+            // Expand all parent folders to make it visible
+            const ancestors = getAncestorIds(folderToExpand)
+            ancestors.forEach(ancestorId => {
+              expandedFolders.value.add(ancestorId)
+            })
+            
+            // Set this folder as the last expanded to highlight it
+            lastExpandedFolder.value = folderToExpand
+          }
+          
           currentFolderId.value = null
           navigationPath.value = []
           break
 
         case 'explorer:viewGallery':
           viewMode.value = 'gallery'
-          // Check if we have a folderId in current params
-          const folderId = currentParams.value.folderId
-          if (folderId) {
-            currentFolderId.value = folderId
-            navigationPath.value = buildNavigationPath(folderId)
-          } else {
-            currentFolderId.value = null
-            navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
-          }
+          // Always start at project root when switching from list view
+          currentFolderId.value = null
+          navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
+          // Update route to reflect root level
+          router.navigateTo('project-explorer', { projectId: selectedProject.value?.id })
           break
 
         case 'breadcrumb:navigate':
@@ -1238,42 +1207,10 @@ export default {
       }
     }
 
-    const handleGalleryRename = (event, item) => {
-      const newName = event.target.value.trim()
-      if (newName && newName !== item.name) {
-        handleRename({
-          itemId: item.id,
-          oldName: item.name,
-          newName: newName,
-          itemType: item.type
-        })
-      }
-      editingItemId.value = null
+    const handleGalleryRename = (renameData) => {
+      handleRename(renameData)
     }
 
-    // Watch for editing state to focus input in gallery view
-    watch(editingItemId, async (newId) => {
-      if (newId && viewMode.value === 'gallery') {
-        await nextTick()
-        // Try multiple times to ensure the element is rendered
-        let attempts = 0
-        const tryFocus = () => {
-          // Find the input for the specific item being edited
-          const input = document.querySelector(`input[data-item-id="${newId}"]`)
-
-          if (input) {
-            input.focus()
-            // Select all text in the input
-            input.select()
-          } else if (attempts < 10) {
-            attempts++
-            setTimeout(tryFocus, 50)
-          }
-        }
-        // Add a small delay to ensure the input is fully rendered
-        setTimeout(tryFocus, 100)
-      }
-    })
 
     const handleDelete = async (itemId, itemName, itemType) => {
       // Confirm deletion
@@ -1379,10 +1316,10 @@ export default {
         return `${bytes} B`
       }
     }
-    
+
     // Store thumbnail data URLs
     const thumbnailCache = ref(new Map())
-    
+
     const getVideoThumbnail = (item) => {
       // Check cache first
       const cacheKey = item.id
@@ -1391,9 +1328,9 @@ export default {
         console.log(`[getVideoThumbnail] Returning cached thumbnail for ${item.name}`)
         return cached
       }
-      
+
       console.log(`[getVideoThumbnail] Checking thumbnail for ${item.name}, thumbnailPath: ${item.thumbnailPath}`)
-      
+
       // Check if the item has a thumbnail path
       if (item.thumbnailPath) {
         console.log(`[getVideoThumbnail] Loading thumbnail from path: ${item.thumbnailPath}`)
@@ -1412,7 +1349,7 @@ export default {
         })
         return null // Return null while loading
       }
-      
+
       // Check if the video has an associated job with a thumbnail
       if (item.jobId) {
         const job = videoEncodingStore.jobs.get(item.jobId)
@@ -1432,11 +1369,11 @@ export default {
           return null // Return null while loading
         }
       }
-      
+
       console.log(`[getVideoThumbnail] No thumbnail found for ${item.name}`)
       return null
     }
-    
+
     // Create a computed function that returns thumbnail
     const getThumbnailForItem = (item) => {
       // Trigger reactivity on thumbnailCache changes
@@ -1491,12 +1428,12 @@ export default {
       handleVideoClick,
       handleItemContextMenu,
       handleGalleryRename,
-      galleryEditInput,
       getFolderSize,
       emptyStateTitle,
       emptyStateMessage,
       getVideoThumbnail,
-      getThumbnailForItem
+      getThumbnailForItem,
+      searchPlaceholder
     }
   }
 }

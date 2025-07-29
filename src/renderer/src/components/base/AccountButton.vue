@@ -1,7 +1,7 @@
 <template>
 <div
   class="flex items-center gap-[9px] mx-3 p-2 rounded-smooth-lg hover:bg-zinc-600/20 cursor-pointer"
-  @click="$emit('click')">
+  @click="$emit('click', $event)">
   <!-- Avatar -->
   <component :is="avatarComponent" v-bind="avatarProps" :class="[type === 'team' ? 'size-8' : 'size-8']" />
 
