@@ -297,6 +297,29 @@ export class FluentFFmpegWrapper extends EventEmitter {
           };
           storeProcess();
         })
+        .on('stderr', (stderrLine) => {
+          // Parse stderr for HLS segment completion
+          // FFmpeg outputs lines like: "[hls @ 0x...] Opening 'segment_0001.m4s' for writing"
+          const segmentMatch = stderrLine.match(/Opening '(.*(segment_\d+\.m4s))' for writing/);
+          if (segmentMatch) {
+            const segmentPath = segmentMatch[1];
+            const segmentFile = segmentMatch[2];
+            const segmentNumber = parseInt(segmentFile.match(/segment_(\d+)/)[1]);
+            
+            // Emit segment ready event
+            if (options.onSegmentReady) {
+              // Wait a bit to ensure file is fully written
+              setTimeout(() => {
+                options.onSegmentReady({
+                  segmentPath,
+                  segmentFile,
+                  segmentNumber,
+                  rendition: options.renditionName || 'unknown'
+                });
+              }, 100);
+            }
+          }
+        })
         .on('progress', (progress) => {
           if (progress.percent) {
             onProgress(progress.percent / 100);

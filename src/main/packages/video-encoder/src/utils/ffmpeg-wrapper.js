@@ -116,7 +116,6 @@ export class FFmpegWrapper extends EventEmitter {
     };
     
     this.activeProcesses.set(process.pid, processInfo);
-    console.log(`[FFmpeg] Started encoding process PID: ${process.pid}, Total active: ${this.activeProcesses.size}`);
     
     // Register with global manager if we have a jobId
     if (this.jobId) {
@@ -529,7 +528,6 @@ export class FFmpegWrapper extends EventEmitter {
               }
             }
           } else {
-            console.log('[FFmpeg] Verified: No ffmpeg processes remaining');
           }
         } catch (e) {
           // Ignore

@@ -158,8 +158,15 @@ export class VideoEncodingService extends EventEmitter {
     });
 
     job.on('thumbnail:ready', (thumbnailData) => {
-      console.log(`[VideoEncodingService] Thumbnail ready for job ${jobId}:`, thumbnailData);
       this.emit('job:thumbnail', { jobId, ...thumbnailData });
+    });
+
+    job.on('segment:ready', (segmentData) => {
+      this.emit('job:segment', segmentData);
+    });
+
+    job.on('storyboard:ready', (storyboardData) => {
+      this.emit('job:storyboard', { jobId, ...storyboardData });
     });
 
     // Add to queue

@@ -693,7 +693,6 @@ export default {
           }
           fileSystem.value.push(newVideo)
 
-          console.log(`Started encoding: ${file.name}`)
         } catch (error) {
           console.error(`Failed to queue video ${file.name}:`, error)
 
@@ -753,6 +752,13 @@ export default {
           const remainingSeconds = seconds % 60
           item.duration = `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
         }
+
+        // Ensure thumbnailPath is preserved from earlier thumbnail event
+        // The thumbnail should already be set from the thumbnail:ready event
+        // but let's clear the cache to force a reload with the final thumbnail
+        if (item.thumbnailPath) {
+          thumbnailCache.value.delete(item.id)
+        }
       }
     })
 
@@ -773,21 +779,20 @@ export default {
     })
 
     const unsubscribeThumbnail = window.api.video.onThumbnail?.((data) => {
-      console.log('[ProjectExplorer] Received thumbnail event:', data)
       const item = fileSystem.value.find(i => i.jobId === data.jobId)
       if (item) {
         // Update the item with thumbnail path
         item.thumbnailPath = data.thumbnailPath
         item.thumbnailIsTemporary = data.isTemporary
-        console.log(`[ProjectExplorer] Updated item ${item.name} with thumbnail: ${data.thumbnailPath}`)
 
+        // Clear cache for this item to force reload with new thumbnail
+        thumbnailCache.value.delete(item.id)
+        
         // Force reactivity update
         const index = fileSystem.value.findIndex(i => i.jobId === data.jobId)
         if (index !== -1) {
           fileSystem.value[index] = { ...item }
         }
-      } else {
-        console.warn(`[ProjectExplorer] Could not find item with jobId: ${data.jobId}`)
       }
     })
 
@@ -829,7 +834,6 @@ export default {
     const handleCancelEncoding = async (jobId) => {
       try {
         await videoEncodingStore.cancelJob(jobId)
-        console.log(`Cancelled encoding job: ${jobId}`)
       } catch (error) {
         console.error(`Failed to cancel job ${jobId}:`, error)
       }
@@ -870,8 +874,7 @@ export default {
             }
             fileSystem.value.push(newVideo)
 
-            console.log(`Started encoding: ${file.name}`)
-          } catch (error) {
+            } catch (error) {
             console.error(`Failed to queue video ${file.name}:`, error)
           }
         }
@@ -905,6 +908,113 @@ export default {
                 label: 'Copy iFrame Embed',
                 action: 'share:copyIframeEmbed',
                 data: { fileId: item.id, fileName: item.name }
+              }
+            ]
+          },
+          { type: 'separator' },
+          {
+            label: 'Labels',
+            submenu: [
+              {
+                label: 'In Progress',
+                type: 'radio',
+                checked: false,
+                icon: 'menu_icons/blue@2x.png',
+                action: 'label:set',
+                data: { fileId: item.id, label: 'in-progress' }
+              },
+              {
+                label: 'Review',
+                type: 'radio',
+                checked: false,
+                icon: 'menu_icons/amber@2x.png',
+                action: 'label:set',
+                data: { fileId: item.id, label: 'review' }
+              },
+              {
+                label: 'Approved',
+                type: 'radio',
+                checked: false,
+                icon: 'menu_icons/emerald@2x.png',
+                action: 'label:set',
+                data: { fileId: item.id, label: 'approved' }
+              },
+              {
+                label: 'Needs Changes',
+                type: 'radio',
+                checked: false,
+                icon: 'menu_icons/orange@2x.png',
+                action: 'label:set',
+                data: { fileId: item.id, label: 'needs-changes' }
+              },
+              {
+                label: 'Final',
+                type: 'radio',
+                checked: false,
+                icon: 'menu_icons/violet@2x.png',
+                action: 'label:set',
+                data: { fileId: item.id, label: 'final' }
+              },
+              {
+                label: 'Archive',
+                type: 'radio',
+                checked: false,
+                icon: 'menu_icons/zinc@2x.png',
+                action: 'label:set',
+                data: { fileId: item.id, label: 'archive' }
+              }
+            ]
+          },
+          { type: 'separator' },
+          {
+            label: 'Download',
+            submenu: [
+              {
+                label: 'MP4 (H.264)',
+                submenu: [
+                  {
+                    label: '360p',
+                    action: 'download:mp4',
+                    data: { fileId: item.id, format: 'mp4', quality: '360p' },
+                    enabled: item.status === 'ready'
+                  },
+                  {
+                    label: '720p',
+                    action: 'download:mp4',
+                    data: { fileId: item.id, format: 'mp4', quality: '720p' },
+                    enabled: item.status === 'ready'
+                  },
+                  {
+                    label: '1080p',
+                    action: 'download:mp4',
+                    data: { fileId: item.id, format: 'mp4', quality: '1080p' },
+                    enabled: item.status === 'ready'
+                  },
+                  {
+                    label: '2160p (4K)',
+                    action: 'download:mp4',
+                    data: { fileId: item.id, format: 'mp4', quality: '2160p' },
+                    enabled: item.status === 'ready'
+                  }
+                ]
+              },
+              {
+                label: 'MP4 (AV1)',
+                submenu: [
+                  {
+                    label: '2160p (4K)',
+                    action: 'download:av1',
+                    data: { fileId: item.id, format: 'av1', quality: '2160p' },
+                    enabled: item.status === 'ready'
+                  }
+                ]
+              },
+              { type: 'separator' },
+              {
+                label: 'Raw File',
+                action: 'download:raw',
+                data: { fileId: item.id, format: 'raw' },
+                enabled: true
               }
             ]
           },
@@ -1084,6 +1194,17 @@ export default {
         case 'share:copyIframeEmbed':
           const embedCode = `<iframe src="https://app.framesend.com/embed/${data.fileId}\" width="640" height="360" frameborder="0" allowfullscreen></iframe>`
           navigator.clipboard.writeText(embedCode)
+          break
+
+        case 'label:set':
+          // Handle setting a label on the video
+          const video = fileSystem.value.find(item => item.id === data.fileId)
+          if (video) {
+            // For now, just log the action
+            console.log(`Setting label "${data.label}" on video:`, video.name)
+            // TODO: Update video metadata with label
+            // TODO: Call server API to persist label
+          }
           break
       }
     }
@@ -1348,24 +1469,17 @@ export default {
       const cacheKey = item.id
       if (thumbnailCache.value.has(cacheKey)) {
         const cached = thumbnailCache.value.get(cacheKey)
-        console.log(`[getVideoThumbnail] Returning cached thumbnail for ${item.name}`)
         return cached
       }
 
-      console.log(`[getVideoThumbnail] Checking thumbnail for ${item.name}, thumbnailPath: ${item.thumbnailPath}`)
-
-      // Check if the item has a thumbnail path
+      // Check if the item has a thumbnail path stored
       if (item.thumbnailPath) {
-        console.log(`[getVideoThumbnail] Loading thumbnail from path: ${item.thumbnailPath}`)
         // Load the thumbnail asynchronously
         window.api.file.readImage(item.thumbnailPath).then(dataUrl => {
           if (dataUrl) {
-            console.log(`[getVideoThumbnail] Loaded thumbnail data URL for ${item.name}`)
             thumbnailCache.value.set(cacheKey, dataUrl)
             // Force reactivity update
             thumbnailCache.value = new Map(thumbnailCache.value)
-          } else {
-            console.error(`[getVideoThumbnail] Failed to load thumbnail for ${item.name}`)
           }
         }).catch(err => {
           console.error(`[getVideoThumbnail] Error loading thumbnail for ${item.name}:`, err)
@@ -1373,16 +1487,15 @@ export default {
         return null // Return null while loading
       }
 
-      // Check if the video has an associated job with a thumbnail
-      if (item.jobId) {
+      // For actively encoding videos, check if job has a thumbnail
+      if (item.jobId && (item.status === 'processing' || item.status === 'queued')) {
         const job = videoEncodingStore.jobs.get(item.jobId)
-        console.log(`[getVideoThumbnail] Checking job ${item.jobId} for thumbnail, job exists: ${!!job}, thumbnailPath: ${job?.thumbnailPath}`)
         if (job && job.thumbnailPath) {
-          console.log(`[getVideoThumbnail] Loading thumbnail from job path: ${job.thumbnailPath}`)
           window.api.file.readImage(job.thumbnailPath).then(dataUrl => {
             if (dataUrl) {
-              console.log(`[getVideoThumbnail] Loaded thumbnail data URL from job for ${item.name}`)
               thumbnailCache.value.set(cacheKey, dataUrl)
+              // Update the item's thumbnailPath for future reference
+              item.thumbnailPath = job.thumbnailPath
               // Force reactivity update
               thumbnailCache.value = new Map(thumbnailCache.value)
             }
@@ -1393,7 +1506,6 @@ export default {
         }
       }
 
-      console.log(`[getVideoThumbnail] No thumbnail found for ${item.name}`)
       return null
     }
 

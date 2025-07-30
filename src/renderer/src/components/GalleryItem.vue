@@ -14,7 +14,7 @@
   @dblclick="handleDoubleClick"
   @contextmenu.prevent="$emit('context-menu', $event, item)">
 
-  <div class="flex flex-col transition-colors"
+  <div class="flex flex-col"
     :class="containerClasses">
 
     <!-- Preview Area -->

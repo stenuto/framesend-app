@@ -2,10 +2,12 @@ import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import { useUserStore } from './user';
 import { useProjectsStore } from './projects';
+import { useAlertsStore } from './alerts';
 
 export const useVideoEncodingStore = defineStore('videoEncoding', () => {
   const userStore = useUserStore();
   const projectsStore = useProjectsStore();
+  const alertsStore = useAlertsStore();
   
   // State
   const jobs = ref(new Map()); // Map of jobId -> job data
@@ -80,15 +82,18 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     cleanupListeners();
     
     // Start listener
-    console.log('[VideoStore] Setting up start listener, onStart available:', !!window.api.video.onStart);
     if (window.api.video.onStart) {
       eventCleanups.value.start = window.api.video.onStart((data) => {
-        console.log('[VideoStore] Received start event for job:', data.jobId, data);
         const job = jobs.value.get(data.jobId);
         if (job) {
           job.status = 'processing'; // Changed from 'encoding' to 'processing'
           job.startedAt = new Date();
-          console.log('[VideoStore] Updated job status to processing');
+          
+          // Show info alert
+          alertsStore.info(
+            'Encoding Started',
+            `Started encoding ${job.file.name}`
+          );
         } else {
           console.warn('[VideoStore] Could not find job for start event:', data.jobId);
         }
@@ -130,19 +135,12 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
           const stageDesc = stageDescriptions[data.currentStage] || data.currentStage;
           const progress = Math.round(data.global * 100);
           
-          if (data.currentStage === 'encode' && data.details?.currentRendition) {
-            const renditionProgress = Math.round(data.details.renditionProgress * 100);
-            console.log(`[${job.file.name}] ${stageDesc}: ${data.details.currentRendition} (${renditionProgress}%) - Total: ${progress}%`);
-          } else {
-            console.log(`[${job.file.name}] ${stageDesc} - ${progress}%`);
-          }
           
           // Log stage completion only for major milestones
           if (data.stages) {
             const majorStages = ['encode', 'assets'];
             Object.entries(data.stages).forEach(([stage, stageData]) => {
               if (stageData.completed && !job.loggedStages?.[stage] && majorStages.includes(stage)) {
-                console.log(`[${job.file.name}] ✓ ${stageDescriptions[stage] || stage} complete`);
                 if (!job.loggedStages) job.loggedStages = {};
                 job.loggedStages[stage] = true;
               }
@@ -163,6 +161,12 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
         job.metadata = data.metadata;
         job.duration = data.duration;
         job.completedAt = new Date();
+        
+        // Show success alert
+        alertsStore.success(
+          'Encoding Complete',
+          `${job.file.name} has been successfully encoded`
+        );
       }
     });
 
@@ -173,13 +177,19 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
         job.status = 'failed'; // Changed from 'error' to 'failed'
         job.error = data.error;
         job.failedAt = new Date();
+        
+        // Show error alert
+        alertsStore.error(
+          'Encoding Failed',
+          `Failed to encode ${job.file.name}: ${data.error || 'Unknown error'}`,
+          data.stack // Include stack trace if available
+        );
       }
     });
     
     // Cancelled listener (if available)
     if (window.api.video.onCancelled) {
       eventCleanups.value.cancelled = window.api.video.onCancelled((data) => {
-        console.log(`[VideoStore] Received cancelled event for job ${data.jobId}`);
         const job = jobs.value.get(data.jobId);
         if (job) {
           job.status = 'failed';
@@ -192,7 +202,6 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
     // Thumbnail listener
     if (window.api.video.onThumbnail) {
       eventCleanups.value.thumbnail = window.api.video.onThumbnail((data) => {
-        console.log(`[VideoStore] Received thumbnail for job ${data.jobId}:`, data);
         const job = jobs.value.get(data.jobId);
         if (job) {
           job.thumbnailPath = data.thumbnailPath;
@@ -200,8 +209,6 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
           
           // Emit an event or update dependent stores
           // This allows the UI to immediately show the thumbnail
-          console.log(`[VideoStore] Updated job ${data.jobId} with thumbnail path: ${data.thumbnailPath}`);
-          console.log(`[${job.file.name}] Early thumbnail generated`);
         } else {
           console.warn(`[VideoStore] Could not find job ${data.jobId} in store`);
         }
@@ -318,7 +325,6 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
    * Cancel a job
    */
   async function cancelJob(jobId) {
-    console.log(`[VideoStore] Cancelling job ${jobId}`);
     const result = await window.api.video.cancel(jobId);
     
     if (!result.success) {
@@ -326,7 +332,6 @@ export const useVideoEncodingStore = defineStore('videoEncoding', () => {
       throw new Error(result.error);
     }
     
-    console.log(`[VideoStore] Job ${jobId} cancelled successfully`);
 
     const job = jobs.value.get(jobId);
     if (job) {

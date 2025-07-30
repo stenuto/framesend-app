@@ -104,7 +104,8 @@ class ApiService {
    * Create new folder
    */
   async createFolder(data) {
-    return this.request('POST', '/folders', data)
+    const { projectId, ...folderData } = data
+    return this.request('POST', `/projects/${projectId}/folders`, folderData)
   }
 
   /**

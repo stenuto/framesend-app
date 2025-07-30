@@ -29,11 +29,6 @@ export async function extractThumbnails(inputPath, outputPath, options = {}) {
 async function extractSingleThumbnail(inputPath, outputPath, options) {
   const ffmpegPath = options.ffmpegPath || 'ffmpeg';
   
-  console.log('[extractSingleThumbnail] Starting thumbnail extraction:', {
-    inputPath,
-    outputPath,
-    options
-  });
   
   // Calculate seek time
   let seekTime = '00:00:01'; // Default 1 second
@@ -64,11 +59,9 @@ async function extractSingleThumbnail(inputPath, outputPath, options) {
   
   args.push('-y', outputPath);
   
-  console.log('[extractSingleThumbnail] Running ffmpeg with args:', args);
   
   try {
     await execa(ffmpegPath, args);
-    console.log('[extractSingleThumbnail] Thumbnail extracted successfully to:', outputPath);
   } catch (error) {
     console.error('[extractSingleThumbnail] FFmpeg error:', error);
     throw error;
@@ -113,7 +106,6 @@ async function generateStoryboardSprite(inputPath, outputPath, options) {
     
     const thumbnailCount = Math.max(1, Math.floor(duration / interval)); // At least 1 thumbnail
     
-    console.log(`[Storyboard] Duration: ${duration.toFixed(1)}s, Interval: ${interval}s, Thumbnails: ${thumbnailCount}`);
     
     // Validate dimensions
     if (!options.width || options.width <= 0 || !options.height || options.height <= 0) {

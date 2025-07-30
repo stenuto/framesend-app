@@ -2,7 +2,7 @@
 <div class="aspect-video relative overflow-hidden">
   <!-- Empty folder - show folder icon -->
   <div v-if="items.length === 0" class="flex items-center justify-center h-full">
-    <Icon name="folder" class="size-12 text-zinc-700" :stroke-width=".75" />
+    <Icon name="folder" class="size-12 text-zinc-700 group-hover:text-zinc-600" :stroke-width=".75" />
   </div>
 
   <!-- 1 video - left half filled, right half empty -->

@@ -205,19 +205,20 @@ export class VideoJob extends EventEmitter {
         }
       );
       
-      // Emit event for immediate UI update
-      this.emit('thumbnail:ready', {
-        jobId: this.id,
-        thumbnailPath: heroPath,
-        isTemporary: false
-      });
+      // Emit event for immediate UI update with a small delay to ensure file is written
+      setTimeout(() => {
+        this.emit('thumbnail:ready', {
+          jobId: this.id,
+          thumbnailPath: heroPath,
+          isTemporary: false
+        });
+      }, 500); // 500ms delay to ensure file is fully written
       
       // Store in metadata
       this.metadata.thumbnails = {
         hero: 'thumbnails/hero_4k.jpg',
       };
       
-      console.log(`[VideoJob ${this.id}] Hero thumbnail generated at 50% (${this.metadata.duration / 2}s) and saved to: ${heroPath}`);
       
       this.progressTracker.updateStage('assets', 0.5); // Hero thumbnail is 50% of assets stage
       
@@ -397,6 +398,17 @@ export class VideoJob extends EventEmitter {
           // Create HLS playlist for this rendition
           const playlistPath = path.join(rendition.outputPath, 'playlist.m3u8');
           
+          // Add segment ready callback to encoding options
+          encodingOptions.onSegmentReady = (segmentData) => {
+            this._handleSegmentReady({
+              ...segmentData,
+              rendition: rendition.name,
+              codec: rendition.codec || 'h264',
+              outputPath: rendition.outputPath
+            });
+          };
+          encodingOptions.renditionName = rendition.name;
+          
           // Start encoding with progress callback
           await this.ffmpeg.encodeWithProgress(
             this.inputPath,
@@ -537,6 +549,14 @@ export class VideoJob extends EventEmitter {
           image: 'thumbnails/storyboard.jpg',
           data: 'thumbnails/storyboard.json',
         };
+        
+        // Emit storyboard ready event
+        this.emit('storyboard:ready', {
+          storyboardPath: 'thumbnails/storyboard.jpg',
+          metadataPath: 'thumbnails/storyboard.json',
+          thumbnailCount: storyboardData.thumbnails?.length || 0,
+          interval: storyboardData.interval || 0
+        });
       }
       
       this.progressTracker.completeStage('assets');
@@ -761,6 +781,34 @@ export class VideoJob extends EventEmitter {
     } catch (error) {
       // Ignore errors during size calculation
       console.warn('Failed to calculate encoded size:', error.message);
+    }
+  }
+
+  /**
+   * Handle when an HLS segment is ready
+   */
+  async _handleSegmentReady(segmentData) {
+    try {
+      const segmentFullPath = path.join(segmentData.outputPath, segmentData.segmentFile);
+      
+      // Check if file exists and get its size
+      const stats = await fs.stat(segmentFullPath);
+      
+      // Emit segment ready event with full metadata
+      this.emit('segment:ready', {
+        jobId: this.id,
+        videoId: this.id,
+        rendition: segmentData.rendition,
+        codec: segmentData.codec,
+        segmentNumber: segmentData.segmentNumber,
+        segmentFile: segmentData.segmentFile,
+        segmentPath: path.relative(this.outputDir, segmentFullPath),
+        size: stats.size,
+        duration: this.metadata.hlsSegmentDuration || 6,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      // Ignore errors - segment might not be fully written yet
     }
   }
 

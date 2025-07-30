@@ -7,6 +7,7 @@
       </p>
     </div>
   </MainLayout>
+  <ToastNotifications />
 </template>
 
 <script setup>
@@ -15,12 +16,15 @@ import { storeToRefs } from 'pinia'
 import { useRouterStore } from './stores/router'
 import { useProjectsStore } from './stores/projects'
 import { useSettingsStore } from './stores/settings'
+import { useAlertsStore } from './stores/alerts'
 import { apiService } from './services/api'
 import MainLayout from './components/layout/MainLayout.vue'
+import ToastNotifications from './components/ToastNotifications.vue'
 
 const router = useRouterStore()
 const projectsStore = useProjectsStore()
 const settingsStore = useSettingsStore() // Initialize settings store
+const alertsStore = useAlertsStore()
 const { currentComponent } = storeToRefs(router)
 
 // Initialize routes on mount
@@ -53,6 +57,13 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error('Failed to load projects from server:', error)
+    
+    // Show warning alert
+    alertsStore.warning(
+      'Server Connection Failed',
+      'Unable to connect to the server. Using local data instead.'
+    )
+    
     // Fall back to local data
     const firstProject = projectsStore.projects[0]
     if (firstProject) {

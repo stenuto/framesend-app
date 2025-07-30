@@ -216,6 +216,7 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       // Queue the video with settings
       const job = await service.queueVideo(filePath, mergedOptions);
       
+      
       // Log API call for video creation
       console.log('📡 POST /api/videos', {
         projectId: options.projectId || 'default-project',
@@ -232,8 +233,6 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
             status: 'processing'
           });
           
-          console.log(`[startHandler] Job ${job.id} started encoding`);
-          
           event.sender.send('encoding:start', data);
         }
       };
@@ -241,18 +240,86 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       const progressHandler = (progress) => {
         if (progress.jobId === job.id) {
           // Log progress with encoded size for debugging
-          console.log(`[Encoding Progress] Job ${job.id}: ${Math.round(progress.global * 100)}%, Encoded Size: ${progress.encodedSize || 0} bytes`);
           event.sender.send('encoding:progress', progress);
         }
       };
       
       const completeHandler = (result) => {
         if (result.jobId === job.id) {
+          // Create clean metadata object for server
+          const cleanMetadata = {
+            // Basic info
+            id: result.metadata.id,
+            duration: result.metadata.duration,
+            
+            // Source file info (clearly labeled)
+            source: {
+              size: result.metadata.size,
+              bitrate: result.metadata.bitrate,
+              video: {
+                codec: result.metadata.video.codec,
+                width: result.metadata.video.width,
+                height: result.metadata.video.height,
+                frameRate: result.metadata.video.frameRate,
+                bitRate: result.metadata.video.bitRate,
+                pixelFormat: result.metadata.video.pixelFormat,
+                colorSpace: result.metadata.video.colorSpace,
+                colorPrimaries: result.metadata.video.colorPrimaries,
+                colorTransfer: result.metadata.video.colorTransfer,
+                aspectRatio: result.metadata.video.aspectRatio
+              },
+              audio: result.metadata.audio ? {
+                codec: result.metadata.audio.codec,
+                channels: result.metadata.audio.channels,
+                channelLayout: result.metadata.audio.channelLayout,
+                sampleRate: result.metadata.audio.sampleRate,
+                bitRate: result.metadata.audio.bitRate
+              } : null
+            },
+            
+            // Encoded output info
+            encoded: {
+              // Renditions array includes all H.264 and AV1 based on user settings
+              renditions: result.metadata.renditions, // Already contains codec, actual bitrate, size, etc.
+              
+              // Encoded audio tracks
+              audio: result.metadata.audio ? {
+                default: {
+                  path: 'audio/default.m4a',
+                  codec: 'aac',
+                  bitrate: '128k',
+                  channels: result.metadata.audio.channels || 2
+                },
+                upgraded: {
+                  path: 'audio/upgraded.m4a',
+                  codec: 'aac',
+                  bitrate: '192k',
+                  channels: result.metadata.audio.channels || 2
+                }
+              } : null,
+              
+              // HLS info
+              hlsSegmentDuration: result.metadata.hlsSegmentDuration,
+              masterPlaylist: result.metadata.masterPlaylist,
+              
+              // Output stats
+              outputSize: result.metadata.outputSize,
+              fileCount: result.metadata.fileCount
+            },
+            
+            // Assets
+            thumbnails: result.metadata.thumbnails,
+            
+            // Timing
+            createdAt: result.metadata.createdAt,
+            encodingDuration: result.metadata.encodingDuration
+          };
+          
           // Log API call for status update to ready with encoded size
           console.log(`📡 PUT /api/videos/${job.id}`, {
             status: 'ready',
             encodedSize: result.metadata?.outputSize || 0,
-            metadata: result.metadata
+            metadata: cleanMetadata
           });
           
           event.sender.send('encoding:complete', result);
@@ -263,6 +330,8 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           service.off('job:error', errorHandler);
           service.off('job:cancelled', cancelledHandler);
           service.off('job:thumbnail', thumbnailHandler);
+          service.off('job:segment', segmentHandler);
+          service.off('job:storyboard', storyboardHandler);
         }
       };
       
@@ -287,6 +356,8 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           service.off('job:error', errorHandler);
           service.off('job:cancelled', cancelledHandler);
           service.off('job:thumbnail', thumbnailHandler);
+          service.off('job:segment', segmentHandler);
+          service.off('job:storyboard', storyboardHandler);
         }
       };
       
@@ -306,18 +377,44 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
           service.off('job:error', errorHandler);
           service.off('job:cancelled', cancelledHandler);
           service.off('job:thumbnail', thumbnailHandler);
+          service.off('job:segment', segmentHandler);
+          service.off('job:storyboard', storyboardHandler);
         }
       };
       
       const thumbnailHandler = (data) => {
         if (data.jobId === job.id) {
-          console.log(`[video:encode] Thumbnail ready for job ${job.id}:`, data.thumbnailPath);
-          event.sender.send('encoding:thumbnail', data);
-          // Also send a log message to renderer for debugging
-          event.sender.send('encoding:log', {
-            jobId: job.id,
-            message: `Thumbnail ready: ${data.thumbnailPath}`
+          // Log mock API call for thumbnail upload
+          console.log(`📡 PUT /api/videos/${job.id}/thumbnail`, {
+            type: 'hero',
+            path: data.thumbnailPath,
+            timestamp: new Date().toISOString()
           });
+          
+          // Ensure we have the absolute path for the renderer
+          const thumbnailData = {
+            ...data,
+            thumbnailPath: data.thumbnailPath // This should already be absolute from VideoJob
+          };
+          
+          event.sender.send('encoding:thumbnail', thumbnailData);
+        }
+      };
+      
+      const segmentHandler = (data) => {
+        if (data.jobId === job.id) {
+          // Log mock API call for segment upload
+          console.log(`📡 PUT /api/videos/${data.videoId}/segment`, {
+            rendition: data.rendition,
+            segmentNumber: data.segmentNumber,
+            segmentPath: data.segmentPath,
+            size: data.size,
+            duration: data.duration,
+            timestamp: data.timestamp
+          });
+          
+          // Optionally forward to renderer
+          event.sender.send('encoding:segment', data);
         }
       };
       
@@ -328,6 +425,24 @@ export default async function registerVideoHandlers(ipcMain, { app }) {
       service.on('job:error', errorHandler);
       service.on('job:cancelled', cancelledHandler);
       service.on('job:thumbnail', thumbnailHandler);
+      service.on('job:segment', segmentHandler);
+      
+      const storyboardHandler = (data) => {
+        if (data.jobId === job.id) {
+          // Log mock API call for storyboard upload
+          console.log(`📡 PUT /api/videos/${job.id}/storyboard`, {
+            imagePath: data.storyboardPath,
+            metadataPath: data.metadataPath,
+            thumbnailCount: data.thumbnailCount,
+            interval: data.interval,
+            timestamp: new Date().toISOString()
+          });
+          
+          event.sender.send('encoding:storyboard', data);
+        }
+      };
+      
+      service.on('job:storyboard', storyboardHandler);
       
       return {
         success: true,

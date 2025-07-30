@@ -28,7 +28,7 @@ DELETE /api/videos/:id            # Delete video
 
 ### Folders
 ```
-POST   /api/folders               # Create folder
+POST   /api/projects/:id/folders  # Create folder in project
 PUT    /api/folders/:id           # Update folder (name, parent)
 DELETE /api/folders/:id           # Delete folder
 ```
