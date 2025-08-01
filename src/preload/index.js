@@ -35,7 +35,8 @@ const api = {
   app: {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),
     getName: () => ipcRenderer.invoke('app:getName'),
-    getPath: (name) => ipcRenderer.invoke('app:getPath', name)
+    getPath: (name) => ipcRenderer.invoke('app:getPath', name),
+    getPlatform: () => ipcRenderer.invoke('app:getPlatform')
   },
   
   // Video encoding
@@ -109,6 +110,23 @@ const api = {
   setAuthToken: (token) => ipcRenderer.invoke('api:setAuthToken', token),
   clearAuthToken: () => ipcRenderer.invoke('api:clearAuthToken'),
   
+  // Keybindings operations
+  keybindings: {
+    registerAll: (shortcuts) => ipcRenderer.invoke('keybindings:registerAll', shortcuts),
+    load: () => ipcRenderer.invoke('keybindings:load'),
+    save: (shortcuts) => ipcRenderer.invoke('keybindings:save', shortcuts)
+  }
+}
+
+// IPC bridge for renderer
+const ipc = {
+  send: (channel, payload) => ipcRenderer.send(channel, payload),
+  on: (channel, callback) => {
+    const listener = (event, ...args) => callback(...args)
+    ipcRenderer.on(channel, listener)
+    // Return cleanup function
+    return () => ipcRenderer.removeListener(channel, listener)
+  }
 }
 
 // Extend electronAPI with webUtils
@@ -126,10 +144,12 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', extendedElectronAPI)
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('ipc', ipc)
   } catch (error) {
     console.error(error)
   }
 } else {
   window.electron = extendedElectronAPI
   window.api = api
+  window.ipc = ipc
 }

@@ -17,6 +17,8 @@ import { useRouterStore } from './stores/router'
 import { useProjectsStore } from './stores/projects'
 import { useSettingsStore } from './stores/settings'
 import { useAlertsStore } from './stores/alerts'
+import { useKeybindingsStore } from './stores/keybindings'
+import { useKeybinding } from './composables/useKeybinding'
 import { apiService } from './services/api'
 import MainLayout from './components/layout/MainLayout.vue'
 import ToastNotifications from './components/ToastNotifications.vue'
@@ -25,11 +27,24 @@ const router = useRouterStore()
 const projectsStore = useProjectsStore()
 const settingsStore = useSettingsStore() // Initialize settings store
 const alertsStore = useAlertsStore()
+const keybindingsStore = useKeybindingsStore()
 const { currentComponent } = storeToRefs(router)
+
+// Handle app-level keybindings
+useKeybinding('app:preferences', () => {
+  router.navigateTo('settings')
+})
+
+useKeybinding('app:quit', () => {
+  window.api.window.close()
+})
 
 // Initialize routes on mount
 onMounted(async () => {
   await router.registerRoutes()
+  
+  // Initialize keybindings
+  await keybindingsStore.load()
 
   try {
     // 1. Load all projects from server

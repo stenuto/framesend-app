@@ -120,6 +120,7 @@ import { useVideoMetadataStore } from '@/stores/videoMetadata'
 import { useSettingsStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
 import { apiService } from '@/services/api'
+import { useKeybindings } from '@/composables/useKeybinding'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
 import FileSystemItem from '@components/FileSystemItem.vue'
@@ -1473,6 +1474,31 @@ export default {
       thumbnailCache.value.size // Access size to trigger reactivity
       return getVideoThumbnail(item)
     }
+
+    // Register keybindings
+    useKeybindings({
+      'file:new-folder': createNewFolder,
+      'explorer:view-list': () => settingsStore.updateUISettings({ viewMode: 'list' }),
+      'explorer:view-gallery': () => settingsStore.updateUISettings({ viewMode: 'gallery' }),
+      'edit:delete': () => {
+        // Delete selected items
+        if (selectedItems.value.size > 0) {
+          const firstSelectedId = Array.from(selectedItems.value)[0]
+          const item = fileSystem.value.find(i => i.id === firstSelectedId)
+          if (item) {
+            deleteItem(firstSelectedId, item.type)
+          }
+        }
+      },
+      'edit:select-all': () => {
+        // Select all items in current view
+        if (viewMode.value === 'list') {
+          rootItems.value.forEach(item => selectedItems.value.add(item.id))
+        } else {
+          rootItems.value.forEach(item => selectedItems.value.add(item.id))
+        }
+      }
+    })
 
     return {
       router,

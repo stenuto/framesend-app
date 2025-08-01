@@ -73,6 +73,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useUserStore } from '@/stores/user'
 import { storeToRefs } from 'pinia'
 import { apiService } from '@/services/api'
+import { useKeybinding } from '@/composables/useKeybinding'
 import Icon from '@components/base/Icon.vue'
 import Button from '@components/base/Button.vue'
 import AccountButton from '@components/base/AccountButton.vue'
@@ -587,20 +588,14 @@ export default defineComponent({
       console.log('New project created:', newProject)
     }
 
-    // Keyboard shortcut handler
-    const handleKeydown = (e) => {
-      // Cmd/Ctrl + N for new project
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault()
-        createProject()
-      }
-    }
+    // Use keybinding composable for new project
+    useKeybinding('file:new-project', () => {
+      createProject()
+    })
 
-    // Set up menu action listener and keyboard shortcuts
+    // Set up menu action listener
     onMounted(() => {
       unsubscribeMenu = window.api.menu.onAction(handleMenuAction)
-      window.addEventListener('keydown', handleKeydown)
-
       // Project order will be applied once settings are loaded
     })
 
@@ -608,7 +603,6 @@ export default defineComponent({
       if (unsubscribeMenu) {
         unsubscribeMenu()
       }
-      window.removeEventListener('keydown', handleKeydown)
     })
 
     // Drag and drop handlers for projects
