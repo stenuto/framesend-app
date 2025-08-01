@@ -9,6 +9,16 @@ const DEFAULT_KEYBINDINGS = {
     { id: 'file:new-project', label: 'New Project', accelerator: 'Cmd+N', scope: 'window' },
     // new folder
     { id: 'file:new-folder', label: 'New Folder', accelerator: 'Cmd+Shift+N', scope: 'window' },
+    // video player controls
+    { id: 'video:play-pause', label: 'Play/Pause', accelerator: 'Space', scope: 'window' },
+    { id: 'video:seek-backward', label: 'Seek Backward', accelerator: 'Left', scope: 'window' },
+    { id: 'video:seek-forward', label: 'Seek Forward', accelerator: 'Right', scope: 'window' },
+    { id: 'video:volume-up', label: 'Volume Up', accelerator: 'Up', scope: 'window' },
+    { id: 'video:volume-down', label: 'Volume Down', accelerator: 'Down', scope: 'window' },
+    { id: 'video:mute', label: 'Mute/Unmute', accelerator: 'M', scope: 'window' },
+    { id: 'video:fullscreen', label: 'Toggle Fullscreen', accelerator: 'F', scope: 'window' },
+    { id: 'video:frame-backward', label: 'Previous Frame', accelerator: 'Comma', scope: 'window' },
+    { id: 'video:frame-forward', label: 'Next Frame', accelerator: 'Period', scope: 'window' },
   ],
 }
 
