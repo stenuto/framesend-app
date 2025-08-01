@@ -30,7 +30,9 @@ const iconMappings = {
   'chevron-right': 'ChevronRight',
   'folder-open': 'FolderOpen',
   'check': 'Check',
-  'panel-left-open': 'PanelLeftOpen'
+  'panel-left-open': 'PanelLeftOpen',
+  'unfold-vertical': 'UnfoldVertical',
+  'unfold-horizontal': 'UnfoldHorizontal'
 }
 
 const props = defineProps({

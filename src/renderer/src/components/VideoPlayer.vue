@@ -7,7 +7,7 @@
   <!-- Video element -->
   <video
     ref="videoEl"
-    class="w-full h-full object-cover"
+    :class="['w-full h-full', props.fitMode === 'cover' ? 'object-cover' : 'object-contain']"
     @loadedmetadata="handleLoadedMetadata"
     @timeupdate="handleTimeUpdate"
     @progress="handleProgress"
@@ -40,11 +40,9 @@
   <div
     v-show="showControls && !loading && !error"
     class="absolute inset-0 pointer-events-none">
-    <!-- Top gradient -->
-    <div class="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-black/70 to-transparent" />
 
     <!-- Bottom controls -->
-    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent pointer-events-auto">
+    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-auto">
       <!-- Progress bar -->
       <div class="px-4 pb-2">
         <div
@@ -181,6 +179,11 @@ const props = defineProps({
   jobId: {
     type: String,
     required: true
+  },
+  fitMode: {
+    type: String,
+    default: 'cover',
+    validator: (value) => ['cover', 'contain'].includes(value)
   }
 })
 
@@ -464,14 +467,22 @@ const handleContextMenu = async (e) => {
     },
     { type: 'separator' },
     {
-      label: 'Use Frame as Thumbnail',
-      action: 'video:use-frame',
-      enabled: !isPlaying.value
-    },
-    {
-      label: 'Copy Frame to Clipboard',
-      action: 'video:copy-frame',
-      enabled: !isPlaying.value
+      label: 'Thumbnail',
+      submenu: [
+        {
+          label: 'Set as Current Frame',
+          action: 'video:set-thumbnail'
+        },
+        {
+          label: 'Upload Image...',
+          action: 'video:upload-thumbnail'
+        },
+        { type: 'separator' },
+        {
+          label: 'Copy Frame',
+          action: 'video:copy-frame'
+        }
+      ]
     },
     { type: 'separator' },
     {
@@ -497,12 +508,16 @@ const handleMenuAction = async (action) => {
     case 'video:skip-forward':
       skipForward()
       break
-    case 'video:use-frame':
-      // TODO: Implement frame extraction
-      console.log('Use frame as thumbnail')
+    case 'video:set-thumbnail':
+      // TODO: Implement setting current frame as thumbnail
+      console.log('Set current frame as thumbnail')
+      break
+    case 'video:upload-thumbnail':
+      // TODO: Implement thumbnail upload
+      console.log('Upload thumbnail image')
       break
     case 'video:copy-frame':
-      // TODO: Implement frame copy
+      // TODO: Implement frame copy to clipboard
       console.log('Copy frame to clipboard')
       break
     case 'video:info':

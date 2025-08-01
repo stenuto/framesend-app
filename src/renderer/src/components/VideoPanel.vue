@@ -1,5 +1,5 @@
 <template>
-<div v-if="selectedVideo" class="relative shrink-0 h-full bg-black border-l border-white/10 w-[400px] flex flex-col">
+<div v-if="selectedVideo" class="relative shrink-0 h-full border-l border-white/10 w-[400px] flex flex-col">
   <!-- Header -->
   <div class="h-12 flex items-center justify-between shrink-0 drag bg-zinc-900 px-4 border-b border-zinc-800">
     <div class="flex items-center justify-between w-full gap-2">
@@ -21,7 +21,16 @@
           {{ selectedVideo.name || 'Untitled' }}
         </h3>
       </div>
-      <Button icon-name="x" size="sm" variant="ghost" class="text-zinc-500" @click="closePanel" />
+      <div class="flex items-center gap-1">
+        <Button 
+          :icon-name="videoFitMode === 'cover' ? 'unfold-horizontal' : 'unfold-vertical'" 
+          size="sm" 
+          variant="ghost" 
+          class="text-zinc-500" 
+          @click="toggleVideoFitMode" 
+          :title="videoFitMode === 'cover' ? 'Fit to frame' : 'Fill frame'" />
+        <Button icon-name="x" size="sm" variant="ghost" class="text-zinc-500" @click="closePanel" />
+      </div>
     </div>
   </div>
 
@@ -31,7 +40,8 @@
     <div v-if="selectedVideo.status === 'ready' && selectedVideo.jobId" class="h-full w-full">
       <VideoPlayer
         :video-id="selectedVideo.id"
-        :job-id="selectedVideo.jobId" />
+        :job-id="selectedVideo.jobId"
+        :fit-mode="videoFitMode" />
     </div>
 
     <!-- Encoding progress -->
@@ -118,6 +128,9 @@ const isEditingTitle = ref(false)
 const editingTitle = ref('')
 const titleInput = ref(null)
 
+// Video fit mode
+const videoFitMode = ref('cover') // 'cover' or 'contain'
+
 // Get encoding job if video is encoding
 const encodingJob = computed(() => {
   if (!props.selectedVideo?.jobId) return null
@@ -148,6 +161,11 @@ const saveTitle = () => {
 const cancelTitleEdit = () => {
   isEditingTitle.value = false
   editingTitle.value = ''
+}
+
+// Toggle video fit mode
+const toggleVideoFitMode = () => {
+  videoFitMode.value = videoFitMode.value === 'cover' ? 'contain' : 'cover'
 }
 
 // Close panel
