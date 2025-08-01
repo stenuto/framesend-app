@@ -444,6 +444,21 @@ export const useProjectsStore = defineStore('projects', () => {
     console.log('========================')
   }
 
+  const updateFileSystemItemName = (itemId, newName) => {
+    const item = fileSystem.value.find(i => i.id === itemId)
+    if (item) {
+      item.name = newName
+      
+      // Also update in videos array if it's a video
+      if (item.type === 'video') {
+        const video = videos.value.find(v => v.id === itemId)
+        if (video) {
+          video.name = newName
+        }
+      }
+    }
+  }
+
   const moveFileSystemItem = async (itemId, newParentId) => {
     const itemIndex = fileSystem.value.findIndex(i => i.id === itemId)
     if (itemIndex === -1) return false
@@ -624,6 +639,7 @@ export const useProjectsStore = defineStore('projects', () => {
     getVideosInFolder,
     getFolderVideoCount,
     moveFileSystemItem,
+    updateFileSystemItemName,
     debugFileSystem,
     
     // Server hydration

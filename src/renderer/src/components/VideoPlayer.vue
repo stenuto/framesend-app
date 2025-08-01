@@ -1,185 +1,168 @@
 <template>
-  <div 
-    class="relative bg-black rounded-smooth-lg overflow-hidden group"
-    @mousemove="handleMouseMove"
-    @mouseleave="handleMouseLeave"
-    @contextmenu.prevent="handleContextMenu"
-  >
-    <!-- Video element -->
-    <video 
-      ref="videoEl" 
-      class="w-full h-full object-contain"
-      @loadedmetadata="handleLoadedMetadata"
-      @timeupdate="handleTimeUpdate"
-      @progress="handleProgress"
-      @play="isPlaying = true"
-      @pause="isPlaying = false"
-      @volumechange="handleVolumeChange"
-      @click="togglePlayPause"
-    />
-    
-    <!-- Loading overlay -->
-    <div 
-      v-if="loading" 
-      class="absolute inset-0 flex items-center justify-center bg-black/50"
-    >
-      <div class="flex flex-col items-center gap-2">
-        <div class="w-8 h-8 border-2 border-zinc-600 border-t-zinc-100 rounded-full animate-spin" />
-        <span class="text-xs text-zinc-400">Loading video...</span>
-      </div>
+<div
+  class="relative bg-black rounded-smooth-lg overflow-hidden group h-full w-full"
+  @mousemove="handleMouseMove"
+  @mouseleave="handleMouseLeave"
+  @contextmenu.prevent="handleContextMenu">
+  <!-- Video element -->
+  <video
+    ref="videoEl"
+    class="w-full h-full object-cover"
+    @loadedmetadata="handleLoadedMetadata"
+    @timeupdate="handleTimeUpdate"
+    @progress="handleProgress"
+    @play="isPlaying = true"
+    @pause="isPlaying = false"
+    @volumechange="handleVolumeChange"
+    @click="togglePlayPause" />
+
+  <!-- Loading overlay -->
+  <div
+    v-if="loading"
+    class="absolute inset-0 flex items-center justify-center bg-black/50">
+    <div class="flex flex-col items-center gap-2">
+      <div class="w-8 h-8 border-2 border-zinc-600 border-t-zinc-100 rounded-full animate-spin" />
+      <span class="text-xs text-zinc-400">Loading video...</span>
     </div>
-    
-    <!-- Error overlay -->
-    <div 
-      v-if="error" 
-      class="absolute inset-0 flex items-center justify-center bg-black/50"
-    >
-      <div class="flex flex-col items-center gap-2 text-center px-4">
-        <Icon name="video-off" class="w-8 h-8 text-zinc-500" />
-        <p class="text-sm text-zinc-400">{{ error }}</p>
-      </div>
+  </div>
+
+  <!-- Error overlay -->
+  <div
+    v-if="error"
+    class="absolute inset-0 flex items-center justify-center bg-black/50">
+    <div class="flex flex-col items-center gap-2 text-center px-4">
+      <Icon name="video-off" class="w-8 h-8 text-zinc-500" />
+      <p class="text-sm text-zinc-400">{{ error }}</p>
     </div>
-    
-    <!-- Controls overlay -->
-    <div 
-      v-show="showControls && !loading && !error" 
-      class="absolute inset-0 pointer-events-none"
-    >
-      <!-- Top gradient -->
-      <div class="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-black/70 to-transparent" />
-      
-      <!-- Bottom controls -->
-      <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent pointer-events-auto">
-        <!-- Progress bar -->
-        <div class="px-4 pb-2">
-          <div 
-            class="relative h-[4px] bg-zinc-800 rounded-full cursor-pointer group/progress"
-            @click="handleProgressClick"
-            @mouseenter="showProgressPreview = true"
-            @mouseleave="showProgressPreview = false"
-            @mousemove="handleProgressMouseMove"
-          >
-            <!-- Buffered progress -->
-            <div 
-              class="absolute h-full bg-zinc-700 rounded-full"
-              :style="{ width: `${bufferedPercent}%` }"
-            />
-            
-            <!-- Playback progress -->
-            <div 
-              class="absolute h-full bg-cyan-500 rounded-full transition-all duration-150"
-              :style="{ width: `${progressPercent}%` }"
-            />
-            
-            <!-- Scrubber -->
-            <div 
-              class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] bg-white rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity"
-              :style="{ left: `${progressPercent}%`, transform: 'translate(-50%, -50%)' }"
-            />
-            
-            <!-- Preview time tooltip -->
-            <div 
-              v-if="showProgressPreview"
-              class="absolute -top-8 bg-zinc-900 text-xs text-zinc-100 px-2 py-1 rounded-smooth pointer-events-none"
-              :style="{ left: `${previewPercent}%`, transform: 'translateX(-50%)' }"
-            >
-              {{ formatTime(previewTime) }}
-            </div>
+  </div>
+
+  <!-- Controls overlay -->
+  <div
+    v-show="showControls && !loading && !error"
+    class="absolute inset-0 pointer-events-none">
+    <!-- Top gradient -->
+    <div class="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-black/70 to-transparent" />
+
+    <!-- Bottom controls -->
+    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent pointer-events-auto">
+      <!-- Progress bar -->
+      <div class="px-4 pb-2">
+        <div
+          class="relative h-[4px] bg-zinc-800 rounded-full cursor-pointer group/progress"
+          @click="handleProgressClick"
+          @mouseenter="showProgressPreview = true"
+          @mouseleave="showProgressPreview = false"
+          @mousemove="handleProgressMouseMove">
+          <!-- Buffered progress -->
+          <div
+            class="absolute h-full bg-zinc-700 rounded-full"
+            :style="{ width: `${bufferedPercent}%` }" />
+
+          <!-- Playback progress -->
+          <div
+            class="absolute h-full bg-blue-500 rounded-full transition-all duration-150"
+            :style="{ width: `${progressPercent}%` }" />
+
+          <!-- Scrubber -->
+          <div
+            class="absolute top-1/2 -translate-y-1/2 w-[12px] h-[12px] bg-white rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity"
+            :style="{ left: `${progressPercent}%`, transform: 'translate(-50%, -50%)' }" />
+
+          <!-- Preview time tooltip -->
+          <div
+            v-if="showProgressPreview"
+            class="absolute -top-8 bg-zinc-900 text-xs text-zinc-100 px-2 py-1 rounded-smooth pointer-events-none"
+            :style="{ left: `${previewPercent}%`, transform: 'translateX(-50%)' }">
+            {{ formatTime(previewTime) }}
           </div>
         </div>
-        
-        <!-- Control buttons -->
-        <div class="flex items-center justify-between px-4 pb-4">
-          <!-- Left controls -->
-          <div class="flex items-center gap-2">
-            <!-- Play/Pause -->
-            <Button 
-              :icon-name="isPlaying ? 'pause' : 'play'"
+      </div>
+
+      <!-- Control buttons -->
+      <div class="flex items-center justify-between px-4 pb-4">
+        <!-- Left controls -->
+        <div class="flex items-center gap-2">
+          <!-- Play/Pause -->
+          <Button
+            :icon-name="isPlaying ? 'pause' : 'play'"
+            variant="ghost"
+            size="sm"
+            @click="togglePlayPause"
+            :title="isPlaying ? 'Pause (Space)' : 'Play (Space)'" />
+
+          <!-- Skip backward -->
+          <Button
+            icon-name="skip-back"
+            variant="ghost"
+            size="sm"
+            @click="skipBackward"
+            title="Skip backward 10s (←)" />
+
+          <!-- Skip forward -->
+          <Button
+            icon-name="skip-forward"
+            variant="ghost"
+            size="sm"
+            @click="skipForward"
+            title="Skip forward 10s (→)" />
+
+          <!-- Time display -->
+          <div class="flex items-center gap-1 text-xs ml-2">
+            <span class="text-zinc-100">{{ formatTime(currentTime) }}</span>
+            <span class="text-zinc-500">/</span>
+            <span class="text-zinc-400">{{ formatTime(duration) }}</span>
+          </div>
+        </div>
+
+        <!-- Right controls -->
+        <div class="flex items-center gap-2">
+          <!-- Volume controls -->
+          <div class="flex items-center gap-2 group/volume">
+            <Button
+              :icon-name="isMuted || volume === 0 ? 'volume-x' : 'volume-2'"
               variant="ghost"
               size="sm"
-              @click="togglePlayPause"
-              :title="isPlaying ? 'Pause (Space)' : 'Play (Space)'"
-            />
-            
-            <!-- Skip backward -->
-            <Button 
-              icon-name="skip-back"
-              variant="ghost"
-              size="sm"
-              @click="skipBackward"
-              title="Skip backward 10s (←)"
-            />
-            
-            <!-- Skip forward -->
-            <Button 
-              icon-name="skip-forward"
-              variant="ghost"
-              size="sm"
-              @click="skipForward"
-              title="Skip forward 10s (→)"
-            />
-            
-            <!-- Time display -->
-            <div class="flex items-center gap-1 text-xs ml-2">
-              <span class="text-zinc-100">{{ formatTime(currentTime) }}</span>
-              <span class="text-zinc-500">/</span>
-              <span class="text-zinc-400">{{ formatTime(duration) }}</span>
+              @click="toggleMute"
+              :title="isMuted ? 'Unmute (M)' : 'Mute (M)'" />
+
+            <!-- Volume slider -->
+            <div class="w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-200">
+              <input
+                type="range"
+                v-model="volume"
+                @input="handleVolumeInput"
+                min="0"
+                max="100"
+                step="1"
+                class="w-full h-[4px] bg-zinc-700 rounded-full appearance-none cursor-pointer volume-slider"
+                :title="`Volume: ${volume}%`" />
             </div>
           </div>
-          
-          <!-- Right controls -->
-          <div class="flex items-center gap-2">
-            <!-- Volume controls -->
-            <div class="flex items-center gap-2 group/volume">
-              <Button 
-                :icon-name="isMuted || volume === 0 ? 'volume-x' : 'volume-2'"
-                variant="ghost"
-                size="sm"
-                @click="toggleMute"
-                :title="isMuted ? 'Unmute (M)' : 'Mute (M)'"
-              />
-              
-              <!-- Volume slider -->
-              <div class="w-0 group-hover/volume:w-20 overflow-hidden transition-all duration-200">
-                <input
-                  type="range"
-                  v-model="volume"
-                  @input="handleVolumeInput"
-                  min="0"
-                  max="100"
-                  step="1"
-                  class="w-full h-[4px] bg-zinc-700 rounded-full appearance-none cursor-pointer volume-slider"
-                  :title="`Volume: ${volume}%`"
-                />
-              </div>
-            </div>
-            
-            <!-- Quality selector -->
-            <Dropdown
-              v-if="qualities.length > 1"
-              v-model="selectedQuality"
-              :options="qualities"
-              option-label="label"
-              option-value="value"
-              size="sm"
-              variant="ghost"
-              button-class="text-xs"
-              :disabled="loading"
-            />
-            
-            <!-- Fullscreen -->
-            <Button 
-              icon-name="maximize"
-              variant="ghost"
-              size="sm"
-              @click="toggleFullscreen"
-              title="Fullscreen (F)"
-            />
-          </div>
+
+          <!-- Quality selector -->
+          <Dropdown
+            v-if="qualities.length > 1"
+            v-model="selectedQuality"
+            :options="qualities"
+            option-label="label"
+            option-value="value"
+            size="sm"
+            variant="ghost"
+            button-class="text-xs"
+            :disabled="loading" />
+
+          <!-- Fullscreen -->
+          <Button
+            icon-name="maximize"
+            variant="ghost"
+            size="sm"
+            @click="toggleFullscreen"
+            title="Fullscreen (F)" />
         </div>
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
@@ -228,15 +211,15 @@ let controlsTimer = null
 // Computed properties
 const manifestUrl = computed(() => {
   if (!props.jobId) return null
-  
+
   // Get username from environment or fallback
   const pathParts = window.location.pathname.split('/')
   let username = 'stephentenuto' // fallback
-  
+
   if (pathParts.includes('Users') && pathParts.length > pathParts.indexOf('Users') + 1) {
     username = pathParts[pathParts.indexOf('Users') + 1]
   }
-  
+
   const basePath = `/Users/${username}/Library/Application Support/framesend-app`
   return `file://${basePath}/encoded-videos/${props.jobId}/master.m3u8`
 })
@@ -244,10 +227,10 @@ const manifestUrl = computed(() => {
 // Methods
 const initializeHls = () => {
   if (!manifestUrl.value || !videoEl.value) return
-  
+
   error.value = null
   loading.value = true
-  
+
   if (Hls.isSupported()) {
     // Create HLS instance
     hls.value = new Hls({
@@ -255,11 +238,11 @@ const initializeHls = () => {
       autoStartLoad: true,
       debug: false
     })
-    
+
     // Load manifest
     hls.value.loadSource(manifestUrl.value)
     hls.value.attachMedia(videoEl.value)
-    
+
     // Handle HLS events
     hls.value.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
       // Extract quality levels
@@ -269,16 +252,16 @@ const initializeHls = () => {
         height: level.height,
         bitrate: level.bitrate
       })).reverse() // Reverse to show highest quality first
-      
+
       // Set default to highest quality
       if (qualities.value.length > 0) {
         selectedQuality.value = qualities.value[0].value
         hls.value.currentLevel = selectedQuality.value
       }
-      
+
       loading.value = false
     })
-    
+
     hls.value.on(Hls.Events.ERROR, (event, data) => {
       if (data.fatal) {
         loading.value = false
@@ -314,7 +297,7 @@ const destroyHls = () => {
 
 const togglePlayPause = () => {
   if (!videoEl.value) return
-  
+
   if (isPlaying.value) {
     videoEl.value.pause()
   } else {
@@ -334,10 +317,10 @@ const skipForward = () => {
 
 const seekByFrame = (direction) => {
   if (!videoEl.value || isPlaying.value) return
-  
+
   // Approximate frame duration (assuming 30fps)
   const frameDuration = 1 / 30
-  
+
   if (direction === 'forward') {
     videoEl.value.currentTime = Math.min(duration.value, videoEl.value.currentTime + frameDuration)
   } else {
@@ -347,7 +330,7 @@ const seekByFrame = (direction) => {
 
 const toggleMute = () => {
   if (!videoEl.value) return
-  
+
   if (isMuted.value) {
     videoEl.value.muted = false
     videoEl.value.volume = volume.value / 100
@@ -358,7 +341,7 @@ const toggleMute = () => {
 
 const handleVolumeInput = (e) => {
   if (!videoEl.value) return
-  
+
   const newVolume = parseInt(e.target.value)
   volume.value = newVolume
   videoEl.value.volume = newVolume / 100
@@ -368,7 +351,7 @@ const handleVolumeInput = (e) => {
 
 const handleVolumeChange = () => {
   if (!videoEl.value) return
-  
+
   isMuted.value = videoEl.value.muted
   if (!videoEl.value.muted) {
     volume.value = Math.round(videoEl.value.volume * 100)
@@ -377,7 +360,7 @@ const handleVolumeChange = () => {
 
 const adjustVolume = (delta) => {
   if (!videoEl.value) return
-  
+
   const newVolume = Math.max(0, Math.min(100, volume.value + delta))
   volume.value = newVolume
   videoEl.value.volume = newVolume / 100
@@ -388,7 +371,7 @@ const adjustVolume = (delta) => {
 const toggleFullscreen = async () => {
   const container = videoEl.value?.parentElement
   if (!container) return
-  
+
   if (!document.fullscreenElement) {
     await container.requestFullscreen()
   } else {
@@ -403,14 +386,14 @@ const handleLoadedMetadata = () => {
 
 const handleTimeUpdate = () => {
   if (!videoEl.value || !duration.value) return
-  
+
   currentTime.value = videoEl.value.currentTime
   progressPercent.value = (currentTime.value / duration.value) * 100
 }
 
 const handleProgress = () => {
   if (!videoEl.value) return
-  
+
   const buffered = videoEl.value.buffered
   if (buffered.length > 0) {
     const bufferedEnd = buffered.end(buffered.length - 1)
@@ -420,20 +403,20 @@ const handleProgress = () => {
 
 const handleProgressClick = (e) => {
   if (!videoEl.value || !duration.value) return
-  
+
   const rect = e.currentTarget.getBoundingClientRect()
   const percent = ((e.clientX - rect.left) / rect.width) * 100
   const time = (percent / 100) * duration.value
-  
+
   videoEl.value.currentTime = time
 }
 
 const handleProgressMouseMove = (e) => {
   if (!duration.value) return
-  
+
   const rect = e.currentTarget.getBoundingClientRect()
   const percent = ((e.clientX - rect.left) / rect.width) * 100
-  
+
   previewPercent.value = Math.max(0, Math.min(100, percent))
   previewTime.value = (previewPercent.value / 100) * duration.value
 }
@@ -496,7 +479,7 @@ const handleContextMenu = async (e) => {
       action: 'video:info'
     }
   ]
-  
+
   await window.api.menu.showContext(menuTemplate, {
     x: e.clientX,
     y: e.clientY
@@ -531,15 +514,15 @@ const handleMenuAction = async (action) => {
 
 const formatTime = (seconds) => {
   if (!seconds || isNaN(seconds)) return '0:00'
-  
+
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   const secs = Math.floor(seconds % 60)
-  
+
   if (hours > 0) {
     return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
-  
+
   return `${minutes}:${secs.toString().padStart(2, '0')}`
 }
 
@@ -606,7 +589,8 @@ onUnmounted(() => {
 /* Volume slider styling */
 .volume-slider::-webkit-slider-track {
   height: 4px;
-  background-color: rgb(63 63 70); /* zinc-700 */
+  background-color: rgb(63 63 70);
+  /* zinc-700 */
   border-radius: 9999px;
 }
 
@@ -614,19 +598,22 @@ onUnmounted(() => {
   appearance: none;
   width: 12px;
   height: 12px;
-  background-color: rgb(244 244 245); /* zinc-100 */
+  background-color: rgb(244 244 245);
+  /* zinc-100 */
   border-radius: 9999px;
   cursor: pointer;
   transition: background-color 150ms;
 }
 
 .volume-slider::-webkit-slider-thumb:hover {
-  background-color: rgb(255 255 255); /* white */
+  background-color: rgb(255 255 255);
+  /* white */
 }
 
 .volume-slider::-moz-range-track {
   height: 4px;
-  background-color: rgb(63 63 70); /* zinc-700 */
+  background-color: rgb(63 63 70);
+  /* zinc-700 */
   border-radius: 9999px;
 }
 
@@ -634,7 +621,8 @@ onUnmounted(() => {
   appearance: none;
   width: 12px;
   height: 12px;
-  background-color: rgb(244 244 245); /* zinc-100 */
+  background-color: rgb(244 244 245);
+  /* zinc-100 */
   border-radius: 9999px;
   cursor: pointer;
   transition: background-color 150ms;
@@ -642,6 +630,7 @@ onUnmounted(() => {
 }
 
 .volume-slider::-moz-range-thumb:hover {
-  background-color: rgb(255 255 255); /* white */
+  background-color: rgb(255 255 255);
+  /* white */
 }
 </style>
