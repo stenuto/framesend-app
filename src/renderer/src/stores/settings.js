@@ -36,11 +36,6 @@ export const useSettingsStore = defineStore('settings', () => {
       ],
       hardwareAcceleration: {
         enabled: true
-      },
-      streamingPreset: 'balanced',
-      audioEnhancement: {
-        enabled: true,
-        level: 3
       }
     },
     projects: {

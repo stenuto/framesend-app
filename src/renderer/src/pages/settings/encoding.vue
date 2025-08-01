@@ -28,55 +28,6 @@
         </div>
       </SettingsItem>
 
-      <!-- Streaming Optimization -->
-      <SettingsItem title="Streaming Optimization" description="Optimize for different viewing scenarios.">
-        <div class="space-y-2">
-          <div class="space-y-1.5">
-            <label class="flex items-center">
-              <input v-model="settings.streamingPreset" type="radio" value="fast-start"
-                class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 accent-blue-500">
-              <span class="ml-2 text-xs">Fast Start</span>
-            </label>
-            <p class="ml-5 text-[10px] text-zinc-500">Quick playback start, ideal for short videos</p>
-
-            <label class="flex items-center mt-2">
-              <input v-model="settings.streamingPreset" type="radio" value="balanced"
-                class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 accent-blue-500">
-              <span class="ml-2 text-xs">Balanced</span>
-            </label>
-            <p class="ml-5 text-[10px] text-zinc-500">Good mix of startup time and quality</p>
-
-            <label class="flex items-center mt-2">
-              <input v-model="settings.streamingPreset" type="radio" value="best-quality"
-                class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 accent-blue-500">
-              <span class="ml-2 text-xs">Best Quality</span>
-            </label>
-            <p class="ml-5 text-[10px] text-zinc-500">Maximum quality for longer videos</p>
-          </div>
-        </div>
-      </SettingsItem>
-
-      <!-- Audio Enhancement -->
-      <SettingsItem title="Audio Enhancement" description="Improve audio consistency and clarity.">
-        <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <ToggleSwitch v-model="settings.audioEnhancement.enabled" size="lg" />
-            <span class="text-xs">Optimize audio levels</span>
-          </div>
-
-          <div v-if="settings.audioEnhancement.enabled" class="space-y-2">
-            <div class="space-y-2">
-              <p class="text-xs text-zinc-400">Audio processing:</p>
-              <input type="range" min="1" max="5" v-model="settings.audioEnhancement.level" class="w-full h-1 accent-blue-500" />
-              <div class="flex justify-between text-[10px] text-zinc-500">
-                <span>Preserve dynamics</span>
-                <span>Consistent volume</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </SettingsItem>
-
     </div>
   </div>
 </template>
@@ -110,11 +61,6 @@ export default {
           customRungs: encoding.customRungs || DEFAULT_CUSTOM_RUNGS,
           hardwareAcceleration: encoding.hardwareAcceleration || {
             enabled: true
-          },
-          streamingPreset: encoding.streamingPreset || 'balanced',
-          audioEnhancement: encoding.audioEnhancement || {
-            enabled: true,
-            level: 3
           }
         }
       },

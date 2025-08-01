@@ -12,14 +12,14 @@
     <!-- Horizontal Tab Navigation -->
     <nav class="flex gap-2 border-b border-zinc-700/50 pb-2.5">
       <button v-for="item in navigationItems" :key="item.id" :class="[
-        'group flex items-center gap-1.5 px-1.5 py-[2.5px] text-xs font-regular rounded-smooth transition-colors',
+        'group flex items-center gap-1.5 px-1.5 py-[3px] text-xs font-regular rounded-smooth-md transition-colors',
         currentSection === item.id
-          ? 'bg-zinc-400/10 text-zinc-50'
-          : 'hover:bg-zinc-400/10 hover:text-zinc-50'
+          ? 'bg-zinc-400/15 text-zinc-50'
+          : 'hover:text-zinc-50 text-zinc-400'
       ]" @click="navigateToSection(item.id)">
-        <Icon v-if="item.icon" :name="item.icon" :class="[
+        <Icon v-if="item.icon" :name="item.icon" stroke-width="1.5" :class="[
           'size-3.5 flex-shrink-0',
-          currentSection === item.id ? '' : 'text-zinc-400'
+          currentSection === item.id ? '' : 'text-zinc-500 group-hover:text-zinc-50'
         ]" />
         <span :class="[
           currentSection === item.id ? 'text-current' : 'group-hover:text-current'
@@ -44,8 +44,6 @@ import GeneralSettings from './general.vue'
 import EncodingSettings from './encoding.vue'
 import CaptionsSettings from './captions.vue'
 import AccountSettings from './account.vue'
-import TeamSettings from './team.vue'
-import BillingSettings from './billing.vue'
 import Icon from '@components/base/Icon.vue'
 
 export default {
@@ -55,8 +53,6 @@ export default {
     EncodingSettings,
     CaptionsSettings,
     AccountSettings,
-    TeamSettings,
-    BillingSettings,
     Icon
   },
   meta: {
@@ -70,9 +66,7 @@ export default {
       { id: 'general', label: 'General', icon: 'settings' },
       { id: 'encoding', label: 'Encoding', icon: 'tv-minimal-play' },
       { id: 'captions', label: 'Captions', icon: 'message-square-quote' },
-      { id: 'account', label: 'Account', icon: 'user' },
-      { id: 'team', label: 'Team', icon: 'users-round' },
-      { id: 'billing', label: 'Billing', icon: 'credit-card' }
+      { id: 'account', label: 'Account', icon: 'user' }
     ]
 
     const currentComponent = computed(() => {
@@ -80,9 +74,7 @@ export default {
         general: 'GeneralSettings',
         encoding: 'EncodingSettings',
         captions: 'CaptionsSettings',
-        account: 'AccountSettings',
-        team: 'TeamSettings',
-        billing: 'BillingSettings'
+        account: 'AccountSettings'
       }
       return componentMap[currentSection.value]
     })

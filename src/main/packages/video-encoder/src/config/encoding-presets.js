@@ -264,11 +264,6 @@ export const DEFAULT_ENCODING_SETTINGS = {
   ],
   hardwareAcceleration: {
     enabled: true
-  },
-  streamingPreset: 'balanced',
-  audioEnhancement: {
-    enabled: true,
-    level: 3
   }
 };
 

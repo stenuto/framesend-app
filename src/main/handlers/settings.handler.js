@@ -47,11 +47,6 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
       ],
       hardwareAcceleration: {
         enabled: true
-      },
-      streamingPreset: 'balanced',
-      audioEnhancement: {
-        enabled: true,
-        level: 3
       }
     },
     ui: {
