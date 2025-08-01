@@ -19,22 +19,39 @@ export default function registerSettingsHandlers(ipcMain, { app }) {
       appearance: 'system'
     },
     encoding: {
-      h264: {
-        enabled: true,
-        rungs: {
-          '360p': true,
-          '720p': true,
-          '1080p': true,
-          '2160p': true
+      customRungs: [
+        {
+          id: '360p_default1',
+          height: 360,
+          quality: 2,
+          enabled: true
         },
-        quality: 3
+        {
+          id: '720p_default2',
+          height: 720,
+          quality: 3,
+          enabled: true
+        },
+        {
+          id: '1080p_default3',
+          height: 1080,
+          quality: 3,
+          enabled: true
+        },
+        {
+          id: '2160p_default4',
+          height: 2160,
+          quality: 3,
+          enabled: false
+        }
+      ],
+      hardwareAcceleration: {
+        enabled: true
       },
-      av1: {
-        enabled: false,
-        rungs: {
-          '2160p_hq': true
-        },
-        quality: 5
+      streamingPreset: 'balanced',
+      audioEnhancement: {
+        enabled: true,
+        level: 3
       }
     },
     ui: {

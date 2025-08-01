@@ -8,23 +8,32 @@ export const useSettingsStore = defineStore('settings', () => {
       // Removed appearance - dark mode only
     },
     encoding: {
-      h264: {
-        enabled: true,
-        rungs: {
-          '360p': true,
-          '720p': true,
-          '1080p': true,
-          '2160p': true
+      customRungs: [
+        {
+          id: '360p_default1',
+          height: 360,
+          quality: 2,
+          enabled: true
         },
-        quality: 3
-      },
-      av1: {
-        enabled: false,
-        rungs: {
-          '2160p_hq': true
+        {
+          id: '720p_default2',
+          height: 720,
+          quality: 3,
+          enabled: true
         },
-        quality: 5
-      },
+        {
+          id: '1080p_default3',
+          height: 1080,
+          quality: 3,
+          enabled: true
+        },
+        {
+          id: '2160p_default4',
+          height: 2160,
+          quality: 3,
+          enabled: false
+        }
+      ],
       hardwareAcceleration: {
         enabled: true
       },
@@ -59,23 +68,8 @@ export const useSettingsStore = defineStore('settings', () => {
           encoding: {
             ...settings.value.encoding,
             ...loaded.encoding,
-            // Ensure nested encoding objects are properly merged
-            h264: {
-              ...settings.value.encoding.h264,
-              ...loaded.encoding?.h264,
-              rungs: {
-                ...settings.value.encoding.h264.rungs,
-                ...loaded.encoding?.h264?.rungs
-              }
-            },
-            av1: {
-              ...settings.value.encoding.av1,
-              ...loaded.encoding?.av1,
-              rungs: {
-                ...settings.value.encoding.av1.rungs,
-                ...loaded.encoding?.av1?.rungs
-              }
-            },
+            // Use loaded customRungs if available, otherwise use defaults
+            customRungs: loaded.encoding?.customRungs || settings.value.encoding.customRungs,
             hardwareAcceleration: {
               ...settings.value.encoding.hardwareAcceleration,
               ...loaded.encoding?.hardwareAcceleration
@@ -105,8 +99,8 @@ export const useSettingsStore = defineStore('settings', () => {
   
   async function saveSettings() {
     try {
-      // Extract plain object from Vue reactive proxy
-      const rawSettings = toRaw(settings.value)
+      // Extract plain object from Vue reactive proxy and ensure deep serialization
+      const rawSettings = JSON.parse(JSON.stringify(toRaw(settings.value)))
       await window.api.settings.save(rawSettings)
     } catch (error) {
       console.error('Failed to save settings:', error)

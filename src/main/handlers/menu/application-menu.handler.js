@@ -5,8 +5,12 @@ import { existsSync } from 'fs'
 
 export default function registerApplicationMenuHandler(ipcMain) {
   const isMac = process.platform === 'darwin'
-
-  const template = [
+  
+  // Store current view mode
+  let currentViewMode = 'list' // Default to list
+  
+  // Function to build menu template with current view mode
+  const buildMenuTemplate = () => [
     // App Menu (macOS only)
     ...(isMac
       ? [{
@@ -73,7 +77,7 @@ export default function registerApplicationMenuHandler(ipcMain) {
         {
           label: 'as List',
           type: 'radio',
-          checked: false, // Will be updated dynamically
+          checked: currentViewMode === 'list',
           id: 'view-list',
           click: () => {
             const window = BrowserWindow.getFocusedWindow()
@@ -85,7 +89,7 @@ export default function registerApplicationMenuHandler(ipcMain) {
         {
           label: 'as Gallery',
           type: 'radio',
-          checked: false, // Will be updated dynamically
+          checked: currentViewMode === 'gallery',
           id: 'view-gallery',
           click: () => {
             const window = BrowserWindow.getFocusedWindow()
@@ -137,28 +141,25 @@ export default function registerApplicationMenuHandler(ipcMain) {
     }
   ]
 
-  const menu = Menu.buildFromTemplate(template)
+  // Build initial menu
+  let menu = Menu.buildFromTemplate(buildMenuTemplate())
   Menu.setApplicationMenu(menu)
 
-  // Function to update view mode in menu
+  // Function to update view mode in menu by rebuilding it
   const updateViewMode = (viewMode) => {
-    const viewMenu = menu.items.find(item => item.label === 'View')
-    if (viewMenu && viewMenu.submenu) {
-      const listItem = viewMenu.submenu.items[0]
-      const galleryItem = viewMenu.submenu.items[1]
-      
-      if (viewMode === 'list') {
-        listItem.checked = true
-        galleryItem.checked = false
-      } else if (viewMode === 'gallery') {
-        listItem.checked = false
-        galleryItem.checked = true
-      }
-    }
+    console.log(`[Menu] Updating view mode from ${currentViewMode} to ${viewMode}`)
+    currentViewMode = viewMode
+    
+    // Rebuild the entire menu with the new view mode
+    menu = Menu.buildFromTemplate(buildMenuTemplate())
+    Menu.setApplicationMenu(menu)
+    
+    console.log('[Menu] Menu rebuilt with view mode:', viewMode)
   }
 
   // Listen for view mode changes from renderer
   ipcMain.on('menu:updateViewMode', (event, viewMode) => {
+    console.log('[Menu] Updating view mode to:', viewMode)
     updateViewMode(viewMode)
   })
 
@@ -167,25 +168,28 @@ export default function registerApplicationMenuHandler(ipcMain) {
     event.sender.send('menu:getViewMode')
   })
   
-  // Load view mode from settings on startup
-  const loadInitialViewMode = async () => {
-    try {
-      const settingsPath = join(app.getPath('userData'), 'settings.json')
-      if (existsSync(settingsPath)) {
-        const content = await readFile(settingsPath, 'utf8')
-        const settings = JSON.parse(content)
-        const viewMode = settings.ui?.viewMode || 'list'
-        updateViewMode(viewMode)
-      } else {
-        // Default to list view if no settings exist
-        updateViewMode('list')
-      }
-    } catch (error) {
-      console.error('Failed to load view mode from settings:', error)
-      updateViewMode('list')
-    }
+  // Set up window event handlers for menu synchronization
+  const setupWindowHandlers = (window) => {
+    // When window is ready, request the current view mode
+    window.webContents.once('did-finish-load', () => {
+      console.log('[Menu] Window loaded, requesting view mode')
+      window.webContents.send('menu:getViewMode')
+    })
+    
+    // Also sync when window gains focus
+    window.on('focus', () => {
+      window.webContents.send('menu:getViewMode')
+    })
   }
   
-  // Load initial view mode
-  loadInitialViewMode()
+  // Set up handlers for existing windows
+  BrowserWindow.getAllWindows().forEach(setupWindowHandlers)
+  
+  // Set up handlers for new windows
+  app.on('browser-window-created', (event, window) => {
+    setupWindowHandlers(window)
+  })
+  
+  // Note: We don't load initial view mode from settings here anymore
+  // The renderer will send us the correct view mode when it's ready
 }

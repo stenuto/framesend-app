@@ -4,17 +4,17 @@ import fs from 'fs-extra';
 import PQueue from 'p-queue';
 import { 
   H264_LADDER,
-  AV1_LADDER,
   PROGRESS_WEIGHTS,
   RESOURCE_LIMITS,
   H264_ENCODING_PARAMS,
   HLS_PARAMS,
   AUDIO_PARAMS,
   THUMBNAIL_PARAMS,
-  AV1_CONFIG,
   calculateBitrate,
   mapQualityToCRF,
   mapQualityToBitrateMultiplier,
+  getH264ProfileLevel,
+  getTargetBPP,
 } from '../config/encoding-presets.js';
 import { filterLadderBySettings } from '../utils/settings-loader.js';
 import { ProgressTracker } from '../utils/progress-tracker.js';
@@ -75,7 +75,6 @@ export class VideoJob extends EventEmitter {
     await fs.ensureDir(this.outputDir);
     await fs.ensureDir(this.tempDir);
     await fs.ensureDir(path.join(this.outputDir, 'renditions', 'h264'));
-    await fs.ensureDir(path.join(this.outputDir, 'renditions', 'av1'));
     await fs.ensureDir(path.join(this.outputDir, 'audio'));
     await fs.ensureDir(path.join(this.outputDir, 'thumbnails'));
     await fs.ensureDir(path.join(this.outputDir, 'captions'));
@@ -109,6 +108,9 @@ export class VideoJob extends EventEmitter {
       
       // Stage 7: Generate captions (if whisper is available)
       await this._genCaptions();
+      
+      // Stage 7.5: Calculate actual bitrates from encoded files
+      await this._calculateActualBitrates();
       
       // Stage 8: Generate HLS manifests
       await this._genManifest();
@@ -256,78 +258,51 @@ export class VideoJob extends EventEmitter {
     const aspectRatio = sourceWidth / sourceHeight;
     const frameRate = this.metadata.video.frameRate;
     
-    // Filter H.264 ladder based on settings and source height
-    if (this.encodingSettings.h264.enabled) {
-      const enabledH264Ladder = filterLadderBySettings(H264_LADDER, this.encodingSettings.h264);
-      
-      const h264Renditions = enabledH264Ladder
-        .map(rung => {
-          // If source is smaller than target, use source dimensions
-          const targetHeight = Math.min(rung.height, sourceHeight);
-          const width = Math.round(targetHeight * aspectRatio / 2) * 2; // Ensure even number
-          
-          // Get quality setting (single value for all H.264 renditions)
-          const quality = this.encodingSettings.h264.quality || 3;
-          const crf = mapQualityToCRF(quality, 'h264');
-          const bitrateMultiplier = mapQualityToBitrateMultiplier(quality);
-          
-          // Calculate bitrate based on actual pixel count and quality multiplier
-          const baseConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
-          const bitrateConfig = {
-            maxrate: `${Math.round(parseInt(baseConfig.maxrate) * bitrateMultiplier)}k`,
-            bufsize: `${Math.round(parseInt(baseConfig.bufsize) * bitrateMultiplier)}k`,
-          };
-          
-          
-          return {
-            ...rung,
-            codec: 'h264',
-            width,
-            height: targetHeight,
-            ...bitrateConfig,
-            crf,
-            outputPath: path.join(this.outputDir, 'renditions', 'h264', rung.name),
-          };
-        });
-        
-      this.renditions.push(...h264Renditions);
-    }
+    // Use custom rungs from settings
+    const customRungs = this.encodingSettings.customRungs || [];
     
-    // Add AV1 renditions based on settings
-    if (this.encodingSettings.av1.enabled) {
-      const enabledAV1Ladder = filterLadderBySettings(AV1_LADDER, this.encodingSettings.av1);
-      
-      const av1Renditions = enabledAV1Ladder
-        .map(rung => {
-          // If source is smaller than target, use source dimensions
-          const targetHeight = Math.min(rung.height, sourceHeight);
-          const width = Math.round(targetHeight * aspectRatio / 2) * 2; // Ensure even number
-          
-          // Get quality setting (single value for all AV1 renditions)
-          const quality = this.encodingSettings.av1.quality || 5;
-          const crf = mapQualityToCRF(quality, 'av1');
-          const bitrateMultiplier = mapQualityToBitrateMultiplier(quality);
-          
-          // Calculate bitrate based on actual pixel count and quality multiplier
-          const baseConfig = calculateBitrate(width, targetHeight, rung.targetBpp, frameRate);
-          const bitrateConfig = {
-            maxrate: `${Math.round(parseInt(baseConfig.maxrate) * bitrateMultiplier)}k`,
-            bufsize: `${Math.round(parseInt(baseConfig.bufsize) * bitrateMultiplier)}k`,
-          };
-          
-          return {
-            ...rung,
-            ...AV1_CONFIG,
-            width,
-            height: targetHeight,
-            ...bitrateConfig,
-            crf,
-            outputPath: path.join(this.outputDir, 'renditions', 'av1', rung.name),
-          };
-        });
+    // Process each enabled custom rung
+    const h264Renditions = customRungs
+      .filter(rung => rung.enabled)
+      .map(rung => {
+        // If source is smaller than target, use source dimensions
+        const targetHeight = Math.min(rung.height, sourceHeight);
+        const width = Math.round(targetHeight * aspectRatio / 2) * 2; // Ensure even number
         
-      this.renditions.push(...av1Renditions);
-    }
+        // Use the quality setting from each individual rung
+        const crf = mapQualityToCRF(rung.quality);
+        const bitrateMultiplier = mapQualityToBitrateMultiplier(rung.quality);
+        
+        // Get profile/level and BPP based on resolution
+        const { profile, level } = getH264ProfileLevel(targetHeight);
+        const targetBpp = getTargetBPP(targetHeight);
+        
+        // Calculate bitrate based on actual pixel count and quality multiplier
+        const baseConfig = calculateBitrate(width, targetHeight, targetBpp, frameRate);
+        const bitrateConfig = {
+          maxrate: `${Math.round(parseInt(baseConfig.maxrate) * bitrateMultiplier)}k`,
+          bufsize: `${Math.round(parseInt(baseConfig.bufsize) * bitrateMultiplier)}k`,
+        };
+        
+        // Determine if this resolution should get upgraded audio
+        const audioUpgrade = targetHeight >= 1080;
+        
+        return {
+          id: rung.id,
+          name: `${targetHeight}p`,  // Generate name from resolution
+          codec: 'h264',
+          width,
+          height: targetHeight,
+          profile,
+          level,
+          audioUpgrade,
+          ...bitrateConfig,
+          crf,
+          outputPath: path.join(this.outputDir, 'renditions', 'h264', rung.id),
+        };
+      });
+      
+    this.renditions.push(...h264Renditions);
     
     // Create output directories for each rendition
     for (const rendition of this.renditions) {
@@ -390,10 +365,19 @@ export class VideoJob extends EventEmitter {
         if (this.cancelled) throw new Error('Job cancelled');
         
         try {
-          // Prepare encoding options based on codec
-          const encodingOptions = rendition.codec === 'libsvtav1' 
-            ? this._getAV1Options(rendition)
-            : this._getH264Options(rendition);
+          // Prepare encoding options
+          const encodingOptions = this._getH264Options(rendition);
+          
+          console.log(`[VideoJob] Encoding ${rendition.name}:`, {
+            width: rendition.width,
+            height: rendition.height,
+            crf: rendition.crf,
+            profile: rendition.profile,
+            level: rendition.level
+          });
+          
+          // Ensure output directory exists
+          await fs.mkdir(rendition.outputPath, { recursive: true });
           
           // Create HLS playlist for this rendition
           const playlistPath = path.join(rendition.outputPath, 'playlist.m3u8');
@@ -456,7 +440,8 @@ export class VideoJob extends EventEmitter {
     return {
       ...H264_ENCODING_PARAMS,
       crf: rendition.crf,
-      videoFilters: `scale=${rendition.width}:${rendition.height || rendition.targetHeight}`,
+      width: rendition.width,
+      height: rendition.height,
       maxrate: rendition.maxrate,
       bufsize: rendition.bufsize,
       profile: rendition.profile,
@@ -467,33 +452,6 @@ export class VideoJob extends EventEmitter {
     };
   }
 
-  /**
-   * Get AV1 encoding options for a rendition
-   */
-  _getAV1Options(rendition) {
-    // Build SVT-AV1 parameters string
-    const svtav1Params = [];
-    if (rendition.svtav1Params) {
-      Object.entries(rendition.svtav1Params).forEach(([key, value]) => {
-        svtav1Params.push(`${key}=${value}`);
-      });
-    }
-    
-    return {
-      codec: rendition.codec,
-      crf: rendition.crf,
-      preset: rendition.preset,
-      pixelFormat: rendition.pixelFormat,
-      videoFilters: `scale=${rendition.width}:${rendition.height || rendition.targetHeight}`,
-      maxrate: rendition.maxrate,
-      bufsize: rendition.bufsize,
-      // SVT-AV1 specific parameters
-      'svtav1-params': svtav1Params.length > 0 ? svtav1Params.join(':') : undefined,
-      ...HLS_PARAMS,
-      hlsSegmentFilename: path.join(rendition.outputPath, 'segment_%04d.m4s'),
-      encodingSettings: this.encodingSettings
-    };
-  }
 
   /**
    * Stage 6: Generate storyboard
@@ -615,17 +573,17 @@ export class VideoJob extends EventEmitter {
   }
 
   /**
-   * Stage 9: Write complete metadata file
+   * Calculate actual bitrates from encoded files
    */
-  async _writeMetadata() {
-    this.progressTracker.startStage('metadata');
+  async _calculateActualBitrates() {
+    console.log(`[VideoJob ${this.id}] Calculating actual bitrates from encoded files`);
     
     // Analyze each rendition to get actual bitrates and segment counts
     for (const rendition of this.renditions) {
       try {
         // Get segment count by listing files
         const segmentFiles = await fs.readdir(rendition.outputPath);
-        const segments = segmentFiles.filter(f => f.match(/segment_\d+\.(ts|mp4)$/));
+        const segments = segmentFiles.filter(f => f.match(/segment_\d+\.(m4s|ts)$/));
         rendition.segmentCount = segments.length;
         
         // Calculate actual bitrate from total segment sizes
@@ -652,12 +610,23 @@ export class VideoJob extends EventEmitter {
         rendition.totalSize = totalSize;
         rendition.averageSegmentSize = segments.length > 0 ? Math.round(totalSize / segments.length) : 0;
         
+        console.log(`[VideoJob ${this.id}] ${rendition.name}: maxrate=${rendition.maxrate}, actualBitrate=${rendition.actualBitrate} bps (${Math.round(rendition.actualBitrate/1000)}k)`);
+        
       } catch (error) {
-        rendition.actualBitrate = parseInt(rendition.bitrate.replace('k', '000')); // Convert target to number
+        console.error(`[VideoJob ${this.id}] Failed to calculate actual bitrate for ${rendition.name}:`, error);
+        // Fallback to maxrate if we can't calculate actual
+        rendition.actualBitrate = parseInt(rendition.maxrate.replace('k', '')) * 1000;
         rendition.segmentCount = 0;
         rendition.totalSize = 0;
       }
     }
+  }
+
+  /**
+   * Stage 9: Write complete metadata file
+   */
+  async _writeMetadata() {
+    this.progressTracker.startStage('metadata');
     
     // Add rendition details with actual values
     this.metadata.renditions = this.renditions.map(r => ({
@@ -665,8 +634,8 @@ export class VideoJob extends EventEmitter {
       codec: r.codec || 'h264',
       width: r.width,
       height: r.height,
-      targetBitrate: r.bitrate, // Original target (e.g., "2500k")
-      actualBitrate: r.actualBitrate || parseInt(r.bitrate.replace('k', '000')), // Actual encoded bitrate in bps
+      targetBitrate: r.maxrate, // Original target (e.g., "2500k")
+      actualBitrate: r.actualBitrate || parseInt(r.maxrate.replace('k', '')) * 1000, // Actual encoded bitrate in bps
       profile: r.profile,
       level: r.level,
       playlistPath: r.playlistPath,

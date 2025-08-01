@@ -30,7 +30,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
         assignees: [
           { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' }
         ],
-        labels: ['1'],
         duration: '3:00'
       },
       createdAt: new Date('2024-01-25'),
@@ -49,7 +48,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
         assignees: [
           { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' }
         ],
-        labels: ['1', '2'],
         duration: '2:45'
       },
       createdAt: new Date('2024-01-15'),
@@ -67,7 +65,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
         assignees: [
           { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
         ],
-        labels: ['4'],
         duration: '0:30'
       },
       createdAt: new Date('2024-01-16'),
@@ -83,7 +80,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
       metadata: {
         thumbnail: 'https://placehold.co/640x360',
         assignees: [],
-        labels: ['4'],
         duration: '2:15'
       },
       createdAt: new Date('2023-12-01'),
@@ -99,7 +95,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
       metadata: {
         thumbnail: 'https://placehold.co/640x360',
         assignees: [],
-        labels: ['2'],
         duration: '1:30'
       },
       createdAt: new Date('2023-11-15'),
@@ -118,7 +113,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
           { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' },
           { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/100?img=8' }
         ],
-        labels: ['3'],
         duration: '5:12'
       },
       createdAt: new Date('2024-01-17'),
@@ -136,7 +130,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
         assignees: [
           { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
         ],
-        labels: ['5', '3'],
         duration: '0:15'
       },
       createdAt: new Date('2024-01-18'),
@@ -154,7 +147,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
         assignees: [
           { id: 'user3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/100?img=8' }
         ],
-        labels: ['6'],
         duration: '3:20'
       },
       createdAt: new Date('2024-01-19'),
@@ -173,7 +165,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
           { id: 'user4', name: 'Sarah Wilson', avatar: 'https://i.pravatar.cc/100?img=9' },
           { id: 'user1', name: 'John Doe', avatar: 'https://i.pravatar.cc/100?img=3' }
         ],
-        labels: ['2', '3'],
         duration: '4:15'
       },
       createdAt: new Date('2024-01-20'),
@@ -192,7 +183,6 @@ export const useFileExplorerStore = defineStore('fileExplorer', () => {
         assignees: [
           { id: 'user2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/100?img=5' }
         ],
-        labels: ['2'],
         duration: '1:45'
       },
       createdAt: new Date('2024-01-26'),

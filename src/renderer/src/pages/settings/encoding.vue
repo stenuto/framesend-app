@@ -10,71 +10,19 @@
     </div>
 
     <div v-else class="space-y-8 pt-8">
-      <!-- H.264 Settings -->
-      <SettingsItem title="H.264 Encoding" description="Enable H.264 encoding for wide compatibility.">
-        <div class="space-y-3">
-          <label class="flex items-center">
-            <input v-model="settings.h264.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
-            <span class="ml-2 text-xs">Enable H.264 encoding</span>
-          </label>
-
-          <div v-if="settings.h264.enabled" class="ml-5 space-y-3">
-            <div class="space-y-2">
-              <p class="text-xs text-zinc-400">Quality setting:</p>
-              <input type="range" min="1" max="5" v-model.number="settings.h264.quality" class="w-full h-1 accent-blue-500" />
-              <div class="flex justify-between text-[10px] text-zinc-500">
-                <span>Fastest</span>
-                <span>Best Quality</span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <p class="text-xs text-zinc-400">Resolution rungs:</p>
-              <div class="space-y-1.5">
-                <label v-for="rung in h264Rungs" :key="rung" class="flex items-center">
-                  <input v-model="settings.h264.rungs[rung]" type="checkbox"
-                    class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded accent-blue-500">
-                  <span class="ml-2 text-xs">{{ rung }}</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </SettingsItem>
-
-      <!-- AV1 Settings -->
-      <SettingsItem title="AV1 4K HQ Mode" description="Enable AV1 encoding for high quality 4K video.">
-        <div class="space-y-3">
-          <label class="flex items-center">
-            <input v-model="settings.av1.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded accent-blue-500">
-            <span class="ml-2 text-xs">Enable AV1 4K HQ encoding</span>
-          </label>
-
-          <div v-if="settings.av1.enabled" class="ml-5 space-y-3">
-            <div class="space-y-2">
-              <p class="text-xs text-zinc-400">Quality setting:</p>
-              <input type="range" min="1" max="5" v-model.number="settings.av1.quality"
-                class="w-full h-1 accent-blue-500" />
-              <div class="flex justify-between text-[10px] text-zinc-500">
-                <span>Fastest</span>
-                <span>Best Quality</span>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Custom Rung Configurator -->
+      <SettingsItem title="Encoding Configuration" description="Configure custom quality levels for video encoding.">
+        <CustomRungConfigurator :modelValue="settings.customRungs" @update:modelValue="updateCustomRungs" />
       </SettingsItem>
 
       <!-- Hardware Acceleration -->
       <SettingsItem title="Hardware Acceleration" description="Speed up encoding using your GPU when available.">
         <div class="space-y-3">
-          <label class="flex items-center">
-            <input v-model="settings.hardwareAcceleration.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
-            <span class="ml-2 text-xs">Use GPU acceleration when available</span>
-          </label>
-          <p v-if="settings.hardwareAcceleration.enabled" class="ml-5 text-[10px] text-zinc-500">
+          <div class="flex items-center gap-3">
+            <ToggleSwitch v-model="settings.hardwareAcceleration.enabled" size="lg" />
+            <span class="text-xs">Use GPU acceleration when available</span>
+          </div>
+          <p v-if="settings.hardwareAcceleration.enabled" class="text-[10px] text-zinc-500">
             Automatically detects and uses NVIDIA, AMD, Intel, or Apple Silicon hardware
           </p>
         </div>
@@ -111,13 +59,12 @@
       <!-- Audio Enhancement -->
       <SettingsItem title="Audio Enhancement" description="Improve audio consistency and clarity.">
         <div class="space-y-3">
-          <label class="flex items-center">
-            <input v-model="settings.audioEnhancement.enabled" type="checkbox"
-              class="w-3 h-3 text-blue-500 bg-zinc-800 border-zinc-600 rounded focus:ring-blue-500 focus:ring-1 accent-blue-500">
-            <span class="ml-2 text-xs">Optimize audio levels</span>
-          </label>
+          <div class="flex items-center gap-3">
+            <ToggleSwitch v-model="settings.audioEnhancement.enabled" size="lg" />
+            <span class="text-xs">Optimize audio levels</span>
+          </div>
 
-          <div v-if="settings.audioEnhancement.enabled" class="ml-5 space-y-2">
+          <div v-if="settings.audioEnhancement.enabled" class="space-y-2">
             <div class="space-y-2">
               <p class="text-xs text-zinc-400">Audio processing:</p>
               <input type="range" min="1" max="5" v-model="settings.audioEnhancement.level" class="w-full h-1 accent-blue-500" />
@@ -139,17 +86,20 @@ import { computed, watch } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
 import SettingsItem from '@/components/settings/SettingsItem.vue'
+import CustomRungConfigurator from '@/components/settings/CustomRungConfigurator.vue'
+import ToggleSwitch from '@/components/base/ToggleSwitch.vue'
+import { DEFAULT_CUSTOM_RUNGS } from '@/utils/encoding-utils'
 
 export default {
   name: 'EncodingSettings',
   components: {
-    SettingsItem
+    SettingsItem,
+    CustomRungConfigurator,
+    ToggleSwitch
   },
   setup() {
     const settingsStore = useSettingsStore()
     const { settings, isLoading } = storeToRefs(settingsStore)
-
-    const h264Rungs = ['360p', '720p', '1080p', '2160p']
 
     // Create computed refs for encoding settings with auto-save
     const encodingSettings = computed({
@@ -157,20 +107,7 @@ export default {
         // Ensure all properties exist with defaults
         const encoding = settings.value.encoding || {}
         return {
-          h264: encoding.h264 || {
-            enabled: true,
-            quality: 5,
-            rungs: {
-              '360p': true,
-              '720p': true,
-              '1080p': true,
-              '2160p': false
-            }
-          },
-          av1: encoding.av1 || {
-            enabled: false,
-            quality: 5
-          },
+          customRungs: encoding.customRungs || DEFAULT_CUSTOM_RUNGS,
           hardwareAcceleration: encoding.hardwareAcceleration || {
             enabled: true
           },
@@ -186,6 +123,14 @@ export default {
       }
     })
 
+    // Update custom rungs
+    const updateCustomRungs = (newRungs) => {
+      settings.value.encoding = {
+        ...settings.value.encoding,
+        customRungs: newRungs
+      }
+    }
+
     // Watch for changes and trigger save
     watch(encodingSettings, () => {
       // Settings will auto-save through the store's watcher
@@ -194,7 +139,7 @@ export default {
     return {
       loading: isLoading,
       settings: encodingSettings,
-      h264Rungs
+      updateCustomRungs
     }
   }
 }

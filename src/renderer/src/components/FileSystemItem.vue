@@ -1,7 +1,8 @@
 <template>
   <div class="text-[13px]">
     <!-- Folder Row -->
-    <div v-if="item.type === 'folder'" class="group hover:bg-white/4 relative" :class="{
+    <div v-if="item.type === 'folder'" class="group relative" :class="{
+      'hover:bg-white/4': !isSelected,
       'bg-blue-400/10': dragOverFolder === item.id,
       'bg-white/2': isInLastExpandedFolder,
     }">
@@ -11,7 +12,7 @@
       </div>
 
       <!-- Content with padding -->
-      <div class="flex items-center px-2.5 py-1 relative " :draggable="true" @click="!isEditing && $emit('toggle-folder', item.id)"
+      <div class="flex items-center pr-3 py-1 relative" :class="[depth === 0 ? 'pl-[10px]' : 'pl-3']" :draggable="true" @click="handleFolderClick"
         @dragstart="handleDragStart" @dragend="handleDragEnd" @drop="handleDrop" @dragover.prevent="handleDragOver"
         @dragleave="handleDragLeave" @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
@@ -29,26 +30,18 @@
           </div>
         </div>
 
-        <!-- Files column -->
-        <div class="w-24 text-current/60">
-          {{ totalFileCount }}
-        </div>
-
         <!-- Size column -->
-        <div class="w-28 text-current/60">
+        <div class="w-28 text-right pr-3 text-current/60">
           {{ folderSize }}
-        </div>
-
-        <!-- Status column -->
-        <div class="w-24 text-current/60">
-
         </div>
       </div>
     </div>
 
     <!-- Video Row -->
-    <div v-else-if="item.type === 'video'" class="group hover:bg-white/4 relative" :class="{
+    <div v-else-if="item.type === 'video'" class="group relative" :class="{
+      'hover:bg-white/4': !isSelected,
       'bg-white/2': isInLastExpandedFolder,
+      'bg-blue-600 text-white hover:bg-blue-500': isSelected,
     }">
       <!-- Vertical hierarchy lines (outside padding) -->
       <div v-for="i in depth" :key="i" :class="hierarchyLineConfig.lineClasses"
@@ -61,10 +54,21 @@
         @contextmenu.prevent="handleContextMenu">
         <!-- Name column -->
         <div class="flex-1 flex items-center gap-2 min-w-0"
-          :class="{ 'opacity-40': item.status === 'processing' || item.status === 'queued' }">
+          :class="{ 'opacity-50': item.status === 'processing' || item.status === 'queued' }">
           <div :style="{ marginLeft: `${depth * 1}rem` }" class="flex items-center gap-0.5">
-            <Icon name="video" class="size-3.5 text-blue-600 flex-shrink-0"
-              :class="{ 'animate-pulse': item.status === 'processing' }" :stroke-width="2" />
+            <!-- Queued icon -->
+            <Icon v-if="item.status === 'queued'" name="clock-fading" class="size-3.5 flex-shrink-0" :class="isSelected ? 'text-white' : 'text-blue-600'" :stroke-width="2" />
+            <!-- Processing icon (circular progress) -->
+            <svg v-else-if="item.status === 'processing'" class="size-3.5 -rotate-90" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                :class="isSelected ? 'text-white/20' : 'text-blue-600/20'" />
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
+                :stroke-dasharray="`${2 * Math.PI * 10}`"
+                :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
+                :class="isSelected ? 'text-white' : 'text-blue-600'" class="transition-all duration-500" />
+            </svg>
+            <!-- Normal video icon -->
+            <Icon v-else name="video" class="size-3.5 flex-shrink-0" :class="isSelected ? 'text-white' : 'text-blue-600'" :stroke-width="2" />
             <span :contenteditable="isEditing" @blur="handleNameBlur" @keydown.enter.prevent="handleNameBlur"
               @keydown.esc="cancelEdit" @click="handleNameClick" @mousedown="handleNameMouseDown" @focus="handleNameFocus" ref="nameEditRef"
               class="truncate outline-none px-1.5"
@@ -72,46 +76,9 @@
           </div>
         </div>
 
-        <!-- Files column (empty for videos) -->
-        <div class="w-24 text-current/60" :class="{ 'opacity-50': item.status === 'processing' }">
-          -
-        </div>
-
         <!-- Size column -->
-        <div class="w-28 text-current/60" :class="{ 'opacity-50': item.status === 'processing' }">
+        <div class="w-28 text-right pr-3" :class="isSelected ? 'text-white/70' : 'text-current/60'">
           {{ item.size || '-' }}
-        </div>
-
-        <!-- Status column -->
-        <div class="w-24 flex items-center">
-          <div v-if="item.status === 'ready'"
-            class="size-5 rounded-full bg-emerald-800/20 flex items-center justify-center">
-            <Icon name="check" class="size-3.5 text-emerald-600" />
-          </div>
-          <!-- PROCESSING -->
-          <div v-else-if="item.status === 'processing'" class="inline-flex items-center gap-1.5">
-            <svg class="size-4 -rotate-90" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
-                class="text-current/15" />
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
-                :stroke-dasharray="`${2 * Math.PI * 10}`"
-                :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`"
-                class="text-blue-500 duration-500" />
-            </svg>
-            <span class="text-xs">
-              {{ Math.round(item.progress || 0) }}%
-            </span>
-          </div>
-          <!-- QUEUED -->
-          <div v-if="item.status === 'queued'"
-            class="rounded-smooth px-1.5 text-[11px] bg-zinc-500/30 group-hover:opacity-100 opacity-30 text-zinc-200/80 flex items-center justify-center">
-            Queued
-          </div>
-          <!-- FAILED -->
-          <div v-if="item.status === 'failed'"
-            class="rounded-smooth px-1.5 text-[11px] bg-red-900/40 group-hover:opacity-100 opacity-30 text-red-200/80 flex items-center justify-center">
-            Failed
-          </div>
         </div>
       </div>
     </div>
@@ -123,9 +90,7 @@
           <Icon name="exclamation-triangle" class="w-4 h-4 text-red-500" />
           <span class="text-red-400">Unknown item type: {{ item.type }} ({{ item.name }})</span>
         </div>
-        <div :class="COLUMN_WIDTHS.files"></div>
         <div :class="COLUMN_WIDTHS.size"></div>
-        <div :class="COLUMN_WIDTHS.status"></div>
       </div>
     </div>
 
@@ -140,7 +105,7 @@
         @drag-end="$emit('drag-end', $event)" @drop="$emit('drop', $event)" @drag-over="$emit('drag-over', $event)"
         @drag-leave="$emit('drag-leave', $event)" @external-drop="$emit('external-drop', $event)"
         @cancel-encoding="$emit('cancel-encoding', $event)" @rename="$emit('rename', $event)"
-        @delete="$emit('delete', $event)" />
+        @delete="$emit('delete', $event)" @context-menu="$emit('context-menu', $event)" />
     </template>
   </div>
 </template>
@@ -154,9 +119,7 @@ import HierarchyLines from './HierarchyLines.vue'
 // Constants
 const INDENT_SIZE = 1 // rem
 const COLUMN_WIDTHS = {
-  files: 'w-24',
-  size: 'w-28',
-  status: 'w-24'
+  size: 'w-28'
 }
 
 // Utility functions
@@ -248,6 +211,11 @@ export default {
 
     // Compute if this item is being edited based on editingItemId
     const isEditing = computed(() => props.editingItemId === props.item.id)
+
+    // Compute if this item is selected
+    const isSelected = computed(() => 
+      uiStore.selectedItem && uiStore.selectedItem.id === props.item.id
+    )
 
     const isExpanded = computed(() =>
       props.expandedFolders.has(props.item.id)
@@ -357,25 +325,6 @@ export default {
       props.item.type === 'folder' ? props.getFolderVideoCount(props.item.id) : 0
     )
 
-    const totalFileCount = computed(() => {
-      if (props.item.type !== 'folder') return 0
-      return countAllItems(props.item.id)
-    })
-
-    const countAllItems = (folderId) => {
-      const items = props.getFolderItems(folderId)
-      let count = 0
-
-      items.forEach(item => {
-        if (item.type === 'video') {
-          count++
-        } else if (item.type === 'folder') {
-          count += countAllItems(item.id)
-        }
-      })
-
-      return count
-    }
 
     const folderSize = computed(() => {
       if (props.item.type !== 'folder') return '-'
@@ -450,6 +399,12 @@ export default {
     // Remove the menu action handler from here - it should only be in the parent
 
     const handleContextMenu = async (e) => {
+      // Emit to parent to handle context menu consistently
+      emit('context-menu', { event: e, item: props.item })
+      return
+
+      // Old implementation removed - now handled in parent
+      /*
       let menuTemplate = []
 
       if (props.item.type === 'video') {
@@ -523,14 +478,25 @@ export default {
           y: e.clientY
         })
       }
+      */
     }
 
     // Remove handleMenuAction - it's causing all items to respond
 
     const handleVideoClick = () => {
       if (props.item.type === 'video') {
-        uiStore.selectVideo(props.item)
+        uiStore.selectItem(props.item)
       }
+    }
+
+    const handleFolderClick = (e) => {
+      if (isEditing.value) return
+      
+      // Select the folder
+      uiStore.selectItem(props.item)
+      
+      // Toggle expand state
+      emit('toggle-folder', props.item.id)
     }
 
     // Remove menu action handler registration - it should only be in parent
@@ -597,9 +563,9 @@ export default {
 
     return {
       isExpanded,
+      isSelected,
       children,
       videoCount,
-      totalFileCount,
       folderSize,
       hierarchyLineConfig,
       isInLastExpandedFolder,
@@ -611,6 +577,7 @@ export default {
       handleDragLeave,
       handleContextMenu,
       handleVideoClick,
+      handleFolderClick,
       COLUMN_WIDTHS,
       INDENT_SIZE,
       isEditing,

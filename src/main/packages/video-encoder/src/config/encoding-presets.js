@@ -8,41 +8,21 @@
  * Lower CRF = better quality, larger files
  * Higher CRF = lower quality, smaller files
  * @param {number} quality - Quality slider value (1-5)
- * @param {string} codec - 'h264' or 'av1'
  * @returns {number} CRF value
  */
-export function mapQualityToCRF(quality, codec = 'h264') {
+export function mapQualityToCRF(quality) {
   // H.264 CRF range: 15-32 (lower is better)
   // Quality 1 = CRF 32 (fastest encoding, smallest files, lower quality)
   // Quality 3 = CRF 23 (balanced - good quality/size trade-off)
   // Quality 5 = CRF 15 (excellent quality, larger files, slower encoding)
-  if (codec === 'h264') {
-    const crfMap = {
-      1: 32,    // Very compressed, suitable for preview/draft
-      2: 27.5,  // Compressed, acceptable quality
-      3: 23,    // Balanced - recommended default
-      4: 19,    // High quality
-      5: 15     // Excellent quality, near-lossless
-    };
-    return crfMap[quality] || 23;
-  }
-  
-  // AV1 CRF range: 12-40 (lower is better, different scale than H.264)
-  // Quality 1 = CRF 40 (fastest, very compressed)
-  // Quality 3 = CRF 25 (balanced - good for most use cases)
-  // Quality 5 = CRF 12 (exceptional quality for archival/master)
-  if (codec === 'av1') {
-    const crfMap = {
-      1: 40,    // Very compressed, fast encoding
-      2: 32.5,  // Compressed but acceptable
-      3: 25,    // Balanced - recommended default
-      4: 18.5,  // High quality
-      5: 12     // Exceptional quality, large files
-    };
-    return crfMap[quality] || 25;
-  }
-  
-  return 23; // Default fallback
+  const crfMap = {
+    1: 32,    // Very compressed, suitable for preview/draft
+    2: 27.5,  // Compressed, acceptable quality
+    3: 23,    // Balanced - recommended default
+    4: 19,    // High quality
+    5: 15     // Excellent quality, near-lossless
+  };
+  return crfMap[quality] || 23;
 }
 
 /**
@@ -115,38 +95,6 @@ export const H264_LADDER = [
   },
 ];
 
-// AV1 ladder - only 4K HQ option
-export const AV1_LADDER = [
-  {
-    name: '2160p_hq',
-    height: 2160,
-    targetBpp: 0.06, // Will be overridden by CRF mode
-    preset: 5,
-    crf: 18,
-    audioUpgrade: true,
-    // AV1 HQ specific settings per user requirements
-    profile: 0, // Main 10 profile
-    pixelFormat: 'yuv420p10le', // 10-bit 4:2:0
-  },
-];
-
-// AV1 general configuration - HQ 4K mode
-export const AV1_CONFIG = {
-  codec: 'libsvtav1',
-  pixelFormat: 'yuv420p10le', // 10-bit 4:2:0
-  // SVT-AV1 HQ parameters
-  svtav1Params: {
-    'preset': 5, // Speed-quality sweet spot
-    'profile': 0, // Main 10 profile
-    'tune': 0, // PSNR/BDRate-centric default
-    'aq-mode': 1, // Content-adaptive quantization
-    'scd': 0, // Disable scene change detection for consistent HLS segments
-    'tile-columns': 2, // 1x2 tiling for smooth parallel decoding
-    'tile-rows': 1,
-    'film-grain': 0, // Disabled by default (can be enabled for grain sources)
-    'fast-decode': 0, // Standard decode complexity
-  },
-};
 
 // H.264 encoding parameters optimized for HLS
 export const H264_ENCODING_PARAMS = {
@@ -212,11 +160,67 @@ export const THUMBNAIL_PARAMS = {
   },
 };
 
-// Encoding options
-export const ENCODING_OPTIONS = {
-  enableAV1: true, // Set to false to disable AV1 encoding completely
-  av1MinHeight: 1080, // Minimum source height to enable AV1 encoding
-};
+// Available resolution options for custom rungs
+export const RESOLUTION_OPTIONS = [
+  { label: '240p', value: 240 },
+  { label: '360p', value: 360 },
+  { label: '480p', value: 480 },
+  { label: '540p', value: 540 },
+  { label: '720p (HD)', value: 720 },
+  { label: '1080p (Full HD)', value: 1080 },
+  { label: '1440p (2K)', value: 1440 },
+  { label: '2160p (4K)', value: 2160 },
+  { label: '4320p (8K)', value: 4320 },
+];
+
+/**
+ * Get H.264 profile and level based on resolution height
+ * @param {number} height - Resolution height in pixels
+ * @returns {Object} Profile and level configuration
+ */
+export function getH264ProfileLevel(height) {
+  if (height <= 360) {
+    return { profile: 'baseline', level: '3.0' };
+  } else if (height <= 480) {
+    return { profile: 'main', level: '3.0' };
+  } else if (height <= 720) {
+    return { profile: 'main', level: '3.1' };
+  } else if (height <= 1080) {
+    return { profile: 'high', level: '4.0' };
+  } else if (height <= 1440) {
+    return { profile: 'high', level: '4.2' };
+  } else if (height <= 2160) {
+    return { profile: 'high', level: '5.1' };
+  } else {
+    // 8K and above
+    return { profile: 'high', level: '6.2' };
+  }
+}
+
+/**
+ * Get target bits per pixel based on resolution
+ * Higher resolutions can use lower BPP due to better efficiency
+ * @param {number} height - Resolution height in pixels
+ * @returns {number} Target bits per pixel
+ */
+export function getTargetBPP(height) {
+  if (height <= 360) {
+    return 0.12; // Higher BPP for low resolutions
+  } else if (height <= 480) {
+    return 0.10;
+  } else if (height <= 720) {
+    return 0.08;
+  } else if (height <= 1080) {
+    return 0.07;
+  } else if (height <= 1440) {
+    return 0.06;
+  } else if (height <= 2160) {
+    return 0.05;
+  } else {
+    // 8K
+    return 0.04;
+  }
+}
 
 // Progress stage weights for accurate progress reporting
 export const PROGRESS_WEIGHTS = {
@@ -241,20 +245,39 @@ export const VALIDATION = {
 
 // Default encoding settings structure
 export const DEFAULT_ENCODING_SETTINGS = {
-  h264: {
-    enabled: true,
-    rungs: {
-      '360p': true,
-      '720p': true,
-      '1080p': true,
-      '2160p': true,
+  customRungs: [
+    {
+      id: '360p_default1',
+      height: 360,
+      quality: 2,
+      enabled: true
+    },
+    {
+      id: '720p_default2',
+      height: 720,
+      quality: 3,
+      enabled: true
+    },
+    {
+      id: '1080p_default3',
+      height: 1080,
+      quality: 3,
+      enabled: true
+    },
+    {
+      id: '2160p_default4',
+      height: 2160,
+      quality: 3,
+      enabled: false
     }
+  ],
+  hardwareAcceleration: {
+    enabled: true
   },
-  av1: {
-    enabled: false, // AV1 4K HQ is optional, disabled by default
-    rungs: {
-      '2160p_hq': true,
-    }
+  streamingPreset: 'balanced',
+  audioEnhancement: {
+    enabled: true,
+    level: 3
   }
 };
 

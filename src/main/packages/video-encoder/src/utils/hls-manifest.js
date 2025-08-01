@@ -38,10 +38,12 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
   
   // Group renditions by codec
   const h264Renditions = renditions.filter(r => r.codec === 'h264' || !r.codec);
-  const av1Renditions = renditions.filter(r => r.codec === 'av1');
+  // Note: AV1 is currently not supported by HLS.js/hls-video-element, so we exclude it from manifest
+  // The files are still created but won't be referenced in the playlist
+  const av1Renditions = []; // renditions.filter(r => r.codec === 'av1' || r.codec === 'libsvtav1');
   
-  // Sort by height (lowest first)
-  const sortByHeight = (a, b) => a.height - b.height;
+  // Sort by height (highest first) - this makes HLS players start with highest quality
+  const sortByHeight = (a, b) => b.height - a.height;
   
   // Add H.264 variants first
   if (h264Renditions.length > 0) {
@@ -49,8 +51,18 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
     h264Renditions.sort(sortByHeight);
     
     for (const rendition of h264Renditions) {
-    // Calculate bandwidth using maxrate + audio bitrate
-    const videoBandwidth = parseInt(rendition.maxrate.replace('k', '')) * 1000;
+    // Use actual bitrate if available, otherwise fall back to maxrate
+    let videoBandwidth;
+    if (rendition.actualBitrate) {
+      // Use the actual encoded bitrate
+      videoBandwidth = rendition.actualBitrate;
+      console.log(`[HLS Manifest] Using actual bitrate for ${rendition.name}: ${Math.round(videoBandwidth/1000)}k`);
+    } else {
+      // Fall back to maxrate
+      videoBandwidth = parseInt(rendition.maxrate.replace('k', '')) * 1000;
+      console.log(`[HLS Manifest] Using maxrate for ${rendition.name}: ${Math.round(videoBandwidth/1000)}k`);
+    }
+    
     const audioBandwidth = rendition.audioUpgrade ? 192000 : 128000;
     const bandwidth = videoBandwidth + audioBandwidth;
     
@@ -91,8 +103,18 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
     av1Renditions.sort(sortByHeight);
     
     for (const rendition of av1Renditions) {
-      // Calculate bandwidth using maxrate + audio bitrate
-      const videoBandwidth = parseInt(rendition.maxrate.replace('k', '')) * 1000;
+      // Use actual bitrate if available, otherwise fall back to maxrate
+      let videoBandwidth;
+      if (rendition.actualBitrate) {
+        // Use the actual encoded bitrate
+        videoBandwidth = rendition.actualBitrate;
+        console.log(`[HLS Manifest] Using actual bitrate for AV1 ${rendition.name}: ${Math.round(videoBandwidth/1000)}k`);
+      } else {
+        // Fall back to maxrate
+        videoBandwidth = parseInt(rendition.maxrate.replace('k', '')) * 1000;
+        console.log(`[HLS Manifest] Using maxrate for AV1 ${rendition.name}: ${Math.round(videoBandwidth/1000)}k`);
+      }
+      
       const audioBandwidth = rendition.audioUpgrade ? 192000 : 128000;
       const bandwidth = videoBandwidth + audioBandwidth;
       

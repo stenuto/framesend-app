@@ -100,7 +100,12 @@ export class FluentFFmpegWrapper extends EventEmitter {
           this.activeProcesses.delete(commandId);
           resolve();
         })
-        .on('error', (err) => {
+        .on('error', (err, stdout, stderr) => {
+          console.error(`[FFmpeg] Error encoding ${options.width}x${options.height}:`);
+          console.error(`[FFmpeg] Error: ${err.message}`);
+          if (stderr) {
+            console.error(`[FFmpeg] Stderr: ${stderr}`);
+          }
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
           reject(err);
@@ -119,22 +124,12 @@ export class FluentFFmpegWrapper extends EventEmitter {
     return new Promise((resolve, reject) => {
       const command = ffmpeg(inputPath);
       
-      // Apply hardware acceleration if enabled
-      if (options.encodingSettings?.hardwareAcceleration?.enabled) {
-        // Use VideoToolbox on macOS for hardware acceleration
-        if (process.platform === 'darwin') {
-          command.inputOptions('-hwaccel', 'videotoolbox');
-        }
-        // Use NVENC on systems with NVIDIA GPUs (if available)
-        else if (options.codec === 'libx264' || !options.codec) {
-          // Try to use h264_nvenc if available, fallback to libx264
-          command.videoCodec('h264_nvenc');
-          command.outputOptions('-preset', 'p4'); // NVENC preset
-          command.outputOptions('-tune', 'hq');
-        }
+      // Set video codec
+      if (options.codec === 'libx264' || options.codec === 'h264' || !options.codec) {
+        // Always use libx264 for now - hardware acceleration can be added later with proper detection
+        command.videoCodec('libx264');
       } else {
-        // Software encoding
-        command.videoCodec(options.codec || 'libx264');
+        command.videoCodec(options.codec);
       }
       
       // Video filters
@@ -143,32 +138,13 @@ export class FluentFFmpegWrapper extends EventEmitter {
       }
       
       // H.264 options
-      if (options.codec === 'libx264' || !options.codec) {
-        // If not using hardware acceleration, apply standard settings
-        if (!options.encodingSettings?.hardwareAcceleration?.enabled) {
-          command
-            .outputOptions('-preset', options.preset || 'medium')
-            .outputOptions('-crf', String(options.crf || 23))
-            .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p')
-            .outputOptions('-profile:v', options.profile || 'main')
-            .outputOptions('-level', options.level || '4.0');
-        } else if (process.platform !== 'darwin') {
-          // NVENC specific settings (non-macOS hardware acceleration)
-          command
-            .outputOptions('-rc', 'vbr')
-            .outputOptions('-cq', String(options.crf || 23))
-            .outputOptions('-profile:v', options.profile || 'main')
-            .outputOptions('-level', options.level || '4.0');
-        } else {
-          // VideoToolbox settings for macOS
-          command
-            .videoCodec('h264_videotoolbox')
-            .outputOptions('-profile:v', options.profile || 'main')
-            .outputOptions('-level', options.level || '4.0');
-          if (options.videoBitrate) {
-            command.videoBitrate(options.videoBitrate);
-          }
-        }
+      if (options.codec === 'libx264' || options.codec === 'h264' || !options.codec) {
+        command
+          .outputOptions('-preset', options.preset || 'medium')
+          .outputOptions('-crf', String(options.crf || 23))
+          .outputOptions('-pix_fmt', options.pixelFormat || 'yuv420p')
+          .outputOptions('-profile:v', options.profile || 'main')
+          .outputOptions('-level', options.level || '4.0');
         
         // Apply streaming optimization preset
         const streamingPreset = options.encodingSettings?.streamingPreset || 'balanced';
@@ -198,9 +174,10 @@ export class FluentFFmpegWrapper extends EventEmitter {
         if (options.bufsize) {
           command.outputOptions('-bufsize', options.bufsize);
         }
-        if (options['x264-params'] && !options.encodingSettings?.hardwareAcceleration?.enabled) {
-          command.outputOptions('-x264-params', options['x264-params']);
-        }
+        // Temporarily disable x264-params to debug encoding issues
+        // if (options['x264-params'] && !options.encodingSettings?.hardwareAcceleration?.enabled) {
+        //   command.outputOptions('-x264-params', options['x264-params']);
+        // }
       }
       
       // AV1 options
@@ -266,15 +243,13 @@ export class FluentFFmpegWrapper extends EventEmitter {
       
       // HLS options with forced keyframes for consistent segmentation
       if (options.hls_time) {
-        // Force keyframes at exact 2-second intervals for consistent segmentation
-        // This ensures all renditions have the same segment boundaries
+        // Set up HLS output
         command
-          .outputOptions('-force_key_frames', 'expr:gte(t,n_forced*2)')
           .outputOptions('-f', 'hls')
           .outputOptions('-hls_time', String(options.hls_time))
           .outputOptions('-hls_playlist_type', options.hls_playlist_type || 'vod')
           .outputOptions('-hls_segment_type', options.hls_segment_type || 'mpegts')
-          .outputOptions('-hls_segment_filename', options.hlsSegmentFilename)
+          .outputOptions('-hls_segment_filename', options.hlsSegmentFilename || options.hls_segment_filename)
           .outputOptions('-hls_flags', options.hls_flags || '');
       }
       
@@ -287,6 +262,8 @@ export class FluentFFmpegWrapper extends EventEmitter {
       // Set up event handlers
       command
         .on('start', (cmd) => {
+          console.log(`[FFmpeg] Starting encoding for ${options.width}x${options.height}:`);
+          console.log(`[FFmpeg] Command: ${cmd}`);
           // Store the process immediately and keep checking
           const storeProcess = () => {
             if (command.ffmpegProc) {
@@ -298,6 +275,10 @@ export class FluentFFmpegWrapper extends EventEmitter {
           storeProcess();
         })
         .on('stderr', (stderrLine) => {
+          // Log errors from FFmpeg
+          if (stderrLine.includes('Error') || stderrLine.includes('Invalid')) {
+            console.error(`[FFmpeg stderr] ${stderrLine}`);
+          }
           // Parse stderr for HLS segment completion
           // FFmpeg outputs lines like: "[hls @ 0x...] Opening 'segment_0001.m4s' for writing"
           const segmentMatch = stderrLine.match(/Opening '(.*(segment_\d+\.m4s))' for writing/);
@@ -381,14 +362,25 @@ export class FluentFFmpegWrapper extends EventEmitter {
           this.activeProcesses.delete(commandId);
           resolve();
         })
-        .on('error', (err) => {
+        .on('error', (err, stdout, stderr) => {
+          console.error(`[FFmpeg] Error encoding ${options.width}x${options.height}:`);
+          console.error(`[FFmpeg] Error: ${err.message}`);
+          if (stderr) {
+            console.error(`[FFmpeg] Stderr: ${stderr}`);
+          }
           this.activeCommands.delete(commandId);
           this.activeProcesses.delete(commandId);
           reject(err);
         });
       
-      if (options.width) {
-        command.size(`${options.width}x?`);
+      // Video size - use scale filter for better compatibility
+      if (options.width && options.height) {
+        // Use simple scaling that maintains aspect ratio
+        command.videoFilters(`scale=${options.width}:${options.height}`);
+      } else if (options.width) {
+        command.videoFilters(`scale=${options.width}:-2`);
+      } else if (options.height) {
+        command.videoFilters(`scale=-2:${options.height}`);
       }
       
       command.save(outputPath);

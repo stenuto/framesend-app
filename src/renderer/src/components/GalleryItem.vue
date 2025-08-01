@@ -1,8 +1,8 @@
 <template>
 <div class="group relative rounded-smooth-md overflow-hidden shadow-xs"
   :class="{
-    'ring-1 ring-white/5': !isDragOver || item.type !== 'folder',
-    'ring-2 ring-blue-500': isDragOver && item.type === 'folder'
+    'ring-1 ring-white/5': !isDragOver && !isSelected,
+    'ring-2 ring-blue-500': (isDragOver && item.type === 'folder') || isSelected
   }"
   :draggable="!isEditing"
   @dragstart="!isEditing ? $emit('drag-start', $event, item) : null"
@@ -37,7 +37,7 @@
         <div v-if="item.status === 'processing'"
           class="absolute inset-0 bg-black/50 flex items-center justify-center">
           <div class="flex flex-col items-center">
-            <svg class="size-8 -rotate-90" viewBox="0 0 24 24">
+            <svg class="size-5 -rotate-90" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
                 class="text-white/20" />
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none"
@@ -59,18 +59,19 @@
           <span class="text-red-400 text-sm">Failed</span>
         </div>
 
-        <div v-else-if="item.status === 'ready'" class="absolute top-2 right-2">
-          <div class="size-5 rounded-smooth-full bg-emerald-500 shadow-xs flex items-center justify-center">
-            <Icon name="check" class="size-3.5 text-white" :stroke-width="3" />
-          </div>
-        </div>
       </template>
     </div>
 
     <!-- Info Section -->
     <div class="p-2">
-      <div class="flex items-center gap-1.5">
-        <Icon v-if="!isEditing && item.type === 'video'" :name="itemIcon" class="size-[13px] flex-shrink-0" :class="iconColor" :stroke-width="2" />
+      <div class="flex items-center gap-1.5" :class="{ 'opacity-50': item.status === 'processing' || item.status === 'queued' }">
+        <!-- Encoding status icons -->
+        <Icon v-if="!isEditing && item.type === 'video' && item.status === 'queued'" name="clock-fading" class="size-[13px] flex-shrink-0 text-blue-600" :stroke-width="2" />
+        <svg v-else-if="!isEditing && item.type === 'video' && item.status === 'processing'" class="size-[13px] flex-shrink-0 -rotate-90" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" class="text-blue-600/20" />
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" :stroke-dasharray="`${2 * Math.PI * 10}`" :stroke-dashoffset="`${2 * Math.PI * 10 * (1 - (item.progress || 0) / 100)}`" class="text-blue-600 transition-all duration-500" />
+        </svg>
+        <Icon v-else-if="!isEditing && item.type === 'video'" :name="itemIcon" class="size-[13px] flex-shrink-0" :class="iconColor" :stroke-width="2" />
 
         <h4 v-if="!isEditing" class="text-[13px] font-medium truncate">
           {{ item.name }}
@@ -104,6 +105,10 @@ const props = defineProps({
     default: false
   },
   isDragOver: {
+    type: Boolean,
+    default: false
+  },
+  isSelected: {
     type: Boolean,
     default: false
   },
@@ -141,6 +146,7 @@ const emit = defineEmits([
 // Template refs
 const editInput = ref(null)
 
+
 // Computed properties
 const containerClasses = computed(() => ({
   'bg-zinc-800 hover:bg-zinc-700/50': true,
@@ -157,7 +163,7 @@ const iconColor = computed(() => {
 
 const primaryMetadata = computed(() => {
   if (props.item.type === 'folder') {
-    return `${props.folderVideoCount} items`
+    return props.folderSize
   } else {
     return props.item.duration || '0:00'
   }
@@ -165,17 +171,17 @@ const primaryMetadata = computed(() => {
 
 const secondaryMetadata = computed(() => {
   if (props.item.type === 'folder') {
-    return props.folderSize
+    return '' // No secondary metadata for folders
   } else {
     return props.item.size || ''
   }
 })
 
+
 // Methods
 const handleClick = () => {
-  if (props.item.type === 'video') {
-    emit('click', props.item)
-  }
+  // Emit click for both folders and videos - parent will handle selection
+  emit('click', props.item)
 }
 
 const handleDoubleClick = () => {

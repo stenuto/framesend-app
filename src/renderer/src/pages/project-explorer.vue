@@ -10,7 +10,7 @@
       <!-- Breadcrumb navigation for gallery view -->
       <div v-if="viewMode === 'gallery'" class="flex items-center gap-2.5">
         <!-- Show as button with chevron if inside a folder, otherwise just text -->
-        <Button v-if="currentFolderId" variant="ghost" size="default" chevron 
+        <Button v-if="currentFolderId" variant="ghost" size="default" chevron
           class="text-sm font-medium -ml-2 -mr-2"
           @click="showBreadcrumbMenu">
           {{ currentFolderName }}
@@ -40,16 +40,14 @@
     <div v-if="viewMode === 'list'" class="border-b border-zinc-800 z-10 shrink-0">
       <div class="flex px-3 py-1 text-[11px] text-zinc-500">
         <div class="flex-1">Name</div>
-        <div class="w-24">Files</div>
-        <div class="w-28">Size</div>
-        <div class="w-24">Status</div>
+        <div class="w-28 text-right pr-3">Size</div>
       </div>
     </div>
 
     <!-- List View -->
     <div v-if="viewMode === 'list'" class="flex-1 overflow-y-auto h-full" @drop.prevent="handleDropOnRoot($event)"
       @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
-      @contextmenu.prevent="handleContextMenu">
+      @contextmenu.prevent="handleContextMenu" @click="handleRootClick">
       <!-- Empty State -->
       <div v-if="rootItems.length === 0" class="flex flex-col items-center justify-center h-full text-zinc-500">
         <Icon name="folder-open" class="size-16 mb-4 text-zinc-700" :stroke-width="1.5" />
@@ -67,14 +65,15 @@
           :editing-item-id="editingItemId" @set-editing-item="editingItemId = $event" @toggle-folder="toggleFolder"
           @drag-start="handleDragStartWrapper" @drag-end="handleDragEnd" @drop="handleDropWrapper"
           @drag-over="handleDragOverWrapper" @drag-leave="handleDragLeaveWrapper"
-          @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" @rename="handleRename" />
+          @external-drop="handleExternalDropWrapper" @cancel-encoding="handleCancelEncoding" @rename="handleRename"
+          @context-menu="handleListItemContextMenu" />
       </div>
     </div>
 
     <!-- Gallery View -->
     <div v-else class="flex-1 overflow-y-auto h-full p-4" @drop.prevent="handleDropOnRoot($event)"
       @dragover.prevent="handleDragOverRoot($event)" @dragleave="handleDragLeaveRoot($event)" @dragenter.prevent
-      @contextmenu.prevent="handleContextMenu">
+      @contextmenu.prevent="handleContextMenu" @click="handleRootClick">
       <!-- Empty State -->
       <div v-if="rootItems.length === 0" class="flex flex-col items-center justify-center h-full text-zinc-500">
         <Icon name="folder-open" class="size-16 mb-4 text-zinc-700" :stroke-width="1.5" />
@@ -85,11 +84,12 @@
       <!-- Grid of items -->
       <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
         <GalleryItem
-          v-for="item in rootItems" 
+          v-for="item in rootItems"
           :key="item.id"
           :item="item"
           :is-editing="editingItemId === item.id"
           :is-drag-over="dragOverFolder === item.id"
+          :is-selected="uiStore.selectedItem && uiStore.selectedItem.id === item.id"
           :folder-videos="item.type === 'folder' ? getVideosInFolder(item.id).filter(v => v.status === 'ready') : []"
           :folder-video-count="item.type === 'folder' ? getFolderVideoCount(item.id) : 0"
           :folder-size="item.type === 'folder' ? getFolderSize(item.id) : '-'"
@@ -103,8 +103,7 @@
           @drop="handleDrop"
           @context-menu="handleItemContextMenu"
           @rename="handleGalleryRename"
-          @cancel-edit="editingItemId = null"
-        />
+          @cancel-edit="editingItemId = null" />
       </div>
     </div>
   </div>
@@ -217,7 +216,11 @@ export default {
     // Watch for view mode changes to persist preference
     watch(viewMode, (newMode, oldMode) => {
       // Update application menu to reflect current view mode
-      window.electron?.ipcRenderer?.send('menu:updateViewMode', newMode)
+      if (window.api?.menu?.updateViewMode) {
+        window.api.menu.updateViewMode(newMode)
+      } else if (window.electron?.ipcRenderer) {
+        window.electron.ipcRenderer.send('menu:updateViewMode', newMode)
+      }
 
       // When switching from list to gallery via any method (not just menu)
       if (newMode === 'gallery' && oldMode === 'list') {
@@ -262,11 +265,15 @@ export default {
           navigationPath.value = [{ id: null, name: selectedProject.value?.name || 'Project' }]
         }
       }
-      
+
       // Sync the loaded view mode with the application menu
       // Use setTimeout to ensure menu is ready
       setTimeout(() => {
-        window.electron?.ipcRenderer?.send('menu:updateViewMode', viewMode.value)
+        if (window.api?.menu?.updateViewMode) {
+          window.api.menu.updateViewMode(viewMode.value)
+        } else if (window.electron?.ipcRenderer) {
+          window.electron.ipcRenderer.send('menu:updateViewMode', viewMode.value)
+        }
       }, 100)
     })
 
@@ -350,7 +357,7 @@ export default {
       const folder = fileSystem.value.find(item => item.id === currentFolderId.value)
       return folder?.name || 'Folder'
     })
-    
+
     // Computed property for search placeholder
     const searchPlaceholder = computed(() => {
       if (viewMode.value === 'list' || !currentFolderId.value) {
@@ -771,10 +778,10 @@ export default {
     })
 
     const unsubscribeCancelled = window.api.video.onCancelled?.((data) => {
-      const item = fileSystem.value.find(i => i.jobId === data.jobId)
-      if (item) {
-        item.status = 'failed'
-        item.error = 'Cancelled by user'
+      const itemIndex = fileSystem.value.findIndex(i => i.jobId === data.jobId)
+      if (itemIndex !== -1) {
+        // Remove cancelled video from the UI
+        fileSystem.value.splice(itemIndex, 1)
       }
     })
 
@@ -787,7 +794,7 @@ export default {
 
         // Clear cache for this item to force reload with new thumbnail
         thumbnailCache.value.delete(item.id)
-        
+
         // Force reactivity update
         const index = fileSystem.value.findIndex(i => i.jobId === data.jobId)
         if (index !== -1) {
@@ -804,7 +811,7 @@ export default {
       unsubscribeCancelled?.()
       unsubscribeThumbnail?.()
       unsubscribeMenu?.()
-      
+
       // Remove application menu listeners
       window.electron?.ipcRenderer?.removeAllListeners('menu:action')
       window.electron?.ipcRenderer?.removeAllListeners('menu:getViewMode')
@@ -874,7 +881,7 @@ export default {
             }
             fileSystem.value.push(newVideo)
 
-            } catch (error) {
+          } catch (error) {
             console.error(`Failed to queue video ${file.name}:`, error)
           }
         }
@@ -886,9 +893,8 @@ export default {
     }
 
     const handleVideoClick = (item) => {
-      if (item.type === 'video') {
-        uiStore.selectVideo(item)
-      }
+      // Select the item (folder or video)
+      uiStore.selectItem(item)
     }
 
     const handleItemContextMenu = async (e, item) => {
@@ -908,60 +914,6 @@ export default {
                 label: 'Copy iFrame Embed',
                 action: 'share:copyIframeEmbed',
                 data: { fileId: item.id, fileName: item.name }
-              }
-            ]
-          },
-          { type: 'separator' },
-          {
-            label: 'Labels',
-            submenu: [
-              {
-                label: 'In Progress',
-                type: 'radio',
-                checked: false,
-                icon: 'menu_icons/blue@2x.png',
-                action: 'label:set',
-                data: { fileId: item.id, label: 'in-progress' }
-              },
-              {
-                label: 'Review',
-                type: 'radio',
-                checked: false,
-                icon: 'menu_icons/amber@2x.png',
-                action: 'label:set',
-                data: { fileId: item.id, label: 'review' }
-              },
-              {
-                label: 'Approved',
-                type: 'radio',
-                checked: false,
-                icon: 'menu_icons/emerald@2x.png',
-                action: 'label:set',
-                data: { fileId: item.id, label: 'approved' }
-              },
-              {
-                label: 'Needs Changes',
-                type: 'radio',
-                checked: false,
-                icon: 'menu_icons/orange@2x.png',
-                action: 'label:set',
-                data: { fileId: item.id, label: 'needs-changes' }
-              },
-              {
-                label: 'Final',
-                type: 'radio',
-                checked: false,
-                icon: 'menu_icons/violet@2x.png',
-                action: 'label:set',
-                data: { fileId: item.id, label: 'final' }
-              },
-              {
-                label: 'Archive',
-                type: 'radio',
-                checked: false,
-                icon: 'menu_icons/zinc@2x.png',
-                action: 'label:set',
-                data: { fileId: item.id, label: 'archive' }
               }
             ]
           },
@@ -994,17 +946,6 @@ export default {
                     label: '2160p (4K)',
                     action: 'download:mp4',
                     data: { fileId: item.id, format: 'mp4', quality: '2160p' },
-                    enabled: item.status === 'ready'
-                  }
-                ]
-              },
-              {
-                label: 'MP4 (AV1)',
-                submenu: [
-                  {
-                    label: '2160p (4K)',
-                    action: 'download:av1',
-                    data: { fileId: item.id, format: 'av1', quality: '2160p' },
                     enabled: item.status === 'ready'
                   }
                 ]
@@ -1071,6 +1012,15 @@ export default {
       })
     }
 
+    const handleRootClick = (e) => {
+      // Check if clicked directly on the root container (not on an item)
+      if (e.target === e.currentTarget || 
+          (!e.target.closest('[draggable="true"]') && !e.target.closest('.group'))) {
+        // Clear selection
+        uiStore.clearSelectedItem()
+      }
+    }
+
     const handleContextMenu = async (e) => {
       // Check if clicked on empty space (not on an item)
       if (e.target.closest('[draggable="true"]')) {
@@ -1108,7 +1058,7 @@ export default {
       })
     }
 
-    const handleMenuAction = (action, data) => {
+    const handleMenuAction = async (action, data) => {
       // Handle menu actions centrally
       switch (action) {
         case 'explorer:newFolder':
@@ -1118,27 +1068,27 @@ export default {
         case 'explorer:viewList':
           // Remember the folder we were viewing in gallery mode
           const folderToExpand = currentFolderId.value
-          
+
           viewMode.value = 'list'
-          
+
           // Clear all expanded folders first
           expandedFolders.value.clear()
-          
+
           // If we were viewing a folder in gallery mode, expand it and its ancestors
           if (folderToExpand) {
             // Expand the folder itself
             expandedFolders.value.add(folderToExpand)
-            
+
             // Expand all parent folders to make it visible
             const ancestors = getAncestorIds(folderToExpand)
             ancestors.forEach(ancestorId => {
               expandedFolders.value.add(ancestorId)
             })
-            
+
             // Set this folder as the last expanded to highlight it
             lastExpandedFolder.value = folderToExpand
           }
-          
+
           currentFolderId.value = null
           navigationPath.value = []
           break
@@ -1196,16 +1146,6 @@ export default {
           navigator.clipboard.writeText(embedCode)
           break
 
-        case 'label:set':
-          // Handle setting a label on the video
-          const video = fileSystem.value.find(item => item.id === data.fileId)
-          if (video) {
-            // For now, just log the action
-            console.log(`Setting label "${data.label}" on video:`, video.name)
-            // TODO: Update video metadata with label
-            // TODO: Call server API to persist label
-          }
-          break
       }
     }
 
@@ -1345,6 +1285,11 @@ export default {
       handleRename(renameData)
     }
 
+    const handleListItemContextMenu = ({ event, item }) => {
+      // Use the same context menu handler as gallery view
+      handleItemContextMenu(event, item)
+    }
+
 
     const handleDelete = async (itemId, itemName, itemType) => {
       // Confirm deletion
@@ -1405,16 +1350,29 @@ export default {
     // Set up menu action listener
     onMounted(() => {
       unsubscribeMenu = window.api.menu.onAction(handleMenuAction)
-      
+
       // Listen for actions from application menu
-      window.electron?.ipcRenderer?.on('menu:action', (event, action) => {
-        handleMenuAction(action)
+      window.electron?.ipcRenderer?.on('menu:action', (event, action, data) => {
+        handleMenuAction(action, data)
       })
-      
+
       // Listen for view mode request from menu
-      window.electron?.ipcRenderer?.on('menu:getViewMode', () => {
-        window.electron?.ipcRenderer?.send('menu:updateViewMode', viewMode.value)
-      })
+      const respondToViewModeRequest = () => {
+        console.log('[ProjectExplorer] Responding to view mode request with:', viewMode.value)
+        if (window.api?.menu?.updateViewMode) {
+          window.api.menu.updateViewMode(viewMode.value)
+        } else if (window.electron?.ipcRenderer) {
+          window.electron.ipcRenderer.send('menu:updateViewMode', viewMode.value)
+        }
+      }
+      
+      window.electron?.ipcRenderer?.on('menu:getViewMode', respondToViewModeRequest)
+      
+      // Also send the initial view mode immediately
+      setTimeout(() => {
+        console.log('[ProjectExplorer] Sending initial view mode:', viewMode.value)
+        respondToViewModeRequest()
+      }, 0)
     })
 
     const getFolderSize = (folderId) => {
@@ -1551,6 +1509,7 @@ export default {
       uiStore,
       currentParams,
       handleContextMenu,
+      handleRootClick,
       viewMode,
       handleRename,
       handleDelete,
@@ -1563,6 +1522,7 @@ export default {
       handleVideoClick,
       handleItemContextMenu,
       handleGalleryRename,
+      handleListItemContextMenu,
       getFolderSize,
       emptyStateTitle,
       emptyStateMessage,

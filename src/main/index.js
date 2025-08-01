@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, screen, nativeTheme, protocol } from 'electron'
+import { app, shell, BrowserWindow, screen, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -8,6 +8,7 @@ import { registerHandlers } from './handlers/index.js'
 
 // Force dark mode for native menus and dialogs
 nativeTheme.themeSource = 'dark'
+
 
 // Get the path for storing window state
 const getWindowStatePath = () => {
@@ -168,6 +169,7 @@ function createWindow() {
 app.whenReady().then(async () => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
+
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

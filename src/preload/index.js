@@ -99,14 +99,16 @@ const api = {
       const listener = (event, action, data) => callback(action, data)
       ipcRenderer.on('menu:action', listener)
       return () => ipcRenderer.removeListener('menu:action', listener)
-    }
+    },
+    updateViewMode: (mode) => ipcRenderer.send('menu:updateViewMode', mode)
   },
   
   // API operations
   request: (method, url, data, headers) => 
     ipcRenderer.invoke('api:request', { method, url, data, headers }),
   setAuthToken: (token) => ipcRenderer.invoke('api:setAuthToken', token),
-  clearAuthToken: () => ipcRenderer.invoke('api:clearAuthToken')
+  clearAuthToken: () => ipcRenderer.invoke('api:clearAuthToken'),
+  
 }
 
 // Extend electronAPI with webUtils

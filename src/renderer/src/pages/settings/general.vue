@@ -11,7 +11,7 @@
     </div>
 
     <div v-else class="space-y-8 pt-8">
-      <!-- Appearance setting removed - dark mode only -->
+      <!-- Language -->
       <SettingsItem title="Language" description="Select the app language.">
         <p class="text-xs text-zinc-400">English (Default)</p>
       </SettingsItem>
