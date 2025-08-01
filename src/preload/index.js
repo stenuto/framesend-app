@@ -53,6 +53,10 @@ const api = {
     pause: () => ipcRenderer.invoke('video:pause'),
     resume: () => ipcRenderer.invoke('video:resume'),
     selectFiles: () => ipcRenderer.invoke('video:selectFiles'),
+    // Thumbnail operations
+    uploadThumbnail: (videoId) => ipcRenderer.invoke('video:uploadThumbnail', { videoId }),
+    setFrameAsThumbnail: (videoId, timestamp) => ipcRenderer.invoke('video:setFrameAsThumbnail', { videoId, timestamp }),
+    copyFrameToClipboard: (videoId, timestamp) => ipcRenderer.invoke('video:copyFrameToClipboard', { videoId, timestamp }),
     
     // Event listeners
     onStart: (callback) => {

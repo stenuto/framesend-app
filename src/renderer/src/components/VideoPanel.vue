@@ -1,7 +1,7 @@
 <template>
 <div v-if="selectedVideo" class="relative shrink-0 h-full border-l border-white/10 w-[400px] flex flex-col">
   <!-- Header -->
-  <div class="h-12 flex items-center justify-between shrink-0 drag bg-zinc-900 px-4 border-b border-zinc-800">
+  <div class="h-12 flex items-center justify-between shrink-0 drag px-4 border-b border-zinc-800">
     <div class="flex items-center justify-between w-full gap-2">
       <!-- Editable title -->
       <div class="flex-1 min-w-0">
@@ -22,12 +22,12 @@
         </h3>
       </div>
       <div class="flex items-center gap-1">
-        <Button 
-          :icon-name="videoFitMode === 'cover' ? 'unfold-horizontal' : 'unfold-vertical'" 
-          size="sm" 
-          variant="ghost" 
-          class="text-zinc-500" 
-          @click="toggleVideoFitMode" 
+        <Button
+          :icon-name="videoFitMode === 'cover' ? 'unfold-horizontal' : 'unfold-vertical'"
+          size="sm"
+          variant="ghost"
+          class="text-zinc-500"
+          @click="toggleVideoFitMode"
           :title="videoFitMode === 'cover' ? 'Fit to frame' : 'Fill frame'" />
         <Button icon-name="x" size="sm" variant="ghost" class="text-zinc-500" @click="closePanel" />
       </div>
@@ -38,7 +38,7 @@
   <div class="flex-1 bg-black overflow-hidden">
     <!-- Video Player -->
     <div v-if="selectedVideo.status === 'ready' && selectedVideo.jobId" class="h-full w-full">
-      <VideoPlayer
+      <MediaChromePlayer
         :video-id="selectedVideo.id"
         :job-id="selectedVideo.jobId"
         :fit-mode="videoFitMode" />
@@ -108,7 +108,7 @@ import { ref, computed, watch, nextTick } from 'vue'
 import { useUIStore } from '@/stores/ui'
 import { useVideoEncodingStore } from '@/stores/videoEncoding'
 import { useProjectsStore } from '@/stores/projects'
-import VideoPlayer from './VideoPlayer.vue'
+import MediaChromePlayer from './MediaChromePlayer.vue'
 import Icon from '@/components/base/Icon.vue'
 import Button from '@/components/base/Button.vue'
 

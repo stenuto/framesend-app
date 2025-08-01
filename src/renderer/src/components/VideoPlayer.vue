@@ -513,8 +513,7 @@ const handleMenuAction = async (action) => {
       console.log('Set current frame as thumbnail')
       break
     case 'video:upload-thumbnail':
-      // TODO: Implement thumbnail upload
-      console.log('Upload thumbnail image')
+      await handleThumbnailUpload()
       break
     case 'video:copy-frame':
       // TODO: Implement frame copy to clipboard
@@ -524,6 +523,27 @@ const handleMenuAction = async (action) => {
       // TODO: Show video info dialog
       console.log('Show video info')
       break
+  }
+}
+
+const handleThumbnailUpload = async () => {
+  try {
+    // Call main process handler which will show file dialog and mock API
+    const response = await window.api.video.uploadThumbnail(props.videoId)
+    
+    if (!response) {
+      // User cancelled
+      return
+    }
+    
+    // Handle successful upload
+    if (response.success) {
+      console.log('Thumbnail upload successful:', response.data)
+      // In a real app, we might emit an event or update the UI
+    }
+    
+  } catch (error) {
+    console.error('Error uploading thumbnail:', error)
   }
 }
 
