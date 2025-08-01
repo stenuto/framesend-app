@@ -174,10 +174,9 @@ export class FluentFFmpegWrapper extends EventEmitter {
         if (options.bufsize) {
           command.outputOptions('-bufsize', options.bufsize);
         }
-        // Temporarily disable x264-params to debug encoding issues
-        // if (options['x264-params'] && !options.encodingSettings?.hardwareAcceleration?.enabled) {
-        //   command.outputOptions('-x264-params', options['x264-params']);
-        // }
+        if (options['x264-params']) {
+          command.outputOptions('-x264-params', options['x264-params']);
+        }
       }
       
       // AV1 options
@@ -209,48 +208,26 @@ export class FluentFFmpegWrapper extends EventEmitter {
       // Audio
       command.audioCodec('aac').audioBitrate('128k');
       
-      // Apply audio enhancement if enabled
-      if (options.encodingSettings?.audioEnhancement?.enabled) {
-        const level = options.encodingSettings.audioEnhancement.level || 3;
-        
-        // Audio filters based on enhancement level
-        const audioFilters = [];
-        
-        // Level 1-2: Basic normalization
-        if (level >= 1) {
-          audioFilters.push('loudnorm=I=-16:TP=-1.5:LRA=11');
-        }
-        
-        // Level 3-4: Add compression
-        if (level >= 3) {
-          audioFilters.push('acompressor=threshold=-20dB:ratio=4:attack=5:release=50');
-        }
-        
-        // Level 5: Add equalizer for clarity
-        if (level >= 5) {
-          audioFilters.push('equalizer=f=3000:t=h:width=200:g=3');
-        }
-        
-        if (audioFilters.length > 0) {
-          command.audioFilters(audioFilters.join(','));
-        }
-        
-        // Increase bitrate for higher quality levels
-        if (level >= 4) {
-          command.audioBitrate('192k');
-        }
-      }
-      
       // HLS options with forced keyframes for consistent segmentation
       if (options.hls_time) {
+        // Force keyframes at exact intervals for consistent segment duration
+        const segmentDuration = parseInt(options.hls_time);
+        const keyframeInterval = `expr:gte(t,n_forced*${segmentDuration})`;
+        
         // Set up HLS output
         command
           .outputOptions('-f', 'hls')
           .outputOptions('-hls_time', String(options.hls_time))
+          .outputOptions('-force_key_frames', keyframeInterval)  // Force keyframe every segment
           .outputOptions('-hls_playlist_type', options.hls_playlist_type || 'vod')
           .outputOptions('-hls_segment_type', options.hls_segment_type || 'mpegts')
           .outputOptions('-hls_segment_filename', options.hlsSegmentFilename || options.hls_segment_filename)
           .outputOptions('-hls_flags', options.hls_flags || '');
+        
+        // Add init filename for fMP4
+        if (options.hls_segment_type === 'fmp4' && options.hls_fmp4_init_filename) {
+          command.outputOptions('-hls_fmp4_init_filename', options.hls_fmp4_init_filename);
+        }
       }
       
       // Add metadata to identify our processes

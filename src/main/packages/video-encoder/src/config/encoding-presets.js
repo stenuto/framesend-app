@@ -103,17 +103,7 @@ export const H264_ENCODING_PARAMS = {
   crf: 23, // Default CRF for quality level 3 (will be overridden by per-rung settings)
   pixelFormat: 'yuv420p', // Standard 8-bit for maximum compatibility
   colorSpace: 'bt709', // HD color space
-  // x264 specific parameters for HLS optimization
-  'x264-params': [
-    'keyint=120',       // Keyframe interval: 2 seconds at 60fps (conservative for variable framerates)
-    'min-keyint=120',   // Fixed GOP size for HLS
-    'scenecut=0',       // Disable scene cut detection for consistent HLS segments
-    'bframes=3',        // B-frames for compression efficiency
-    'ref=4',            // Reference frames for quality
-    'rc-lookahead=40',  // Lookahead for rate control
-    'aq-mode=1',        // Adaptive quantization mode
-    'threads=0',        // Use all available threads
-  ].join(':'),
+  // Note: x264-params are now dynamically set based on framerate and segment duration
 };
 
 // HLS segmentation parameters
@@ -121,8 +111,9 @@ export const HLS_PARAMS = {
   'hls_time': 6,                           // 6-second segments (Apple recommendation)
   'hls_playlist_type': 'vod',              // VOD playlist type
   'hls_segment_type': 'fmp4',              // CMAF compliant fragmented MP4
-  'hls_flags': 'independent_segments', // Keep flags simple for now
+  'hls_flags': 'independent_segments+temp_file', // independent_segments for IDR starts, temp_file for atomic writes
   'hls_segment_filename': 'segment_%04d.m4s', // Segment naming pattern (.m4s for fMP4)
+  'hls_fmp4_init_filename': 'init.mp4',     // Init segment for fMP4
   'master_pl_name': 'playlist.m3u8',       // Variant playlist name
 };
 

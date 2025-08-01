@@ -15,17 +15,7 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
     '',
   ];
   
-  // Add audio groups if audio exists
-  if (metadata.audio) {
-    lines.push(
-      '# Audio',
-      // Default audio group (128k)
-      '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-default",NAME="English",DEFAULT=YES,AUTOSELECT=YES,LANGUAGE="en",URI="audio/default.m4a"',
-      // Upgraded audio group (192k)
-      '#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-upgraded",NAME="English",DEFAULT=YES,AUTOSELECT=YES,LANGUAGE="en",URI="audio/upgraded.m4a"',
-      ''
-    );
-  }
+  // Audio is embedded in video streams, no external audio groups needed
   
   // Add subtitle group if captions exist
   if (metadata.captions) {
@@ -42,13 +32,17 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
   // The files are still created but won't be referenced in the playlist
   const av1Renditions = []; // renditions.filter(r => r.codec === 'av1' || r.codec === 'libsvtav1');
   
-  // Sort by height (highest first) - this makes HLS players start with highest quality
-  const sortByHeight = (a, b) => b.height - a.height;
+  // Sort by bandwidth (lowest first) - HLS spec requires ascending order
+  const sortByBandwidth = (a, b) => {
+    const aBandwidth = a.actualBitrate || parseInt(a.maxrate.replace('k', '')) * 1000;
+    const bBandwidth = b.actualBitrate || parseInt(b.maxrate.replace('k', '')) * 1000;
+    return aBandwidth - bBandwidth;
+  };
   
   // Add H.264 variants first
   if (h264Renditions.length > 0) {
     lines.push('# H.264 Variants');
-    h264Renditions.sort(sortByHeight);
+    h264Renditions.sort(sortByBandwidth);
     
     for (const rendition of h264Renditions) {
     // Use actual bitrate if available, otherwise fall back to maxrate
@@ -71,19 +65,18 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
     const audioCodec = metadata.audio ? ',mp4a.40.2' : '';
     const codecs = `${videoCodec}${audioCodec}`;
     
+    // Calculate average bandwidth (use 90% of peak for conservative estimate)
+    const averageBandwidth = Math.round(bandwidth * 0.9);
+    
     // Build variant stream info
     const streamInfo = [
       `BANDWIDTH=${bandwidth}`,
+      `AVERAGE-BANDWIDTH=${averageBandwidth}`,
       `RESOLUTION=${rendition.width}x${rendition.height}`,
       `CODECS="${codecs}"`,
       `FRAME-RATE=${metadata.video.frameRate.toFixed(3)}`,
+      'CLOSED-CAPTIONS=NONE'
     ];
-    
-    if (metadata.audio) {
-      // Use upgraded audio group for 1080p+
-      const audioGroup = rendition.audioUpgrade ? 'audio-upgraded' : 'audio-default';
-      streamInfo.push(`AUDIO="${audioGroup}"`);
-    }
     
     if (metadata.captions) {
       streamInfo.push('SUBTITLES="subs"');
@@ -100,7 +93,7 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
   // Add AV1 variants as alternative renditions
   if (av1Renditions.length > 0) {
     lines.push('# AV1 Variants');
-    av1Renditions.sort(sortByHeight);
+    av1Renditions.sort(sortByBandwidth);
     
     for (const rendition of av1Renditions) {
       // Use actual bitrate if available, otherwise fall back to maxrate
@@ -121,17 +114,17 @@ export async function generateHLSManifest(outputPath, renditions, metadata) {
       const videoCodec = 'av01.0.08M.10'; // AV1 Main Profile, Level 4.0, 10-bit
       const audioCodec = metadata.audio ? ',mp4a.40.2' : '';
       
+      // Calculate average bandwidth
+      const averageBandwidth = Math.round(bandwidth * 0.9);
+      
       const streamInfo = [
         `BANDWIDTH=${bandwidth}`,
+        `AVERAGE-BANDWIDTH=${averageBandwidth}`,
         `RESOLUTION=${rendition.width}x${rendition.height}`,
         `CODECS="${videoCodec}${audioCodec}"`,
         `FRAME-RATE=${metadata.video.frameRate.toFixed(3)}`,
+        'CLOSED-CAPTIONS=NONE'
       ];
-      
-      if (metadata.audio) {
-        // AV1 should use upgraded audio since it's 4K
-        streamInfo.push('AUDIO="audio-upgraded"');
-      }
       
       lines.push(
         `#EXT-X-STREAM-INF:${streamInfo.join(',')}`,

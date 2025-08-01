@@ -20,7 +20,7 @@
         </h3>
       </div>
       <!-- Project name for list view -->
-      <h3 v-else class="text-sm font-medium">
+      <h3 v-else class="text-sm font-medium flex-1 truncate">
         {{ selectedProject?.name }}
       </h3>
     </div>
@@ -1014,8 +1014,8 @@ export default {
 
     const handleRootClick = (e) => {
       // Check if clicked directly on the root container (not on an item)
-      if (e.target === e.currentTarget || 
-          (!e.target.closest('[draggable="true"]') && !e.target.closest('.group'))) {
+      if (e.target === e.currentTarget ||
+        (!e.target.closest('[draggable="true"]') && !e.target.closest('.group'))) {
         // Clear selection
         uiStore.clearSelectedItem()
       }
@@ -1365,9 +1365,9 @@ export default {
           window.electron.ipcRenderer.send('menu:updateViewMode', viewMode.value)
         }
       }
-      
+
       window.electron?.ipcRenderer?.on('menu:getViewMode', respondToViewModeRequest)
-      
+
       // Also send the initial view mode immediately
       setTimeout(() => {
         console.log('[ProjectExplorer] Sending initial view mode:', viewMode.value)

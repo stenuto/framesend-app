@@ -97,8 +97,8 @@ export class VideoJob extends EventEmitter {
       // Stage 3: Plan encoding renditions
       await this._planRenditions();
       
-      // Stage 4: Extract audio
-      await this._extractAudio();
+      // Stage 4: Extract audio - SKIPPED (audio is embedded in video streams)
+      // await this._extractAudio();
       
       // Stage 5: Encode video streams
       await this._encodeStreams();
@@ -196,7 +196,7 @@ export class VideoJob extends EventEmitter {
       const aspectRatio = this.metadata.video.width / this.metadata.video.height;
       
       // Generate hero thumbnail maintaining aspect ratio
-      const heroPath = path.join(this.outputDir, 'thumbnails', 'hero_4k.jpg');
+      const heroPath = path.join(this.outputDir, 'thumbnails', 'thumbnail_2160.jpg');
       await extractThumbnails(
         this.inputPath,
         heroPath,
@@ -218,7 +218,7 @@ export class VideoJob extends EventEmitter {
       
       // Store in metadata
       this.metadata.thumbnails = {
-        hero: 'thumbnails/hero_4k.jpg',
+        hero: 'thumbnails/thumbnail_2160.jpg',
       };
       
       
@@ -437,15 +437,34 @@ export class VideoJob extends EventEmitter {
    * Get H.264 encoding options for a rendition
    */
   _getH264Options(rendition) {
+    // Calculate keyframe interval based on framerate and segment duration
+    const frameRate = this.metadata.video.frameRate;
+    const segmentDuration = HLS_PARAMS.hls_time; // 6 seconds
+    const keyframeInterval = Math.ceil(frameRate * segmentDuration); // GOP size
+    
+    // Build x264 params dynamically
+    const x264Params = [
+      `keyint=${keyframeInterval}`,       // Keyframe interval matches segment duration
+      `min-keyint=${keyframeInterval}`,   // Fixed GOP size for consistent segments
+      'scenecut=0',                       // Disable scene cut detection
+      'bframes=3',                        // B-frames for compression
+      'ref=4',                            // Reference frames
+      'rc-lookahead=40',                  // Rate control lookahead
+      'aq-mode=1',                        // Adaptive quantization
+      'threads=0',                        // Use all threads
+    ].join(':');
+    
     return {
       ...H264_ENCODING_PARAMS,
       crf: rendition.crf,
       width: rendition.width,
       height: rendition.height,
+      videoFilters: `scale=${rendition.width}:${rendition.height}`,  // Scale video to target resolution
       maxrate: rendition.maxrate,
       bufsize: rendition.bufsize,
       profile: rendition.profile,
       level: rendition.level,
+      'x264-params': x264Params,
       ...HLS_PARAMS,
       hlsSegmentFilename: path.join(rendition.outputPath, 'segment_%04d.m4s'),
       encodingSettings: this.encodingSettings
